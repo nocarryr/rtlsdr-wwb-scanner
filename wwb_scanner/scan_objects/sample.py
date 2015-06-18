@@ -32,7 +32,10 @@ class Sample(object):
         self._magnitude = value
     @property
     def formatted_frequency(self):
-        return '%07.3f' % (self.frequency)
+        return '%07.4f' % (self.frequency)
+    @property
+    def formatted_magnitude(self):
+        return '%03.1f' % (self.magnitude)
     def __repr__(self):
         return str(self)
     def __str__(self):
