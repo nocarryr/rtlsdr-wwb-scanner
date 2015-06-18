@@ -19,4 +19,10 @@ class Spectrum(object):
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample
         return sample
+    def iter_frequencies(self):
+        for key in sorted(self.samples.keys()):
+            yield key
+    def iter_samples(self):
+        for key in self.iter_frequencies():
+            yield self.samples[key]
         
