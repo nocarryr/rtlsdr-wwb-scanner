@@ -20,6 +20,9 @@
     <Source>wwb_scanner/scan_objects/spectrum.py</Source>
     <Source>wwb_scanner/scan_objects/sample.py</Source>
     <Source>wwb_scanner/file_handlers/exporters.py</Source>
+    <Source>wwb_scanner/scanner/__init__.py</Source>
+    <Source>wwb_scanner/scanner/main.py</Source>
+    <Source>wwb_scanner/scanner/sample_processing.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
