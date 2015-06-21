@@ -46,7 +46,11 @@ class CSVExporter(BaseExporter):
             ]))
         return newline_chars.join(lines)
         
-class WWBExporter(BaseExporter):
+class WWBLegacyExporter(BaseExporter):
+    def set_filename(self, value):
+        if os.path.splitext(value[1]).lower() != '.sbd':
+            value = '.'.join([os.path.splitext(value)[0], 'sbd'])
+        super(WWBLegacyExporter, self).set_filename(value)
     def build_data(self):
         spectrum = self.spectrum
         now = datetime.datetime.utcnow()

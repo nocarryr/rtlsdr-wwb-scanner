@@ -1,1 +1,1 @@
-from .exporters import CSVExporter, WWBExporter
+from .exporters import CSVExporter, WWBLegacyExporter
