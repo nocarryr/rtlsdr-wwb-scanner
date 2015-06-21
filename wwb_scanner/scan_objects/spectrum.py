@@ -2,6 +2,7 @@ from wwb_scanner.scan_objects import Sample
 
 class Spectrum(object):
     def __init__(self, **kwargs):
+        self.step_size = kwargs.get('step_size')
         self.samples = {}
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):

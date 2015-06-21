@@ -27,7 +27,7 @@ class Scanner(object):
             if key in kwargs:
                 val = kwargs.get(key)
             setattr(self, key, val)
-        self.spectrum = Spectrum()
+        self.spectrum = Spectrum(step_size=self.step_size)
         self.sdr = RtlSdr()
         self.sdr.sample_rate = self.sample_rate
         self.samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)

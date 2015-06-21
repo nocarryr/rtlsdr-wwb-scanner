@@ -11,7 +11,7 @@ def next_2_to_pow(val):
     return val + 1
     
 def calc_num_samples(sample_rate):
-    return next_2_to_pow(int(sample_rate * .5))
+    return next_2_to_pow(int(sample_rate * .25))
     
 def read_samples(scanner, freq):
     sdr = scanner.sdr
