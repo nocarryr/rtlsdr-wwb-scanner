@@ -1,4 +1,9 @@
 import os
+import datetime
+import uuid
+import xml.etree.ElementTree as ET
+
+EPOCH = datetime.datetime(1970, 1, 1)
 
 class BaseExporter(object):
     def __init__(self, **kwargs):
@@ -40,4 +45,45 @@ class CSVExporter(BaseExporter):
                 sample.formatted_magnitude
             ]))
         return newline_chars.join(lines)
+        
+class WWBExporter(BaseExporter):
+    def build_data(self):
+        spectrum = self.spectrum
+        now = datetime.datetime.utcnow()
+        attribs = dict(
+            ver='0.0.0.1', 
+            id='{%s}' % (uuid.uuid4()), 
+            model='TODO', 
+            name='Rtlsdr WWB Scanner', 
+            date=now.strftime('%a %b %d %Y'), 
+            time=now.strftime('%H:%M:%S'), 
+            color='#00ff00',
+        )
+        root = ET.Element('scan_data_source', attribs)
+        attribs = dict(
+            count='1', 
+            no_data_value='-140', 
+        )
+        data_sets = ET.SubElement(root, 'data_sets', attribs)
+        attribs = dict(
+            index='0', 
+            freq_units='KHz', 
+            ampl_units='dBm', 
+            start_freq=min(spectrum.samples.keys()), 
+            stop_freq=max(spectrum.samples.keys()), 
+            step_freq=spectrum.step_size, 
+            res_bandwidth='TODO', 
+            scale_factor='1', 
+            date=root.get('date'), 
+            time=root.get('time'), 
+            date_time=str(int((now - EPOCH).total_seconds())), 
+        )
+        data_set = ET.SubElement(data_sets, 'data_set', attribs)
+        for sample in spectrum.iter_samples():
+            ET.SubElement(data_set, text=sample.formatted_magnitude)
+        tree = self.tree = ET.ElementTree(root)
+        return tree
+    def write_file(self):
+        tree = self.build_data()
+        tree.write(self.filename, encoding='UTF-8', xml_declaration=True)
         
