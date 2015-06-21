@@ -23,6 +23,8 @@
     <Source>wwb_scanner/scanner/__init__.py</Source>
     <Source>wwb_scanner/scanner/main.py</Source>
     <Source>wwb_scanner/scanner/sample_processing.py</Source>
+    <Source>wwb_scanner/ui/__init__.py</Source>
+    <Source>wwb_scanner/ui/plots.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
