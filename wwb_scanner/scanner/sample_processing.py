@@ -20,5 +20,9 @@ def read_samples(scanner, freq):
     f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length, scaling='spectrum')
     f = np.fft.fftshift(f)
     f += freq
+    if scanner.save_raw_values:
+        raw = powers
     powers = 20. * np.log10(powers)
+    if scanner.save_raw_values:
+        return f, powers, raw
     return f, powers

@@ -11,6 +11,7 @@ SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.], 
     step_size=.025, 
     sample_rate=2e6,  
+    save_raw_values=False
 )
 
 def mhz_to_hz(mhz):
@@ -39,6 +40,8 @@ class Scanner(object):
         self.sdr.sample_rate = self.sample_rate
         self.samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
         self.sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size))
+        if self.save_raw_values:
+            self.raw_values = {}
     @property
     def current_freq(self):
         return self._current_freq
@@ -76,7 +79,12 @@ class Scanner(object):
             self.progress = step / num_steps
     def scan_freq(self, freq):
         spectrum = self.spectrum
-        freqs, powers = sample_processing.read_samples(self, freq)
+        t = sample_processing.read_samples(self, freq)
+        if self.save_raw_values:
+            freqs, powers, raw = t
+            self.raw_values[freq] = [freqs, powers]
+        else:
+            freqs, powers = t
         print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             f = hz_to_mhz(f)
@@ -137,8 +145,10 @@ def scan_and_plot(**kwargs):
     scanner.stop()
     return scanner
     
-def scan_and_save(filename, **kwargs):
+def scan_and_save(filename=None, **kwargs):
     scanner = Scanner(**kwargs)
+    if filename is None:
+        filename = 'scan_%07.3f-%07.3f.csv' % (scanner.scan_range[0], scanner.scan_range[1])
     scanner.run_scan()
     fh = CSVExporter(filename=filename, spectrum=scanner.spectrum)
     fh.write_file()
