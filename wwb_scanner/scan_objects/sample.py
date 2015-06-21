@@ -25,11 +25,13 @@ class Sample(object):
     def magnitude(self, value):
         if not isinstance(value, numbers.Number):
             return
-        if self.magnitude == value:
+        old = self.magnitude
+        if old == value:
             return
         if not isinstance(value, float):
             value = float(value)
         self._magnitude = value
+        self.spectrum.on_sample_change(sample=self, magnitude=value, old=old)
     @property
     def formatted_frequency(self):
         return '%07.4f' % (self.frequency)

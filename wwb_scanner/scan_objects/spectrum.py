@@ -1,8 +1,11 @@
+import threading
 from wwb_scanner.scan_objects import Sample
 
 class Spectrum(object):
     def __init__(self, **kwargs):
         self.step_size = kwargs.get('step_size')
+        self.data_updated = threading.Event()
+        self.data_update_lock = threading.Lock()
         self.samples = {}
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):
@@ -19,6 +22,7 @@ class Spectrum(object):
         kwargs.setdefault('spectrum', self)
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample
+        self.set_data_updated()
         return sample
     def iter_frequencies(self):
         for key in sorted(self.samples.keys()):
@@ -26,4 +30,11 @@ class Spectrum(object):
     def iter_samples(self):
         for key in self.iter_frequencies():
             yield self.samples[key]
-        
+    def on_sample_change(self, **kwargs):
+        sample = kwargs.get('sample')
+        if sample.frequency not in self.samples:
+            return
+        self.set_data_updated()
+    def set_data_updated(self):
+        with self.data_update_lock:
+            self.data_updated.set()
