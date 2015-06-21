@@ -5,6 +5,7 @@ from rtlsdr import RtlSdr
 from wwb_scanner.scanner import sample_processing
 from wwb_scanner.scan_objects import Spectrum
 from wwb_scanner.ui import plots
+from wwb_scanner.file_handlers import CSVExporter
 
 SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.], 
@@ -134,4 +135,11 @@ def scan_and_plot(**kwargs):
     scanner.spectrum.data_updated.wait()
     plot.build_plot()
     scanner.stop()
+    return scanner
+    
+def scan_and_save(filename, **kwargs):
+    scanner = Scanner(**kwargs)
+    scanner.run_scan()
+    fh = CSVExporter(filename=filename, spectrum=scanner.spectrum)
+    fh.write_file()
     return scanner
