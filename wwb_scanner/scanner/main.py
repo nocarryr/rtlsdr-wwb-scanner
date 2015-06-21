@@ -38,6 +38,7 @@ class Scanner(object):
     @current_freq.setter
     def current_freq(self, value):
         self._current_freq = value
+        print 'scanning %s' % (value)
     @property
     def progress(self):
         return self._progress
@@ -66,6 +67,7 @@ class Scanner(object):
     def scan_freq(self, freq):
         spectrum = self.spectrum
         freqs, powers = sample_processing.read_samples(self, freq)
+        print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             f = hz_to_mhz(f)
             spectrum.add_sample(frequency=f, magnitude=p)
