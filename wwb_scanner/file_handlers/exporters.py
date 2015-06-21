@@ -31,6 +31,9 @@ class BaseExporter(object):
 class CSVExporter(BaseExporter):
     newline_chars = '\r\n'
     delimiter_char = ','
+    def __init__(self, **kwargs):
+        super(CSVExporter, self).__init__(**kwargs)
+        self.frequency_format = kwargs.get('frequency_format')
     def set_filename(self, value):
         if os.path.splitext(value)[1] == '.CSV':
             value = '.'.join([os.path.splitext(value)[0], 'csv'])
@@ -38,10 +41,15 @@ class CSVExporter(BaseExporter):
     def build_data(self):
         newline_chars = self.newline_chars
         delim = self.delimiter_char
+        frequency_format = self.frequency_format
         lines = []
         for sample in self.spectrum.iter_samples():
+            if frequency_format is None:
+                f = sample.formatted_frequency
+            else:
+                f = frequency_format % (sample.frequency)
             lines.append(delim.join([
-                sample.formatted_frequency, 
+                f, 
                 sample.formatted_magnitude
             ]))
         return newline_chars.join(lines)

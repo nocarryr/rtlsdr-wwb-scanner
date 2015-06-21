@@ -145,11 +145,11 @@ def scan_and_plot(**kwargs):
     scanner.stop()
     return scanner
     
-def scan_and_save(filename=None, **kwargs):
+def scan_and_save(filename=None, frequency_format=None, **kwargs):
     scanner = Scanner(**kwargs)
     if filename is None:
         filename = 'scan_%07.3f-%07.3f.csv' % (scanner.scan_range[0], scanner.scan_range[1])
     scanner.run_scan()
-    fh = CSVExporter(filename=filename, spectrum=scanner.spectrum)
+    fh = CSVExporter(filename=filename, frequency_format=frequency_format, spectrum=scanner.spectrum)
     fh.write_file()
     return scanner
