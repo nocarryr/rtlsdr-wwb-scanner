@@ -122,3 +122,16 @@ class WWBLegacyExporter(BaseWWBExporter):
             ET.SubElement(data_set, 'v', text=sample.formatted_magnitude)
         return tree
         
+class WWBExporter(BaseWWBExporter):
+    _extension = 'sdb2'
+    def build_data(self):
+        tree = super(WWBExporter, self).build_data()
+        root = tree.getroot()
+        spectrum = self.spectrum
+        data_sets = root.findall('*/data_sets')
+        freq_set = ET.SubElement(data_sets, 'freq_set')
+        data_set = ET.SubElement(data_sets, 'data_set')
+        for sample in spectrum.iter_samples():
+            ET.SubElement(freq_set, 'f', text=sample.formatted_frequency)
+            ET.SubElement(data_set, 'v', text=sample.formatted_magnitude)
+        return tree
