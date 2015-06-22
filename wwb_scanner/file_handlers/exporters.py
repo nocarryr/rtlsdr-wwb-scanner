@@ -54,30 +54,48 @@ class CSVExporter(BaseExporter):
             ]))
         return newline_chars.join(lines)
         
-class WWBLegacyExporter(BaseExporter):
+class BaseWWBExporter(BaseExporter):
     def set_filename(self, value):
-        if os.path.splitext(value[1]).lower() != '.sbd':
-            value = '.'.join([os.path.splitext(value)[0], 'sbd'])
-        super(WWBLegacyExporter, self).set_filename(value)
+        ext = self._extension
+        if os.path.splitext(value[1]).lower() != '.%s' % (ext):
+            value = '.'.join([os.path.splitext(value)[0], ext])
+        super(BaseWWBExporter, self).set_filename(value)
+        self.dt = kwargs.get('dt', datetime.datetime.utcnow())
+    def build_attribs(self):
+        dt = self.dt
+        d = dict(
+            scan_data_source=dict(
+                ver='0.0.0.1', 
+                id='{%s}' % (uuid.uuid4()), 
+                model='TODO', 
+                name=os.path.abspath(self.filename), 
+                date=dt.strftime('%a %b %d %Y'), 
+                time=dt.strftime('%H:%M:%S'), 
+                color='#00ff00',
+            ), 
+            data_sets=dict(
+                count='1', 
+                no_data_value='-140', 
+            ), 
+        )
+        return d
     def build_data(self):
+        attribs = self.attribs = self.build_attribs()
+        root = self.root = ET.Element('scan_data_source', attribs['scan_data_source'])
+        ET.SubElement(root, 'data_sets', attribs['data_sets'])
+        self.tree = ET.ElementTree(root)
+        return root
+    def write_file(self):
+        tree = self.build_data()
+        tree.write(self.filename, encoding='UTF-8', xml_declaration=True)
+    
+class WWBLegacyExporter(BaseWWBExporter):
+    _extension = 'sbd'
+    def build_attribs(self):
+        d = super(WWBLegacyExporter, self).build_attribs()
         spectrum = self.spectrum
-        now = datetime.datetime.utcnow()
-        attribs = dict(
-            ver='0.0.0.1', 
-            id='{%s}' % (uuid.uuid4()), 
-            model='TODO', 
-            name='Rtlsdr WWB Scanner', 
-            date=now.strftime('%a %b %d %Y'), 
-            time=now.strftime('%H:%M:%S'), 
-            color='#00ff00',
-        )
-        root = ET.Element('scan_data_source', attribs)
-        attribs = dict(
-            count='1', 
-            no_data_value='-140', 
-        )
-        data_sets = ET.SubElement(root, 'data_sets', attribs)
-        attribs = dict(
+        dt = self.dt
+        d['data_set'] = dict(
             index='0', 
             freq_units='KHz', 
             ampl_units='dBm', 
@@ -86,16 +104,19 @@ class WWBLegacyExporter(BaseExporter):
             step_freq=spectrum.step_size, 
             res_bandwidth='TODO', 
             scale_factor='1', 
-            date=root.get('date'), 
-            time=root.get('time'), 
-            date_time=str(int((now - EPOCH).total_seconds())), 
+            date=d['scan_data_source']['date'], 
+            time=d['scan_data_source']['time'], 
+            date_time=str(int((dt - EPOCH).total_seconds())), 
         )
-        data_set = ET.SubElement(data_sets, 'data_set', attribs)
+        return d
+    def build_data(self):
+        tree = super(WWBLegacyExporter, self).build_data()
+        root = tree.getroot()
+        spectrum = self.spectrum
+        attribs = self.attribs
+        data_sets = root.findall('*/data_sets')
+        data_set = ET.SubElement(data_sets, 'data_set', attribs['data_set'])
         for sample in spectrum.iter_samples():
             ET.SubElement(data_set, text=sample.formatted_magnitude)
-        tree = self.tree = ET.ElementTree(root)
         return tree
-    def write_file(self):
-        tree = self.build_data()
-        tree.write(self.filename, encoding='UTF-8', xml_declaration=True)
         
