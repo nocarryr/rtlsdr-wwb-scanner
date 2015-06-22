@@ -9,6 +9,9 @@ class BaseExporter(object):
     def __init__(self, **kwargs):
         self.spectrum = kwargs.get('spectrum')
         self.filename = kwargs.get('filename')
+    def __call__(self):
+        self.build_data()
+        self.write_file()
     @property
     def filename(self):
         return getattr(self, '_filename', None)
