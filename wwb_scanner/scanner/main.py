@@ -79,12 +79,11 @@ class Scanner(object):
             self.progress = step / num_steps
     def scan_freq(self, freq):
         spectrum = self.spectrum
-        t = sample_processing.read_samples(self, freq)
+        sample_set = sample_processing.SampleSet(self, freq)
         if self.save_raw_values:
-            freqs, powers, raw = t
-            self.raw_values[freq] = [freqs, powers]
-        else:
-            freqs, powers = t
+            self.raw_values[freq] = sample_set
+        freqs = sample_set.frequencies
+        powers = sample_set.powers
         print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             f = hz_to_mhz(f)
