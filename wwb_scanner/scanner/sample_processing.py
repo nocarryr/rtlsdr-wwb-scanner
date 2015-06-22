@@ -30,6 +30,7 @@ class SampleSet(object):
         f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length, scaling='spectrum')
         f = np.fft.fftshift(f)
         f += freq
+        f /= 1e6
         self.frequencies = f
         self.raw = powers
         self.powers = 20. * np.log10(powers)

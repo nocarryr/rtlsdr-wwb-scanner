@@ -86,7 +86,6 @@ class Scanner(object):
         powers = sample_set.powers
         print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
-            f = hz_to_mhz(f)
             spectrum.add_sample(frequency=f, magnitude=p)
         
 class ThreadedScanner(threading.Thread, Scanner):
