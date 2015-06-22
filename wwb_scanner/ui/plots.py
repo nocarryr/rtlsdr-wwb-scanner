@@ -60,7 +60,7 @@ class BasePlot(object):
 class Spectrum(BasePlot):
     def build_plot(self):
         self.figure = plt.figure()
-        self.plot = plt.plot(self.build_data())[0]
+        self.plot = plt.plot(*self.build_data())[0]
         plt.xlabel('frequency (MHz)')
         plt.ylabel('dBm')
         plt.show()
