@@ -1,3 +1,6 @@
+import xml.etree.ElementTree as ET
+import itertools
+
 from wwb_scanner.scan_objects import Spectrum
 
 class BaseImporter(object):
@@ -25,4 +28,20 @@ class CSVImporter(BaseImporter):
                 continue
             f, v = line.split(',')
             spectrum.add_sample(frequency=float(f), magnitude=float(v))
-            
+        
+class BaseWWBImporter(BaseImporter):
+    def load_file(self):
+        return ET.parse(self.filename)
+        
+class WWBImporter(BaseWWBImporter):
+    _extension = 'sdb2'
+    def parse_file_data(self):
+        spectrum = self.spectrum
+        root = self.file_data.getroot()
+        freq_set = root.find('*/freq_set')
+        data_set = root.find('*/data_set')
+        for ftag, vtag in itertools.izip(freq_set.iter('f'), data_set.iter('v')):
+            f = float(ftag.text) / 1000
+            v = float(vtag.text)
+            spectrum.add_sample(frequency=f, magnitude=v)
+        
