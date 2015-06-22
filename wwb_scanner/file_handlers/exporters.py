@@ -55,12 +55,14 @@ class CSVExporter(BaseExporter):
         return newline_chars.join(lines)
         
 class BaseWWBExporter(BaseExporter):
+    def __init__(self, **kwargs):
+        super(BaseWWBExporter, self).__init__(**kwargs)
+        self.dt = kwargs.get('dt', datetime.datetime.utcnow())
     def set_filename(self, value):
         ext = self._extension
         if os.path.splitext(value[1]).lower() != '.%s' % (ext):
             value = '.'.join([os.path.splitext(value)[0], ext])
         super(BaseWWBExporter, self).set_filename(value)
-        self.dt = kwargs.get('dt', datetime.datetime.utcnow())
     def build_attribs(self):
         dt = self.dt
         d = dict(
