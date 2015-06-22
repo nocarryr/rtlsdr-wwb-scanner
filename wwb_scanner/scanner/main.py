@@ -131,7 +131,7 @@ class ThreadedScanner(threading.Thread, Scanner):
     def scan_freq(self, freq):
         if self.stopping.is_set():
             return False
-        super(ThreadedScanner, self).scan_freq(freq)
+        return super(ThreadedScanner, self).scan_freq(freq)
     def stop(self):
         self.stopping.set()
         self.waiting.set()
