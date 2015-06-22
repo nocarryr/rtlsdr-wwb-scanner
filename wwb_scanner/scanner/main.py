@@ -63,6 +63,9 @@ class Scanner(object):
         self.on_progress(value)
     def on_progress(self, value):
         print '%s%%' % (int(value * 100))
+    def calc_next_center_freq(self, sample_set):
+        f = sample_set.frequencies
+        return f.max() + (f.max() - f.min())
     def run_scan(self):
         freq, end_freq = self.scan_range
         step_size = self.step_size
@@ -71,10 +74,10 @@ class Scanner(object):
         step = 0
         while freq < end_freq:
             self.current_freq = freq
-            r = self.scan_freq(mhz_to_hz(freq))
-            if r is False:
+            sample_set = self.scan_freq(mhz_to_hz(freq))
+            if sample_set is False:
                 break
-            freq += step_size
+            freq = self.calc_next_center_freq(sample_set)
             step += 1
             self.progress = step / num_steps
     def scan_freq(self, freq):
@@ -87,6 +90,7 @@ class Scanner(object):
         print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             spectrum.add_sample(frequency=f, magnitude=p)
+        return sample_set
         
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
