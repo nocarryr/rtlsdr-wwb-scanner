@@ -131,7 +131,8 @@ class WWBLegacyExporter(BaseWWBExporter):
         data_sets = root.find('data_sets')
         data_set = ET.SubElement(data_sets, 'data_set', attribs['data_set'])
         for sample in spectrum.iter_samples():
-            ET.SubElement(data_set, 'v', text=sample.formatted_magnitude)
+            v = ET.SubElement(data_set, 'v')
+            v.text = sample.formatted_magnitude
         return tree
         
 class WWBExporter(BaseWWBExporter):
@@ -144,6 +145,8 @@ class WWBExporter(BaseWWBExporter):
         freq_set = ET.SubElement(data_sets, 'freq_set')
         data_set = ET.SubElement(data_sets, 'data_set')
         for sample in spectrum.iter_samples():
-            ET.SubElement(freq_set, 'f', text=sample.formatted_frequency)
-            ET.SubElement(data_set, 'v', text=sample.formatted_magnitude)
+            f = ET.SubElement(freq_set, 'f')
+            f.text = sample.formatted_frequency
+            v = ET.SubElement(data_set, 'v')
+            v.text = sample.formatted_magnitude
         return tree
