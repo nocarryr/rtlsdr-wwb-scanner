@@ -70,6 +70,9 @@ class Scanner(object):
     @current_freq.setter
     def current_freq(self, value):
         self._current_freq = value
+        if value is not None:
+            f_min, f_max = self.scan_range
+            self.progress = (value - f_min) / (f_max - f_min)
         self.on_current_freq(value)
     def on_current_freq(self, value):
         print 'scanning %s' % (value)
@@ -78,7 +81,6 @@ class Scanner(object):
         return self._progress
     @progress.setter
     def progress(self, value):
-        value = round(value, 1)
         if value == self._progress:
             return
         self._progress = value
@@ -90,18 +92,12 @@ class Scanner(object):
         return f.max() + (f.max() - f.min())
     def run_scan(self):
         freq, end_freq = self.scan_range
-        step_size = self.step_size
-        num_steps = (end_freq - freq) / step_size
-        print 'num_steps=%s' % (num_steps)
-        step = 0
         while freq < end_freq:
             self.current_freq = freq
             sample_set = self.scan_freq(mhz_to_hz(freq))
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
-            step += 1
-            self.progress = step / num_steps
     def scan_freq(self, freq):
         spectrum = self.spectrum
         sample_set = sample_processing.SampleSet(self, freq)
