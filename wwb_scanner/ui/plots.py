@@ -64,3 +64,24 @@ class Spectrum(BasePlot):
         plt.xlabel('frequency (MHz)')
         plt.ylabel('dBm')
         plt.show()
+    
+class DiffSpectrum(object):
+    def __init__(self, **kwargs):
+        self.spectra = []
+        self.figure, self.axes = plt.subplots(3, 1, sharex='col')
+    def add_spectrum(self, spectrum, **kwargs):
+        name = kwargs.get('name')
+        if name is None:
+            name = str(len(self.spectra))
+        self.spectra.append({'name':name, 'spectrum':spectrum})
+    def build_plots(self):
+        dtype = np.dtype(float)
+        for i, spec_data in enumerate(self.spectra):
+            spectrum = spec_data['spectrum']
+            x = np.fromiter(spectrum.iter_frequencies(), dtype)
+            y = np.fromiter((s.magnitude for s in spectrum.iter_samples()), dtype)
+            axes = self.axes[i]
+            axes.plot(x, y)
+            axes.set_title(spec_data['name'])
+        plt.show()
+    

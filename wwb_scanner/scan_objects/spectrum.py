@@ -55,3 +55,13 @@ class Spectrum(object):
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d
+
+def compare_spectra(spec1, spec2):
+    diff_spec = Spectrum()
+    for sample in spec1.iter_samples():
+        other_sample = spec2.samples.get(sample.frequency)
+        if other_sample is None:
+            continue
+        magnitude = sample.magnitude - other_sample.magnitude
+        diff_spec.add_sample(frequency=sample.frequency, magnitude=magnitude)
+    return diff_spec
