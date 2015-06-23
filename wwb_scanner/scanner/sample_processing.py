@@ -14,8 +14,8 @@ def calc_num_samples(sample_rate):
     return next_2_to_pow(int(sample_rate * .25))
     
 class SampleSet(object):
-    __slots = ('scanner', 'center_frequency', 'samples', 
-               'raw', 'frequencies', 'powers')
+    __slots__ = ('scanner', 'center_frequency', 'samples', 
+                 'raw', 'frequencies', 'powers')
     def __init__(self, scanner, center_frequency):
         self.scanner = scanner
         self.center_frequency = center_frequency
