@@ -119,7 +119,7 @@ class WWBLegacyExporter(BaseWWBExporter):
         root = tree.getroot()
         spectrum = self.spectrum
         attribs = self.attribs
-        data_sets = root.findall('*/data_sets')
+        data_sets = root.find('data_sets')
         data_set = ET.SubElement(data_sets, 'data_set', attribs['data_set'])
         for sample in spectrum.iter_samples():
             ET.SubElement(data_set, 'v', text=sample.formatted_magnitude)
@@ -131,7 +131,7 @@ class WWBExporter(BaseWWBExporter):
         tree = super(WWBExporter, self).build_data()
         root = tree.getroot()
         spectrum = self.spectrum
-        data_sets = root.findall('*/data_sets')
+        data_sets = root.find('data_sets')
         freq_set = ET.SubElement(data_sets, 'freq_set')
         data_set = ET.SubElement(data_sets, 'data_set')
         for sample in spectrum.iter_samples():
