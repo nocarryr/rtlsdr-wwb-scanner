@@ -1,3 +1,4 @@
+import json
 import numpy as np
 from scipy.signal import welch
 
@@ -16,10 +17,22 @@ def calc_num_samples(sample_rate):
 class SampleSet(object):
     __slots__ = ('scanner', 'center_frequency', 'samples', 
                  'raw', 'frequencies', 'powers')
-    def __init__(self, scanner, center_frequency):
+    def __init__(self, scanner, center_frequency, **kwargs):
         self.scanner = scanner
         self.center_frequency = center_frequency
-        self.read_samples()
+        if not kwargs.get('from_json'):
+            self.read_samples()
+    @classmethod
+    def from_json(cls, scanner, data):
+        if isinstance(data, basestring):
+            data = json.loads(data)
+        obj = cls(scanner, data['center_frequency'], from_json=True)
+        np_keys = ['samples', 'frequencies', 'raw', 'powers']
+        for key, val in data.items():
+            if key in np_keys:
+                val = np.array(val)
+            setattr(obj, key, val)
+        return obj
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency

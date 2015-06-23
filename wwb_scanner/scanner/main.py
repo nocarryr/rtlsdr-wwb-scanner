@@ -36,13 +36,30 @@ class Scanner(object):
             if key in kwargs:
                 val = kwargs.get(key)
             setattr(self, key, val)
-        self.spectrum = Spectrum(step_size=self.step_size)
+        if 'spectrum' in kwargs:
+            self.spectrum = Spectrum.from_json(kwargs['spectrum'])
+        else:
+            self.spectrum = Spectrum(step_size=self.step_size)
         self.sdr = RtlSdr()
         self.sdr.sample_rate = self.sample_rate
-        self.samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
-        self.sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size))
+        samples_per_scan = kwargs.get('samples_per_scan')
+        if samples_per_scan is None:
+            samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
+        sample_segment_length = kwargs.get('sample_segment_length')
+        if sample_segment_length is None:
+            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size))
+        self.samples_per_scan = samples_per_scan
+        self.sample_segment_length = sample_segment_length
         if self.save_raw_values:
             self.raw_values = {}
+            if 'raw_values' in kwargs:
+                for key, val in kwargs['raw_values'].items():
+                    self.raw_values[key] = sample_processing.SampleSet.from_json(self, val)
+    @classmethod
+    def from_json(cls, data):
+        if isinstance(data, basestring):
+            data = json.loads(data)
+        return cls(**data)
     def to_json(self, **kwargs):
         d = self._serialize()
         return json.dumps(d, **kwargs)

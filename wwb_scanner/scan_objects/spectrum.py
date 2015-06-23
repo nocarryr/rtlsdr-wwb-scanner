@@ -15,6 +15,11 @@ class Spectrum(object):
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
+    @classmethod
+    def from_json(cls, data):
+        if isinstance(data, basestring):
+            data = json.loads(data)
+        return cls(**data)
     def to_json(self, **kwargs):
         d = self._serialize()
         return json.dumps(d, **kwargs)
