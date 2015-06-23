@@ -70,6 +70,7 @@ class BaseWWBExporter(BaseExporter):
         super(BaseWWBExporter, self).set_filename(value)
     def build_attribs(self):
         dt = self.dt
+        spectrum = self.spectrum
         d = dict(
             scan_data_source=dict(
                 ver='0.0.0.1', 
@@ -84,6 +85,19 @@ class BaseWWBExporter(BaseExporter):
                 count='1', 
                 no_data_value='-140', 
             ), 
+        )
+        d['data_set'] = dict(
+            index='0', 
+            freq_units='KHz', 
+            ampl_units='dBm', 
+            start_freq=str(min(spectrum.samples.keys()) * 1000), 
+            stop_freq=str(max(spectrum.samples.keys()) * 1000), 
+            step_freq=str(spectrum.step_size * 1000), 
+            res_bandwidth='TODO', 
+            scale_factor='1', 
+            date=d['scan_data_source']['date'], 
+            time=d['scan_data_source']['time'], 
+            date_time=str(int((dt - EPOCH).total_seconds())), 
         )
         return d
     def build_data(self):
@@ -105,24 +119,6 @@ class BaseWWBExporter(BaseExporter):
     
 class WWBLegacyExporter(BaseWWBExporter):
     _extension = 'sbd'
-    def build_attribs(self):
-        d = super(WWBLegacyExporter, self).build_attribs()
-        spectrum = self.spectrum
-        dt = self.dt
-        d['data_set'] = dict(
-            index='0', 
-            freq_units='KHz', 
-            ampl_units='dBm', 
-            start_freq=min(spectrum.samples.keys()), 
-            stop_freq=max(spectrum.samples.keys()), 
-            step_freq=spectrum.step_size, 
-            res_bandwidth='TODO', 
-            scale_factor='1', 
-            date=d['scan_data_source']['date'], 
-            time=d['scan_data_source']['time'], 
-            date_time=str(int((dt - EPOCH).total_seconds())), 
-        )
-        return d
     def build_data(self):
         tree = super(WWBLegacyExporter, self).build_data()
         root = tree.getroot()
@@ -143,10 +139,10 @@ class WWBExporter(BaseWWBExporter):
         spectrum = self.spectrum
         data_sets = root.find('data_sets')
         freq_set = ET.SubElement(data_sets, 'freq_set')
-        data_set = ET.SubElement(data_sets, 'data_set')
+        data_set = ET.SubElement(data_sets, 'data_set', self.attribs['data_set'])
         for sample in spectrum.iter_samples():
             f = ET.SubElement(freq_set, 'f')
-            f.text = sample.formatted_frequency
+            f.text = str(int(sample.frequency * 1000))
             v = ET.SubElement(data_set, 'v')
             v.text = sample.formatted_magnitude
         return tree
