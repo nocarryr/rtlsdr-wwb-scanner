@@ -63,7 +63,7 @@ class BaseWWBExporter(BaseExporter):
         self.dt = kwargs.get('dt', datetime.datetime.utcnow())
     def set_filename(self, value):
         ext = self._extension
-        if os.path.splitext(value[1]).lower() != '.%s' % (ext):
+        if os.path.splitext(value)[1].lower() != '.%s' % (ext):
             value = '.'.join([os.path.splitext(value)[0], ext])
         super(BaseWWBExporter, self).set_filename(value)
     def build_attribs(self):
