@@ -88,8 +88,8 @@ class BaseWWBExporter(BaseExporter):
         attribs = self.attribs = self.build_attribs()
         root = self.root = ET.Element('scan_data_source', attribs['scan_data_source'])
         ET.SubElement(root, 'data_sets', attribs['data_sets'])
-        self.tree = ET.ElementTree(root)
-        return root
+        tree = self.tree = ET.ElementTree(root)
+        return tree
     def write_file(self):
         tree = self.build_data()
         tree.write(self.filename, encoding='UTF-8', xml_declaration=True)
