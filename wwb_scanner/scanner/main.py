@@ -13,7 +13,8 @@ SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.], 
     step_size=.025, 
     sample_rate=2e6,  
-    save_raw_values=False
+    save_raw_values=False, 
+    gain=30., 
 )
 
 def mhz_to_hz(mhz):
@@ -43,6 +44,8 @@ class Scanner(object):
             self.spectrum = Spectrum(step_size=self.step_size)
         self.sdr = RtlSdr()
         self.sdr.sample_rate = self.sample_rate
+        if self.gain != 'AUTO':
+            self.sdr.gain = self.gain
         samples_per_scan = kwargs.get('samples_per_scan')
         if samples_per_scan is None:
             samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
