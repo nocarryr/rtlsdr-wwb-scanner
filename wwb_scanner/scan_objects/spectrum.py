@@ -10,8 +10,11 @@ class Spectrum(object):
         self.samples = {}
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):
-            for frequency, magnitude in samples.items():
-                self.add_sample(frequency=frequency, magnitude=magnitude)
+            for key, data in samples.items():
+                if isinstance(data, dict):
+                    self.add_sample(**data)
+                else:
+                    self.add_sample(frequency=key, magnitude=data)
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
