@@ -1,4 +1,5 @@
 import threading
+import json
 
 from rtlsdr import RtlSdr
 
@@ -42,6 +43,9 @@ class Scanner(object):
         self.sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size))
         if self.save_raw_values:
             self.raw_values = {}
+    def to_json(self, **kwargs):
+        d = self._serialize()
+        return json.dumps(d, **kwargs)
     @property
     def current_freq(self):
         return self._current_freq
@@ -91,6 +95,17 @@ class Scanner(object):
         for f, p in zip(freqs, powers):
             spectrum.add_sample(frequency=f, magnitude=p)
         return sample_set
+    def _serialize(self):
+        keys = ['samples_per_scan', 'sample_segment_length']
+        keys.extend(SCANNER_DEFAULTS.keys())
+        d = {k: getattr(self, k) for k in keys}
+        if self.save_raw_values:
+            raw_values = self.raw_values
+            d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
+        d['spectrum'] = self.spectrum._serialize()
+        return d
+        
+        
         
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):

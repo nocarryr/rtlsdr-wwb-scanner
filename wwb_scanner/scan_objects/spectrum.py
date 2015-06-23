@@ -1,4 +1,5 @@
 import threading
+import json
 from wwb_scanner.scan_objects import Sample
 
 class Spectrum(object):
@@ -14,6 +15,9 @@ class Spectrum(object):
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
+    def to_json(self, **kwargs):
+        d = self._serialize()
+        return json.dumps(d, **kwargs)
     def add_sample(self, **kwargs):
         if kwargs.get('frequency') in self.samples:
             sample = self.samples[kwargs['frequency']]
@@ -38,3 +42,8 @@ class Spectrum(object):
     def set_data_updated(self):
         with self.data_update_lock:
             self.data_updated.set()
+    def _serialize(self):
+        d = {'step_size':self.step_size}
+        samples = self.samples
+        d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
+        return d

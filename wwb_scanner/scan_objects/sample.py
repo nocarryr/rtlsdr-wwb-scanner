@@ -38,6 +38,9 @@ class Sample(object):
     @property
     def formatted_magnitude(self):
         return '%03.1f' % (self.magnitude)
+    def _serialize(self):
+        keys = ['frequency', 'magnitude']
+        return {k: getattr(self, k) for k in keys}
     def __repr__(self):
         return str(self)
     def __str__(self):
