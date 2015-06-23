@@ -1,7 +1,9 @@
 import os
 import datetime
 import uuid
+from StringIO import StringIO
 import xml.etree.ElementTree as ET
+import xml.dom.minidom as minidom
 
 EPOCH = datetime.datetime(1970, 1, 1)
 
@@ -92,7 +94,14 @@ class BaseWWBExporter(BaseExporter):
         return tree
     def write_file(self):
         tree = self.build_data()
-        tree.write(self.filename, encoding='UTF-8', xml_declaration=True)
+        fd = StringIO()
+        tree.write(fd, encoding='UTF-8', xml_declaration=True)
+        doc = minidom.parseString(fd.getvalue())
+        fd.close()
+        s = doc.toprettyxml(encoding='UTF-8')
+        with open(self.filename, 'w') as f:
+            f.write(s)
+        
     
 class WWBLegacyExporter(BaseWWBExporter):
     _extension = 'sbd'
