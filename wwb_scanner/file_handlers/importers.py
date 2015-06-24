@@ -1,3 +1,4 @@
+import os.path
 import xml.etree.ElementTree as ET
 import itertools
 
@@ -7,6 +8,20 @@ class BaseImporter(object):
     def __init__(self, **kwargs):
         self.spectrum = Spectrum()
         self.filename = kwargs.get('filename')
+    @classmethod
+    def import_file(cls, filename):
+        ext = os.path.splitext(filename)[1].strip('.').lower()
+        def find_importer(_cls):
+            if getattr(_cls, '_extension', None) == ext:
+                return _cls
+            for _subcls in _cls.__subclasses__():
+                r = find_importer(_subcls)
+                if r is not None:
+                    return r
+            return None
+        cls = find_importer(BaseImporter)
+        fh = cls(filename=filename)
+        return fh()
     def __call__(self):
         self.file_data = self.load_file()
         self.parse_file_data()
@@ -20,6 +35,7 @@ class BaseImporter(object):
     
 class CSVImporter(BaseImporter):
     delimiter_char = ','
+    _extension = 'csv'
     def parse_file_data(self):
         spectrum = self.spectrum
         for line in self.file_data.splitlines():
