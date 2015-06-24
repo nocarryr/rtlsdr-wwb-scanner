@@ -28,6 +28,8 @@
     <Source>wwb_scanner/file_handlers/importers.py</Source>
     <Source>wwb_scanner/ui/mainwindow.py</Source>
     <Source>wwb_scanner/ui/menubar.py</Source>
+    <Source>wwb_scanner/ui/graph_panel.py</Source>
+    <Source>wwb_scanner/ui/scan_panel.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
