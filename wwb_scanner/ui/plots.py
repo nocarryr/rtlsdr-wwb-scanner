@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+from wwb_scanner.scan_objects.spectrum import compare_spectra
+
 class BasePlot(object):
     def __init__(self, **kwargs):
         self.spectrum = kwargs.get('spectrum')
@@ -76,6 +78,10 @@ class DiffSpectrum(object):
         self.spectra.append({'name':name, 'spectrum':spectrum})
     def build_plots(self):
         dtype = np.dtype(float)
+        if len(self.spectra) == 2:
+            diff_spec = compare_spectra(self.spectra[0]['spectrum'], 
+                                        self.spectra[1]['spectrum'])
+            self.spectra.append({'name':'diff', 'spectrum':diff_spec})
         for i, spec_data in enumerate(self.spectra):
             spectrum = spec_data['spectrum']
             x = np.fromiter(spectrum.iter_frequencies(), dtype)
