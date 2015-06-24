@@ -29,7 +29,6 @@ class Spectrum(object):
     def add_sample(self, **kwargs):
         if kwargs.get('frequency') in self.samples:
             sample = self.samples[kwargs['frequency']]
-            sample.magnitude = kwargs.get('magnitude')
             return sample
         kwargs.setdefault('spectrum', self)
         sample = Sample(**kwargs)
