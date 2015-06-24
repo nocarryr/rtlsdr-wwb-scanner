@@ -38,15 +38,14 @@ class SampleSet(object):
         freq = self.center_frequency
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
-        samples = sdr.read_samples(scanner.samples_per_scan)
-        self.samples = np.absolute(samples)
-        f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length, scaling='spectrum')
+        samples = self.samples = sdr.read_samples(scanner.samples_per_scan)
+        f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length)#, scaling='spectrum')
         f = np.fft.fftshift(f)
         f += freq
         f /= 1e6
         self.frequencies = f
         self.raw = powers
-        self.powers = 20. * np.log10(powers)
+        self.powers = 10. * np.log10(powers)
     def _serialize(self):
         d = {}
         for key in self.__slots__:

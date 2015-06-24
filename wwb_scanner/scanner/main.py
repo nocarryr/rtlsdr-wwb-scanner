@@ -14,7 +14,7 @@ SCANNER_DEFAULTS = dict(
     step_size=.025, 
     sample_rate=2e6,  
     save_raw_values=False, 
-    gain=30., 
+    gain=40., 
 )
 
 def mhz_to_hz(mhz):
@@ -51,7 +51,7 @@ class Scanner(object):
             samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
         sample_segment_length = kwargs.get('sample_segment_length')
         if sample_segment_length is None:
-            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size))
+            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
         self.samples_per_scan = samples_per_scan
         self.sample_segment_length = sample_segment_length
         if self.save_raw_values:
@@ -92,7 +92,7 @@ class Scanner(object):
         print '%s%%' % (int(value * 100))
     def calc_next_center_freq(self, sample_set):
         f = sample_set.frequencies
-        return f.max() + (f.max() - f.min())
+        return f.max() - self.step_size
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
@@ -186,7 +186,7 @@ def scan_and_save(filename=None, frequency_format=None, **kwargs):
     if os.path.splitext(filename)[1].lower() not in ['.csv', '.sdb', '.sdb2']:
         filename = '.'.join([filename, 'sdb2'])
     scanner.run_scan()
-    if os.path.splitext(filename)[1].lower() == 'csv':
+    if os.path.splitext(filename)[1].lower() == '.csv':
         cls = CSVExporter
     else:
         cls = WWBExporter
