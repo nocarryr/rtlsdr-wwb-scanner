@@ -2,10 +2,15 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from wwb_scanner.scan_objects.spectrum import compare_spectra
+from wwb_scanner.file_handlers import BaseImporter
 
 class BasePlot(object):
     def __init__(self, **kwargs):
-        self.spectrum = kwargs.get('spectrum')
+        self.filename = kwargs.get('filename')
+        if self.filename is not None:
+            self.spectrum = BaseImporter.import_file(self.filename)
+        else:
+            self.spectrum = kwargs.get('spectrum')
         
         #self.figure.canvas.mpl_connect('idle_event', self.on_idle)
         
@@ -71,10 +76,12 @@ class DiffSpectrum(object):
     def __init__(self, **kwargs):
         self.spectra = []
         self.figure, self.axes = plt.subplots(3, 1, sharex='col')
-    def add_spectrum(self, spectrum, **kwargs):
+    def add_spectrum(self, spectrum=None, **kwargs):
         name = kwargs.get('name')
         if name is None:
             name = str(len(self.spectra))
+        if spectrum is None:
+            spectrum = BaseImporter.import_file(kwargs.get('filename'))
         self.spectra.append({'name':name, 'spectrum':spectrum})
     def build_plots(self):
         dtype = np.dtype(float)
