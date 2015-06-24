@@ -59,7 +59,7 @@ class BasePlot(object):
     def build_plot(self):
         pass
     
-class Spectrum(BasePlot):
+class SpectrumPlot(BasePlot):
     def build_plot(self):
         self.figure = plt.figure()
         self.plot = plt.plot(*self.build_data())[0]

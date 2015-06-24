@@ -171,7 +171,7 @@ class ThreadedScanner(threading.Thread, Scanner):
         
 def scan_and_plot(**kwargs):
     scanner = ThreadedScanner(**kwargs)
-    plot = plots.Spectrum(spectrum=scanner.spectrum)
+    plot = plots.SpectrumPlot(spectrum=scanner.spectrum)
     scanner.plot = plot
     scanner.start()
     scanner.spectrum.data_updated.wait()
