@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from scipy.signal import welch
+from scipy.signal import welch, find_peaks_cwt
 
 def next_2_to_pow(val):
     val -= 1
@@ -16,11 +16,13 @@ def calc_num_samples(sample_rate):
     
 class SampleSet(object):
     __slots__ = ('scanner', 'center_frequency', 'samples', 
-                 'raw', 'frequencies', 'powers')
-    def __init__(self, scanner, center_frequency, **kwargs):
-        self.scanner = scanner
-        self.center_frequency = center_frequency
-        if not kwargs.get('from_json'):
+                 'raw', 'frequencies', 'powers', 'collection')
+    def __init__(self, **kwargs):
+        for key in self.__slots__:
+            setattr(self, key, kwargs.get(key))
+        if self.scanner is None and self.collection is not None:
+            self.scanner = self.collection.scanner
+        if 'from_json' in kwargs or self.raw is None:
             self.read_samples()
     @classmethod
     def from_json(cls, scanner, data):
@@ -44,8 +46,9 @@ class SampleSet(object):
         f += freq
         f /= 1e6
         self.frequencies = f
-        self.raw = powers
+        self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
+    
     def _serialize(self):
         d = {}
         for key in self.__slots__:
@@ -56,4 +59,50 @@ class SampleSet(object):
                 val = val.tolist()
             d[key] = val
         return d
+        
+class SampleCollection(object):
+    def __init__(self, **kwargs):
+        self.scanner = kwargs.get('scanner')
+        self.sample_sets = {}
+    def add_sample_set(self, sample_set):
+        self.sample_sets[sample_set.center_frequency] = sample_set
+    def scan_freq(self, freq):
+        sample_set = SampleSet(collection=self, center_frequency=freq)
+        self.add_sample_set(sample_set)
+        return sample_set
+    def iter_frequencies(self):
+        return sorted(self.sample_sets.keys())
+    def iter_sample_sets(self):
+        sample_sets = self.sample_sets
+        for key in self.iter_frequencies():
+            yield sample_sets[key]
+    def combine_samples(self):
+        f = None
+        for sample_set in self.iter_sample_sets():
+            if f is None:
+                f = sample_set.frequencies.copy()
+                r = sample_set.raw.copy()
+            else:
+                f = np.hstack(sample_set.frequencies)
+                r = np.hstack(sample_set.raw)
+        sort_indecies = np.argsort(f)
+        f.partition(sort_indecies)
+        r.partition(sort_indecies)
+        self.frequencies = f
+        self.raw = r
+    def convert_powers(self):
+        self.powers = 10. * np.log10(self.raw)
+    def smooth_peaks(self):
+        f = self.frequencies
+        p = self.powers
+        width = np.arange(1, int(len(self.sample_sets.values()[0].raw) / 4.))
+        peakind = find_peaks_cwt(p, width)
+        f = np.delete(f, peakind)
+        p = np.delete(p, peakind)
+        self.frequencies = f
+        self.powers = p
+    def finalize(self):
+        self.combine_samples()
+        self.convert_powers()
+        #self.smooth_peaks()
         

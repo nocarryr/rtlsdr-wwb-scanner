@@ -54,6 +54,7 @@ class Scanner(object):
             sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
         self.samples_per_scan = samples_per_scan
         self.sample_segment_length = sample_segment_length
+        self.sample_collection = sample_processing.SampleCollection(scanner=self)
         if self.save_raw_values:
             self.raw_values = {}
             if 'raw_values' in kwargs:
@@ -101,16 +102,17 @@ class Scanner(object):
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
-    def scan_freq(self, freq):
+        self.finalize_scan()
+    def finalize_scan(self):
+        self.sample_collection.finalize()
         spectrum = self.spectrum
-        sample_set = sample_processing.SampleSet(self, freq)
-        if self.save_raw_values:
-            self.raw_values[freq] = sample_set
-        freqs = sample_set.frequencies
-        powers = sample_set.powers
-        print 'adding %s samples to spectrum: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
-        for f, p in zip(freqs, powers):
+        c = self.sample_collection
+        for f, p in zip(c.frequencies, c.powers):
             spectrum.add_sample(frequency=f, magnitude=p)
+    def scan_freq(self, freq):
+        sample_set = self.sample_collection.scan_freq(freq)
+        freqs = sample_set.frequencies
+        print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         return sample_set
     def _serialize(self):
         keys = ['samples_per_scan', 'sample_segment_length']
