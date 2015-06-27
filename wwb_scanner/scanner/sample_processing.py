@@ -10,12 +10,12 @@ def next_2_to_pow(val):
     val |= val >> 8
     val |= val >> 16
     return val + 1
-    
+
 def calc_num_samples(sample_rate):
     return next_2_to_pow(int(sample_rate * .25))
-    
+
 class SampleSet(object):
-    __slots__ = ('scanner', 'center_frequency', 'samples', 
+    __slots__ = ('scanner', 'center_frequency', 'samples',
                  'raw', 'frequencies', 'powers', 'collection')
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -48,7 +48,7 @@ class SampleSet(object):
         self.frequencies = f
         self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
-    
+
     def _serialize(self):
         d = {}
         for key in self.__slots__:
@@ -59,7 +59,7 @@ class SampleSet(object):
                 val = val.tolist()
             d[key] = val
         return d
-        
+
 class SampleCollection(object):
     def __init__(self, **kwargs):
         self.scanner = kwargs.get('scanner')
@@ -83,8 +83,8 @@ class SampleCollection(object):
                 f = sample_set.frequencies.copy()
                 r = sample_set.raw.copy()
             else:
-                f = np.hstack(sample_set.frequencies)
-                r = np.hstack(sample_set.raw)
+                f = np.hstack((f, sample_set.frequencies))
+                r = np.hstack((r, sample_set.raw))
         sort_indecies = np.argsort(f)
         f.partition(sort_indecies)
         r.partition(sort_indecies)
@@ -105,4 +105,3 @@ class SampleCollection(object):
         self.combine_samples()
         self.convert_powers()
         #self.smooth_peaks()
-        
