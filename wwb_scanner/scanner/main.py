@@ -10,21 +10,21 @@ from wwb_scanner.ui import plots
 from wwb_scanner.file_handlers import CSVExporter, WWBExporter
 
 SCANNER_DEFAULTS = dict(
-    scan_range=[400., 900.], 
-    step_size=.025, 
-    sample_rate=2e6,  
-    save_raw_values=False, 
-    gain=40., 
+    scan_range=[400., 900.],
+    step_size=.025,
+    sample_rate=2e6,
+    save_raw_values=False,
+    gain=40.,
 )
 
 def mhz_to_hz(mhz):
     return mhz * 1000000.0
 def hz_to_mhz(hz):
     return hz / 1000000.0
-    
+
 class StopScanner(Exception):
     pass
-    
+
 class Scanner(object):
     '''
         params:
@@ -121,9 +121,9 @@ class Scanner(object):
             d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
         d['spectrum'] = self.spectrum._serialize()
         return d
-        
-        
-        
+
+
+
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
         threading.Thread.__init__(self)
@@ -168,17 +168,14 @@ class ThreadedScanner(threading.Thread, Scanner):
         self.stopping.set()
         self.waiting.set()
         self.stopped.wait()
-        
+
 def scan_and_plot(**kwargs):
-    scanner = ThreadedScanner(**kwargs)
+    scanner = Scanner(**kwargs)
+    scanner.run_scan()
     plot = plots.SpectrumPlot(spectrum=scanner.spectrum)
-    scanner.plot = plot
-    scanner.start()
-    scanner.spectrum.data_updated.wait()
     plot.build_plot()
-    scanner.stop()
     return scanner
-    
+
 def scan_and_save(filename=None, frequency_format=None, **kwargs):
     scanner = Scanner(**kwargs)
     if filename is None:
