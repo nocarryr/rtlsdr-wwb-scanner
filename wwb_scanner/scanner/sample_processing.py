@@ -64,8 +64,11 @@ class SampleCollection(object):
     def __init__(self, **kwargs):
         self.scanner = kwargs.get('scanner')
         self.sample_sets = {}
+        self.frequencies = None
+        self.raw = None
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
+        self.combine_samples(sample_set)
     def scan_freq(self, freq):
         sample_set = SampleSet(collection=self, center_frequency=freq)
         self.add_sample_set(sample_set)
@@ -76,18 +79,17 @@ class SampleCollection(object):
         sample_sets = self.sample_sets
         for key in self.iter_frequencies():
             yield sample_sets[key]
-    def combine_samples(self):
-        f = None
-        for sample_set in self.iter_sample_sets():
-            if f is None:
-                f = sample_set.frequencies.copy()
-                r = sample_set.raw.copy()
-            else:
-                f = np.hstack((f, sample_set.frequencies))
-                r = np.hstack((r, sample_set.raw))
-        sort_indecies = np.argsort(f)
-        f.partition(sort_indecies)
-        r.partition(sort_indecies)
+    def combine_samples(self, sample_set):
+        if self.frequencies is None:
+            self.frequencies = sample_set.frequencies.copy()
+            self.raw = sample_set.raw.copy()
+            return
+        f = self.frequencies
+        r = self.raw
+        indecies = np.searchsorted(f, sample_set.frequencies)
+        for i, insert_i in enumerate(indecies):
+            f = np.insert(f, insert_i, sample_set.frequencies[i])
+            r = np.insert(r, insert_i, sample_set.raw[i])
         self.frequencies = f
         self.raw = r
     def convert_powers(self):
@@ -102,6 +104,6 @@ class SampleCollection(object):
         self.frequencies = f
         self.powers = p
     def finalize(self):
-        self.combine_samples()
+        #self.combine_samples()
         self.convert_powers()
         #self.smooth_peaks()
