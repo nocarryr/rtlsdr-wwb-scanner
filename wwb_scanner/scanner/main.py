@@ -104,9 +104,6 @@ class Scanner(object):
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
-        self.finalize_scan()
-    def finalize_scan(self):
-        pass
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum

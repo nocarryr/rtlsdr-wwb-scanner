@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from scipy.signal import welch, find_peaks_cwt, lombscargle
+from scipy.signal import welch
 
 def next_2_to_pow(val):
     val -= 1
@@ -66,48 +66,9 @@ class SampleCollection(object):
     def __init__(self, **kwargs):
         self.scanner = kwargs.get('scanner')
         self.sample_sets = {}
-        self.frequencies = None
-        self.raw = None
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
     def scan_freq(self, freq):
         sample_set = SampleSet(collection=self, center_frequency=freq)
         self.add_sample_set(sample_set)
         return sample_set
-    def iter_frequencies(self):
-        return sorted(self.sample_sets.keys())
-    def iter_sample_sets(self):
-        sample_sets = self.sample_sets
-        for key in self.iter_frequencies():
-            yield sample_sets[key]
-    def combine_samples(self, sample_set):
-        if self.frequencies is None:
-            self.frequencies = sample_set.frequencies.copy()
-            self.raw = sample_set.raw.copy()
-            return
-        f = self.frequencies
-        r = self.raw
-        indecies = np.searchsorted(f, sample_set.frequencies)
-        for i, insert_i in enumerate(indecies):
-            f = np.insert(f, insert_i, sample_set.frequencies[i])
-            r = np.insert(r, insert_i, sample_set.raw[i])
-        self.frequencies = f
-        self.raw = r
-    def convert_powers(self):
-        self.powers = 10. * np.log10(self.raw)
-    def smooth_peaks(self):
-        f = self.frequencies
-        p = self.powers
-        width = np.arange(1, int(len(self.sample_sets.values()[0].raw) / 4.))
-        peakind = find_peaks_cwt(p, width)
-        f = np.delete(f, peakind)
-        p = np.delete(p, peakind)
-        self.frequencies = f
-        self.powers = p
-    def build_periodogram(self):
-        scanner = self.scanner
-        out_freqs = np.arange(scanner.scan_range[0], scanner.scan_range[1], scanner.step_size)
-        p = lombscargle(self.frequencies, self.powers, out_freqs)
-        return out_freqs, p
-    def finalize(self):
-        pass
