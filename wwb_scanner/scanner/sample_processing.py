@@ -45,6 +45,8 @@ class SampleSet(object):
         f = np.fft.fftshift(f)
         f += freq
         f /= 1e6
+        f = f[4:-4]
+        powers = powers[4:-4]
         self.frequencies = f
         self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
