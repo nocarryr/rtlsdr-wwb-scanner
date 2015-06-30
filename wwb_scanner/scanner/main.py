@@ -44,8 +44,16 @@ class Scanner(object):
             self.spectrum = Spectrum(step_size=self.step_size)
         self.sdr = RtlSdr()
         self.sdr.sample_rate = self.sample_rate
+        real_sr = self.sdr.sample_rate
+        if real_sr != self.sample_rate:
+            print 'real sample rate is %s' % (real_sr)
+        self.sample_rate = real_sr
         if self.gain != 'AUTO':
             self.sdr.gain = self.gain
+            real_g = self.sdr.gain
+            if real_g != self.gain:
+                print 'real gain value is %s' % (real_g)
+                self.gain = real_g
         samples_per_scan = kwargs.get('samples_per_scan')
         if samples_per_scan is None:
             samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
