@@ -93,7 +93,9 @@ class Scanner(object):
         print '%s%%' % (int(value * 100))
     def calc_next_center_freq(self, sample_set):
         f = sample_set.frequencies
-        return f.max() - self.step_size
+        fmax = f.max()
+        fsize = fmax - f.min()
+        return (fmax + (fsize / 2.)) - 0.
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
