@@ -68,7 +68,6 @@ class SampleCollection(object):
         self.raw = None
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
-        self.combine_samples(sample_set)
     def scan_freq(self, freq):
         sample_set = SampleSet(collection=self, center_frequency=freq)
         self.add_sample_set(sample_set)
@@ -109,7 +108,4 @@ class SampleCollection(object):
         p = lombscargle(self.frequencies, self.powers, out_freqs)
         return out_freqs, p
     def finalize(self):
-        #self.combine_samples()
-        self.convert_powers()
-        #self.smooth_peaks()
-        return self.build_periodogram()
+        pass

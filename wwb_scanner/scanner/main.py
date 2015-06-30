@@ -104,15 +104,15 @@ class Scanner(object):
             freq = self.calc_next_center_freq(sample_set)
         self.finalize_scan()
     def finalize_scan(self):
-        self.sample_collection.finalize()
-        spectrum = self.spectrum
-        c = self.sample_collection
-        for f, p in zip(c.frequencies, c.powers):
-            spectrum.add_sample(frequency=f, magnitude=p)
+        pass
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
+        spectrum = self.spectrum
         freqs = sample_set.frequencies
+        powers = sample_set.powers
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
+        for f, p in zip(freqs, powers):
+            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True)
         return sample_set
     def _serialize(self):
         keys = ['samples_per_scan', 'sample_segment_length']
