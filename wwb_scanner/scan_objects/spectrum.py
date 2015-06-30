@@ -28,6 +28,8 @@ class Spectrum(object):
         return json.dumps(d, **kwargs)
     def add_sample(self, **kwargs):
         if kwargs.get('frequency') in self.samples:
+            if kwargs.get('force_magnitude'):
+                sample.magnitude = kwargs.get('magnitude')
             sample = self.samples[kwargs['frequency']]
             return sample
         kwargs.setdefault('spectrum', self)

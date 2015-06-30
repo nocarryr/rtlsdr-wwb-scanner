@@ -10,17 +10,19 @@ def next_2_to_pow(val):
     val |= val >> 8
     val |= val >> 16
     return val + 1
-    
+
 def calc_num_samples(sample_rate):
     return next_2_to_pow(int(sample_rate * .25))
-    
+
 class SampleSet(object):
-    __slots__ = ('scanner', 'center_frequency', 'samples', 
-                 'raw', 'frequencies', 'powers')
-    def __init__(self, scanner, center_frequency, **kwargs):
-        self.scanner = scanner
-        self.center_frequency = center_frequency
-        if not kwargs.get('from_json'):
+    __slots__ = ('scanner', 'center_frequency', 'samples',
+                 'raw', 'frequencies', 'powers', 'collection')
+    def __init__(self, **kwargs):
+        for key in self.__slots__:
+            setattr(self, key, kwargs.get(key))
+        if self.scanner is None and self.collection is not None:
+            self.scanner = self.collection.scanner
+        if 'from_json' in kwargs or self.raw is None:
             self.read_samples()
     @classmethod
     def from_json(cls, scanner, data):
@@ -43,9 +45,12 @@ class SampleSet(object):
         f = np.fft.fftshift(f)
         f += freq
         f /= 1e6
+        f = f[4:-4]
+        powers = powers[4:-4]
         self.frequencies = f
-        self.raw = powers
+        self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
+
     def _serialize(self):
         d = {}
         for key in self.__slots__:
@@ -56,4 +61,14 @@ class SampleSet(object):
                 val = val.tolist()
             d[key] = val
         return d
-        
+
+class SampleCollection(object):
+    def __init__(self, **kwargs):
+        self.scanner = kwargs.get('scanner')
+        self.sample_sets = {}
+    def add_sample_set(self, sample_set):
+        self.sample_sets[sample_set.center_frequency] = sample_set
+    def scan_freq(self, freq):
+        sample_set = SampleSet(collection=self, center_frequency=freq)
+        self.add_sample_set(sample_set)
+        return sample_set
