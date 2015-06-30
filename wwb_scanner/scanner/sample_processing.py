@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from scipy.signal import welch, find_peaks_cwt
+from scipy.signal import welch, find_peaks_cwt, lombscargle
 
 def next_2_to_pow(val):
     val -= 1
@@ -103,7 +103,13 @@ class SampleCollection(object):
         p = np.delete(p, peakind)
         self.frequencies = f
         self.powers = p
+    def build_periodogram(self):
+        scanner = self.scanner
+        out_freqs = np.arange(scanner.scan_range[0], scanner.scan_range[1], scanner.step_size)
+        p = lombscargle(self.frequencies, self.powers, out_freqs)
+        return out_freqs, p
     def finalize(self):
         #self.combine_samples()
         self.convert_powers()
         #self.smooth_peaks()
+        return self.build_periodogram()
