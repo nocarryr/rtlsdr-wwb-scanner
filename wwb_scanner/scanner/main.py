@@ -25,12 +25,7 @@ def hz_to_mhz(hz):
 class StopScanner(Exception):
     pass
 
-class Scanner(object):
-    '''
-        params:
-            scan_range: (list) frequency range to scan (in MHz)
-            step_size:  increment (in MHz) to return scan values
-    '''
+class ScannerBase(object):
     def __init__(self, **kwargs):
         self._current_freq = None
         self._progress = 0.
@@ -42,32 +37,7 @@ class Scanner(object):
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
             self.spectrum = Spectrum(step_size=self.step_size)
-        self.sdr = RtlSdr()
-        self.sdr.sample_rate = self.sample_rate
-        real_sr = self.sdr.sample_rate
-        if real_sr != self.sample_rate:
-            print 'real sample rate is %s' % (real_sr)
-        self.sample_rate = real_sr
-        if self.gain != 'AUTO':
-            self.sdr.gain = self.gain
-            real_g = self.sdr.gain
-            if real_g != self.gain:
-                print 'real gain value is %s' % (real_g)
-                self.gain = real_g
-        samples_per_scan = kwargs.get('samples_per_scan')
-        if samples_per_scan is None:
-            samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
-        sample_segment_length = kwargs.get('sample_segment_length')
-        if sample_segment_length is None:
-            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
-        self.samples_per_scan = samples_per_scan
-        self.sample_segment_length = sample_segment_length
         self.sample_collection = sample_processing.SampleCollection(scanner=self)
-        if self.save_raw_values:
-            self.raw_values = {}
-            if 'raw_values' in kwargs:
-                for key, val in kwargs['raw_values'].items():
-                    self.raw_values[key] = sample_processing.SampleSet.from_json(self, val)
     @classmethod
     def from_json(cls, data):
         if isinstance(data, basestring):
@@ -113,6 +83,46 @@ class Scanner(object):
                 break
             freq = self.calc_next_center_freq(sample_set)
     def scan_freq(self, freq):
+        pass
+    def _serialize(self):
+        d = {k: getattr(self, k) for k in SCANNER_DEFAULTS.keys()}
+        d['spectrum'] = self.spectrum._serialize()
+        return d
+        
+class Scanner(ScannerBase):
+    '''
+        params:
+            scan_range: (list) frequency range to scan (in MHz)
+            step_size:  increment (in MHz) to return scan values
+    '''
+    def __init__(self, **kwargs):
+        super(Scanner, self).__init__(**kwargs)
+        self.sdr = RtlSdr()
+        self.sdr.sample_rate = self.sample_rate
+        real_sr = self.sdr.sample_rate
+        if real_sr != self.sample_rate:
+            print 'real sample rate is %s' % (real_sr)
+        self.sample_rate = real_sr
+        if self.gain != 'AUTO':
+            self.sdr.gain = self.gain
+            real_g = self.sdr.gain
+            if real_g != self.gain:
+                print 'real gain value is %s' % (real_g)
+                self.gain = real_g
+        samples_per_scan = kwargs.get('samples_per_scan')
+        if samples_per_scan is None:
+            samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
+        sample_segment_length = kwargs.get('sample_segment_length')
+        if sample_segment_length is None:
+            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
+        self.samples_per_scan = samples_per_scan
+        self.sample_segment_length = sample_segment_length
+        if self.save_raw_values:
+            self.raw_values = {}
+            if 'raw_values' in kwargs:
+                for key, val in kwargs['raw_values'].items():
+                    self.raw_values[key] = sample_processing.SampleSet.from_json(self, val)
+    def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum
         freqs = sample_set.frequencies
@@ -122,16 +132,13 @@ class Scanner(object):
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True)
         return sample_set
     def _serialize(self):
+        d = super(Scanner, self)._serialize()
         keys = ['samples_per_scan', 'sample_segment_length']
-        keys.extend(SCANNER_DEFAULTS.keys())
-        d = {k: getattr(self, k) for k in keys}
+        d.update({k: getattr(self, k) for k in keys})
         if self.save_raw_values:
             raw_values = self.raw_values
             d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
-        d['spectrum'] = self.spectrum._serialize()
         return d
-
-
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
