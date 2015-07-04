@@ -1,0 +1,92 @@
+<RootWidget>:
+    orientation: 'vertical'
+    plot_container: plot_container
+    scan_controls: scan_controls
+    ActionBar:
+        pos_hint: {'top':1}
+        ActionView:
+            use_separator: True
+            ActionPrevious:
+                text: ''
+                split_str: ''
+                title: 'Action Bar'
+                with_previous: False
+            ActionGroup:
+                text: 'File'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'New'
+                ActionButton:
+                    text: 'Open'
+                ActionButton:
+                    text: 'Save'
+                ActionButton:
+                    text: 'Save As'
+                ActionButton:
+                    text: 'Quit'
+            ActionGroup:
+                text: 'Scan'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'Scan Settings'
+                ActionButton:
+                    text: 'Perform Scan'
+                ActionButton:
+                    text: 'Save Scan'
+            ActionGroup:
+                text: 'Plots'
+                mode: 'spinner'
+                size_hint_x: None
+                width: 90
+                ActionButton:
+                    text: 'Import'
+    PlotContainer:
+        id: plot_container
+    ScanControls:
+        id: scan_controls
+    
+<PlotContainer>:
+    orientation: 'vertical'
+    
+<ScanRangeControls>:
+    orientation: 'horizontal'
+    
+<ScanRangeTextInput>:
+    multiline: False
+    on_text_validate: self.validate_input()
+    input_filter: 'float'
+    
+<ScanControls>:
+    orientation: 'horizontal'
+    size_hint_y: .15
+    scan_range_widget: scan_range
+    gain_txt: gain_txt
+    start_btn: start_btn
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Scan Range'
+        ScanRangeControls:
+            id: scan_range
+            scan_range_start_txt: scan_range_start
+            scan_range_end_txt: scan_range_end
+            ScanRangeTextInput:
+                id: scan_range_start
+                range_index: 0
+            ScanRangeTextInput:
+                id: scan_range_end
+                range_index: 1
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Gain'
+        TextInput:
+            id: gain_txt
+    Button:
+        id: start_btn
+        text: 'Start'
+        on_release: root.on_scan_button_release()

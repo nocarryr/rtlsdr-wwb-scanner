@@ -27,6 +27,9 @@
     <Source>wwb_scanner/ui/plots.py</Source>
     <Source>wwb_scanner/file_handlers/importers.py</Source>
     <Source>wwb_scanner/scanner/rtlpower_scan.py</Source>
+    <Source>wwb_scanner/ui/kivyui/__init__.py</Source>
+    <Source>wwb_scanner/ui/kivyui/main.py</Source>
+    <Source>wwb_scanner/ui/kivyui/main.kv</Source>
   </Sources>
   <Forms/>
   <Translations/>
