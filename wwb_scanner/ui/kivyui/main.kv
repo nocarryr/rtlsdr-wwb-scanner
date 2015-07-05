@@ -1,3 +1,6 @@
+<ActionButton>:
+    on_release: app.on_action_button_release(self)
+    
 <RootWidget>:
     orientation: 'vertical'
     plot_container: plot_container
@@ -18,14 +21,19 @@
                 width: 90
                 ActionButton:
                     text: 'New'
+                    action: 'file.new'
                 ActionButton:
                     text: 'Open'
+                    action: 'file.open'
                 ActionButton:
                     text: 'Save'
+                    action: 'file.save'
                 ActionButton:
                     text: 'Save As'
+                    action: 'file.save_as'
                 ActionButton:
                     text: 'Quit'
+                    action: 'file.quit'
             ActionGroup:
                 text: 'Scan'
                 mode: 'spinner'
@@ -33,10 +41,13 @@
                 width: 90
                 ActionButton:
                     text: 'Scan Settings'
+                    action: 'scan.settings'
                 ActionButton:
                     text: 'Perform Scan'
+                    action: 'scan.scan'
                 ActionButton:
                     text: 'Save Scan'
+                    action: 'scan.save'
             ActionGroup:
                 text: 'Plots'
                 mode: 'spinner'
@@ -44,6 +55,7 @@
                 width: 90
                 ActionButton:
                     text: 'Import'
+                    action: 'plots.import'
     PlotContainer:
         id: plot_container
     ScanControls:
