@@ -9,6 +9,7 @@ from kivy.properties import (
 )
 from kivy.garden.filebrowser import FileBrowser
 
+from wwb_scanner.ui.kivyui import plots
 from wwb_scanner.file_handlers import BaseImporter
 
 class Action(object):
@@ -89,7 +90,8 @@ class MainApp(App):
     
 class PlotContainer(BoxLayout):
     def add_plot(self, spectrum):
-        pass
+        w = plots.SpectrumPlot(spectrum=spectrum, size_hint=[1, 1])
+        self.add_widget(w)
     
 class ScanControls(BoxLayout):
     scan_range_widget = ObjectProperty(None)
