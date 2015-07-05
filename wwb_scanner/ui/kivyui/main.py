@@ -90,7 +90,7 @@ class MainApp(App):
     
 class PlotContainer(BoxLayout):
     def add_plot(self, spectrum):
-        w = plots.SpectrumPlot(spectrum=spectrum, size_hint=[1, 1])
+        w = plots.SpectrumGraph(spectrum=spectrum, size_hint=[.8, .8])
         self.add_widget(w)
     
 class ScanControls(BoxLayout):
