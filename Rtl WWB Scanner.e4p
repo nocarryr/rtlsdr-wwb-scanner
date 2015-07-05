@@ -30,6 +30,7 @@
     <Source>wwb_scanner/ui/kivyui/__init__.py</Source>
     <Source>wwb_scanner/ui/kivyui/main.py</Source>
     <Source>wwb_scanner/ui/kivyui/main.kv</Source>
+    <Source>kivyapp.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

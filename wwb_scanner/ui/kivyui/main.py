@@ -125,6 +125,8 @@ class ScanRangeTextInput(TextInput):
         if self.text != t:
             self.text = t
     
-
-if '__main__' == __name__:
+def run():
     MainApp().run()
+
+if __name__ == '__main__':
+    run()
