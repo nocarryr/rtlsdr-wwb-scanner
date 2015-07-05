@@ -3,6 +3,7 @@ import threading
 import json
 
 from rtlsdr import RtlSdr
+from rtlsdr import librtlsdr
 
 from wwb_scanner.scanner import sample_processing
 from wwb_scanner.scan_objects import Spectrum
@@ -105,8 +106,10 @@ class Scanner(ScannerBase):
         self.sample_rate = real_sr
         if self.gain != 'AUTO':
             self.sdr.gain = self.gain
-            real_g = self.sdr.gain
-            if real_g != self.gain:
+            #real_g = self.sdr.gain
+            real_g = librtlsdr.rtlsdr_get_tuner_gain(self.sdr.dev_p)
+            print 'real_g:',  real_g
+            if False:#real_g != self.gain:
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
         samples_per_scan = kwargs.get('samples_per_scan')
