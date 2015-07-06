@@ -56,9 +56,10 @@ class Spectrum(object):
     def import_from_file(cls, filename):
         importer = get_importer()
         return importer.import_file(filename)
-    def export_to_file(self, filename):
+    def export_to_file(self, **kwargs):
         exporter = get_exporter()
-        exporter.export_to_file(filename=filename, spectrum=self)
+        kwargs['spectrum'] = self
+        exporter.export_to_file(**kwargs)
     def show_plot(self):
         plot_cls = get_spectrum_plot()
         plot = plot_cls(spectrum=self)
