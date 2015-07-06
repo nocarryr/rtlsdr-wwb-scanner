@@ -14,6 +14,22 @@ class BaseExporter(object):
     def __call__(self):
         self.build_data()
         self.write_file()
+    @classmethod
+    def export_to_file(cls, **kwargs):
+        filename = kwargs.get('filename')
+        ext = os.path.splitext(filename)[1].strip('.').lower()
+        def find_exporter(_cls):
+            if getattr(_cls, '_extension', None) == ext:
+                return _cls
+            for _subcls in _cls.__subclasses__():
+                r = find_exporter(_subcls)
+                if r is not None:
+                    return r
+            return None
+        cls = find_exporter(cls)
+        fh = cls(**kwargs)
+        fh()
+        return fh
     @property
     def filename(self):
         return getattr(self, '_filename', None)
@@ -34,6 +50,7 @@ class BaseExporter(object):
             f.write(s)
         
 class CSVExporter(BaseExporter):
+    _extension = 'csv'
     newline_chars = '\r\n'
     delimiter_char = ','
     def __init__(self, **kwargs):
