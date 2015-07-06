@@ -1,4 +1,3 @@
-import os
 import threading
 import json
 
@@ -7,8 +6,6 @@ from rtlsdr import librtlsdr
 
 from wwb_scanner.scanner import sample_processing
 from wwb_scanner.scan_objects import Spectrum
-from wwb_scanner.ui import plots
-from wwb_scanner.file_handlers import CSVExporter, WWBExporter
 
 SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
@@ -191,21 +188,11 @@ class ThreadedScanner(threading.Thread, Scanner):
 def scan_and_plot(**kwargs):
     scanner = Scanner(**kwargs)
     scanner.run_scan()
-    plot = plots.SpectrumPlot(spectrum=scanner.spectrum)
-    plot.build_plot()
+    scanner.spectrum.show_plot()
     return scanner
 
 def scan_and_save(filename=None, frequency_format=None, **kwargs):
     scanner = Scanner(**kwargs)
-    if filename is None:
-        filename = 'scan_%07.3f-%07.3f' % (scanner.scan_range[0], scanner.scan_range[1])
-    if os.path.splitext(filename)[1].lower() not in ['.csv', '.sdb', '.sdb2']:
-        filename = '.'.join([filename, 'sdb2'])
     scanner.run_scan()
-    if os.path.splitext(filename)[1].lower() == '.csv':
-        cls = CSVExporter
-    else:
-        cls = WWBExporter
-    fh = cls(filename=filename, frequency_format=frequency_format, spectrum=scanner.spectrum)
-    fh()
+    scanner.spectrum.export_to_file(filename=filename, frequency_format=frequency_format)
     return scanner
