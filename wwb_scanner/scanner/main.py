@@ -1,5 +1,6 @@
 import threading
 import json
+import decimal
 
 from rtlsdr import RtlSdr
 from rtlsdr import librtlsdr
@@ -71,7 +72,9 @@ class ScannerBase(object):
         f = sample_set.frequencies
         fmax = f.max()
         fsize = fmax - f.min()
-        return (fmax + (fsize / 2.)) - 0.
+        real_f = (fmax + (fsize / 2.)) - 0.
+        d = decimal.Decimal(str(self.step_size))
+        return float(decimal.Decimal.from_float(real_f).quantize(d))
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
