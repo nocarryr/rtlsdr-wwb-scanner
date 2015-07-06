@@ -12,7 +12,7 @@ def next_2_to_pow(val):
     return val + 1
 
 def calc_num_samples(sample_rate):
-    return next_2_to_pow(int(sample_rate * .25))
+    return next_2_to_pow(int(sample_rate * .125))
 
 class SampleSet(object):
     __slots__ = ('scanner', 'center_frequency', 'samples',
@@ -36,6 +36,25 @@ class SampleSet(object):
             setattr(obj, key, val)
         return obj
     def read_samples(self):
+        scanner = self.scanner
+        freq = self.center_frequency
+        sdr = scanner.sdr
+        sdr.set_center_freq(freq)
+        samples = self.samples = sdr.read_samples(scanner.samples_per_scan)
+        mag = np.fft.fft(samples, n=int(scanner.sample_segment_length))
+        mag_size = mag.size
+        is_even = mag_size % 2 == 0
+        f = np.fft.fftfreq(mag.size, d=1/scanner.sample_rate)
+        f = np.fft.fftshift(f)
+        f += freq
+        f /= 1e6
+        if is_even:
+            mag = mag[1:]
+            f = f[1:]
+        self.raw = mag
+        self.frequencies = f
+        self.powers = 20. * np.log10(mag)
+    def read_samples_welch(self):
         scanner = self.scanner
         freq = self.center_frequency
         sdr = scanner.sdr
