@@ -1,6 +1,21 @@
 import threading
 import json
 from wwb_scanner.scan_objects import Sample
+try:
+    from wwb_scanner import file_handlers
+except ImportError:
+    file_handlers = None
+    
+def get_file_handlers():
+    global file_handlers
+    if file_handlers is None:
+        from wwb_scanner import file_handlers as _file_handlers
+        file_handlers = _file_handlers
+    return file_handlers
+def get_importer():
+    return get_file_handlers().BaseImporter
+def get_exporter():
+    return get_file_handlers().BaseExporter
 
 class Spectrum(object):
     def __init__(self, **kwargs):
@@ -26,6 +41,13 @@ class Spectrum(object):
     def to_json(self, **kwargs):
         d = self._serialize()
         return json.dumps(d, **kwargs)
+    @classmethod
+    def import_from_file(cls, filename):
+        importer = get_importer()
+        return importer.import_file(filename)
+    def export_to_file(self, filename):
+        exporter = get_exporter()
+        exporter.export_to_file(filename=filename, spectrum=self)
     def add_sample(self, **kwargs):
         if kwargs.get('frequency') in self.samples:
             if kwargs.get('force_magnitude'):
