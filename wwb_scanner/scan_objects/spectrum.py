@@ -5,6 +5,10 @@ try:
     from wwb_scanner import file_handlers
 except ImportError:
     file_handlers = None
+try:
+    from wwb_scanner.ui.plots import SpectrumPlot
+except ImportError:
+    SpectrumPlot = None
     
 def get_file_handlers():
     global file_handlers
@@ -16,6 +20,13 @@ def get_importer():
     return get_file_handlers().BaseImporter
 def get_exporter():
     return get_file_handlers().BaseExporter
+    
+def get_spectrum_plot():
+    global SpectrumPlot
+    if SpectrumPlot is None:
+        from wwb_scanner.ui.plots import SpectrumPlot as _SpectrumPlot
+        SpectrumPlot = _SpectrumPlot
+    return SpectrumPlot
 
 class Spectrum(object):
     def __init__(self, **kwargs):
@@ -48,6 +59,11 @@ class Spectrum(object):
     def export_to_file(self, filename):
         exporter = get_exporter()
         exporter.export_to_file(filename=filename, spectrum=self)
+    def show_plot(self):
+        plot_cls = get_spectrum_plot()
+        plot = plot_cls(spectrum=self)
+        plot.build_plot()
+        return plot
     def add_sample(self, **kwargs):
         if kwargs.get('frequency') in self.samples:
             if kwargs.get('force_magnitude'):
