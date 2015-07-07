@@ -112,10 +112,13 @@ class Scanner(ScannerBase):
             if False:#real_g != self.gain:
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
-        samples_per_scan = kwargs.get('samples_per_scan')
+        self.fft_size = 1024
+        samples_per_scan = self.fft_size*16
+        #samples_per_scan = kwargs.get('samples_per_scan')
         if samples_per_scan is None:
             samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
-        sample_segment_length = kwargs.get('sample_segment_length')
+        sample_segment_length = self.fft_size / 8
+        #sample_segment_length = kwargs.get('sample_segment_length')
         if sample_segment_length is None:
             sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
         self.samples_per_scan = samples_per_scan

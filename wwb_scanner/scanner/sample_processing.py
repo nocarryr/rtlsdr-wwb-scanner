@@ -1,6 +1,6 @@
 import json
 import numpy as np
-from scipy.signal import welch
+from scipy.signal import welch, resample
 
 def next_2_to_pow(val):
     val -= 1
@@ -35,7 +35,7 @@ class SampleSet(object):
                 val = np.array(val)
             setattr(obj, key, val)
         return obj
-    def read_samples(self):
+    def read_samples_crapily(self):
         scanner = self.scanner
         freq = self.center_frequency
         sdr = scanner.sdr
@@ -54,18 +54,19 @@ class SampleSet(object):
         self.raw = mag
         self.frequencies = f
         self.powers = 20. * np.log10(mag)
-    def read_samples_welch(self):
+    def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         samples = self.samples = sdr.read_samples(scanner.samples_per_scan)
-        f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length)#, scaling='spectrum')
+        f, powers = welch(samples, fs=scanner.sample_rate, nfft=scanner.fft_size)#, nperseg=scanner.sample_segment_length)#, scaling='spectrum')
+        #powers, f = resample(powers, 128, t=f)
         f = np.fft.fftshift(f)
         f += freq
         f /= 1e6
-        f = f[4:-4]
-        powers = powers[4:-4]
+        #f = f[4:-4]
+        #powers = powers[4:-4]
         self.frequencies = f
         self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
