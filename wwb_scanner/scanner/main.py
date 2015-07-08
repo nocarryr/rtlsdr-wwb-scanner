@@ -71,7 +71,7 @@ class ScannerBase(object):
         f = sample_set.frequencies
         fmax = f.max()
         fsize = fmax - f.min()
-        return (fmax + (fsize / 2.)) - 0.
+        return fmax + (fsize / 2.)
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
@@ -109,6 +109,7 @@ class Scanner(ScannerBase):
             if False:#real_g != self.gain:
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
+        self.bandwidth = self.sample_rate / 4.
         samples_per_scan = kwargs.get('samples_per_scan')
         if samples_per_scan is None:
             samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
