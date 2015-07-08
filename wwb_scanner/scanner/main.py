@@ -9,8 +9,9 @@ from wwb_scanner.scan_objects import Spectrum
 
 SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
-    step_size=.025,
+    step_size=.0125,
     sample_rate=2e6,
+    sampling_period=.025, 
     save_raw_values=False,
     gain=40.,
 )
@@ -71,7 +72,7 @@ class ScannerBase(object):
         f = sample_set.frequencies
         fmax = f.max()
         fsize = fmax - f.min()
-        return (fmax + (fsize / 2.)) - 0.
+        return fmax + (fsize / 2.)
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
@@ -109,14 +110,7 @@ class Scanner(ScannerBase):
             if False:#real_g != self.gain:
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
-        samples_per_scan = kwargs.get('samples_per_scan')
-        if samples_per_scan is None:
-            samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
-        sample_segment_length = kwargs.get('sample_segment_length')
-        if sample_segment_length is None:
-            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
-        self.samples_per_scan = samples_per_scan
-        self.sample_segment_length = sample_segment_length
+        self.bandwidth = self.sample_rate / 4.
         if self.save_raw_values:
             self.raw_values = {}
             if 'raw_values' in kwargs:
@@ -136,8 +130,6 @@ class Scanner(ScannerBase):
         return sample_set
     def _serialize(self):
         d = super(Scanner, self)._serialize()
-        keys = ['samples_per_scan', 'sample_segment_length']
-        d.update({k: getattr(self, k) for k in keys})
         if self.save_raw_values:
             raw_values = self.raw_values
             d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
