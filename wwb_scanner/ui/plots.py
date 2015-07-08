@@ -70,6 +70,12 @@ class SpectrumPlot(BasePlot):
         self.plot = plt.plot(*self.build_data())[0]
         plt.xlabel('frequency (MHz)')
         plt.ylabel('dBm')
+        center_frequencies = self.spectrum.center_frequencies
+        if len(center_frequencies):
+            samples = self.spectrum.samples
+            plt.vlines(center_frequencies, 
+                       [0] * len(center_frequencies), 
+                       [samples.get(f).magnitude for f in center_frequencies])
         plt.show()
     
 class DiffSpectrum(object):

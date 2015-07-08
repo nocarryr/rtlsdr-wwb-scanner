@@ -129,9 +129,12 @@ class Scanner(ScannerBase):
         spectrum = self.spectrum
         freqs = sample_set.frequencies
         powers = sample_set.powers
+        center_freq = freqs[freqs.size / 2]
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
-            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True)
+            is_center = f == center_freq
+            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True, 
+                                is_center_frequency=is_center)
         return sample_set
     def _serialize(self):
         d = super(Scanner, self)._serialize()
