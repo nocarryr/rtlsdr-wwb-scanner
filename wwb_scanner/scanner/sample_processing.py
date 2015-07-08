@@ -39,8 +39,6 @@ class SampleSet(object):
         scanner = self.scanner
         freq = self.center_frequency
         num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
-        #num_samples = int(scanner.bandwidth)
-        #scan_freqs = np.fft.fftfreq(num_samples, 1/scanner.bandwidth)
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         samples = self.samples = sdr.read_samples(num_samples)
@@ -49,8 +47,6 @@ class SampleSet(object):
         f = np.fft.fftshift(f)
         f += freq
         f /= 1e6
-        #f = f[4:-4]
-        #powers = powers[4:-4]
         self.frequencies = f
         self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
