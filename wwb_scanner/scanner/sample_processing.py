@@ -38,7 +38,7 @@ class SampleSet(object):
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
-        num_samples = next_2_to_pow(int(scanner.bandwidth))
+        num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
         #num_samples = int(scanner.bandwidth)
         #scan_freqs = np.fft.fftfreq(num_samples, 1/scanner.bandwidth)
         sdr = scanner.sdr
