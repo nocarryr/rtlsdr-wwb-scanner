@@ -44,6 +44,7 @@ class Spectrum(object):
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
+        self.center_frequencies = kwargs.get('center_frequencies', [])
     @classmethod
     def from_json(cls, data):
         if isinstance(data, basestring):
@@ -66,8 +67,11 @@ class Spectrum(object):
         plot.build_plot()
         return plot
     def add_sample(self, **kwargs):
-        if kwargs.get('frequency') in self.samples:
-            sample = self.samples[kwargs['frequency']]
+        f = kwargs.get('frequency')
+        if kwargs.get('is_center_frequency') and f not in self.center_frequencies:
+            self.center_frequencies.append(f)
+        if f in self.samples:
+            sample = self.samples[f]
             if kwargs.get('force_magnitude'):
                 sample.magnitude = kwargs.get('magnitude')
             return sample
@@ -91,7 +95,7 @@ class Spectrum(object):
         with self.data_update_lock:
             self.data_updated.set()
     def _serialize(self):
-        d = {'step_size':self.step_size}
+        d = {'step_size':self.step_size, 'center_frequencies':self.center_frequencies}
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d
