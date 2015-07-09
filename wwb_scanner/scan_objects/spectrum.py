@@ -1,5 +1,6 @@
 import threading
-import json
+
+from wwb_scanner.core import JSONMixin
 from wwb_scanner.scan_objects import Sample
 try:
     from wwb_scanner import file_handlers
@@ -28,7 +29,7 @@ def get_spectrum_plot():
         SpectrumPlot = _SpectrumPlot
     return SpectrumPlot
 
-class Spectrum(object):
+class Spectrum(JSONMixin):
     def __init__(self, **kwargs):
         self.step_size = kwargs.get('step_size')
         self.data_updated = threading.Event()
@@ -45,14 +46,6 @@ class Spectrum(object):
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
         self.center_frequencies = kwargs.get('center_frequencies', [])
-    @classmethod
-    def from_json(cls, data):
-        if isinstance(data, basestring):
-            data = json.loads(data)
-        return cls(**data)
-    def to_json(self, **kwargs):
-        d = self._serialize()
-        return json.dumps(d, **kwargs)
     @classmethod
     def import_from_file(cls, filename):
         importer = get_importer()

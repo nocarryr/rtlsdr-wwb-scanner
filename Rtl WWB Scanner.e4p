@@ -27,6 +27,9 @@
     <Source>wwb_scanner/ui/plots.py</Source>
     <Source>wwb_scanner/file_handlers/importers.py</Source>
     <Source>wwb_scanner/scanner/rtlpower_scan.py</Source>
+    <Source>wwb_scanner/core.py</Source>
+    <Source>wwb_scanner/utils/__init__.py</Source>
+    <Source>wwb_scanner/utils/numpyjson.py</Source>
   </Sources>
   <Forms/>
   <Translations/>

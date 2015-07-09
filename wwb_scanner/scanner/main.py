@@ -1,10 +1,10 @@
 import threading
-import json
 
 from rtlsdr import RtlSdr
 from rtlsdr import librtlsdr
 
-from wwb_scanner.scanner import sample_processing
+from wwb_scanner.core import JSONMixin
+from wwb_scanner.scanner.sample_processing import SampleCollection
 from wwb_scanner.scan_objects import Spectrum
 
 SCANNER_DEFAULTS = dict(
@@ -24,7 +24,7 @@ def hz_to_mhz(hz):
 class StopScanner(Exception):
     pass
 
-class ScannerBase(object):
+class ScannerBase(JSONMixin):
     def __init__(self, **kwargs):
         self._current_freq = None
         self._progress = 0.
@@ -36,15 +36,8 @@ class ScannerBase(object):
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
             self.spectrum = Spectrum(step_size=self.step_size)
-        self.sample_collection = sample_processing.SampleCollection(scanner=self)
-    @classmethod
-    def from_json(cls, data):
-        if isinstance(data, basestring):
-            data = json.loads(data)
-        return cls(**data)
-    def to_json(self, **kwargs):
-        d = self._serialize()
-        return json.dumps(d, **kwargs)
+        if not kwargs.get('__from_json__'):
+            self.sample_collection = SampleCollection(scanner=self)
     @property
     def current_freq(self):
         return self._current_freq
@@ -86,7 +79,11 @@ class ScannerBase(object):
     def _serialize(self):
         d = {k: getattr(self, k) for k in SCANNER_DEFAULTS.keys()}
         d['spectrum'] = self.spectrum._serialize()
+        d['sample_collection'] = self.sample_collection._serialize()
         return d
+    def _deserialize(self, **kwargs):
+        data = kwargs.get('sample_collection')
+        self.sample_collection = SampleCollection.from_json(data, scanner=self)
         
 class Scanner(ScannerBase):
     '''
@@ -111,11 +108,6 @@ class Scanner(ScannerBase):
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
         self.bandwidth = self.sample_rate / 4.
-        if self.save_raw_values:
-            self.raw_values = {}
-            if 'raw_values' in kwargs:
-                for key, val in kwargs['raw_values'].items():
-                    self.raw_values[key] = sample_processing.SampleSet.from_json(self, val)
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum
@@ -128,12 +120,6 @@ class Scanner(ScannerBase):
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True, 
                                 is_center_frequency=is_center)
         return sample_set
-    def _serialize(self):
-        d = super(Scanner, self)._serialize()
-        if self.save_raw_values:
-            raw_values = self.raw_values
-            d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
-        return d
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
