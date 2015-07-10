@@ -65,7 +65,7 @@ class ScannerBase(JSONMixin):
         f = sample_set.frequencies
         fmax = f.max()
         fsize = fmax - f.min()
-        return fmax + (fsize / 2.)
+        return (fmax + (fsize / 2.)) + (f[1] - f[2])
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
