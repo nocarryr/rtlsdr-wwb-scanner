@@ -1,3 +1,4 @@
+import time
 import numpy as np
 from scipy.signal import welch, get_window
 
@@ -31,6 +32,7 @@ class SampleSet(JSONMixin):
         num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
+        time.sleep(.1)
         samples = self.samples = sdr.read_samples(num_samples)
         win = get_window('hanning', int(scanner.bandwidth / (scanner.step_size * 1e6)))
         f, powers = welch(samples, fs=scanner.sample_rate, window=win)
