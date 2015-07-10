@@ -17,8 +17,8 @@ def calc_num_samples(sample_rate):
     return next_2_to_pow(int(sample_rate * .25))
 
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'samples',
-                 'raw', 'frequencies', 'powers', 'collection')
+    __slots__ = ('scanner', 'center_frequency', 'raw', 
+                 'frequencies', 'powers', 'collection')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             setattr(self, key, kwargs.get(key))
@@ -33,7 +33,7 @@ class SampleSet(JSONMixin):
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
-        samples = self.samples = sdr.read_samples(num_samples)
+        samples = sdr.read_samples(num_samples)
         win = get_window('hanning', int(scanner.bandwidth / (scanner.step_size * 1e6)))
         f, powers = welch(samples, fs=scanner.sample_rate, window=win)
         f = np.fft.fftshift(f)
