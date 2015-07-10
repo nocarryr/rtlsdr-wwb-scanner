@@ -35,6 +35,9 @@ class SampleSet(JSONMixin):
         win = get_window('hanning', int(scanner.bandwidth / (scanner.step_size * 1e6)))
         f, powers = welch(samples, fs=scanner.sample_rate, window=win)
         f = np.fft.fftshift(f)
+        if f.size % 2 == 0:
+            f = f[1:]
+            powers = powers[1:]
         f += freq
         f /= 1e6
         self.frequencies = f
