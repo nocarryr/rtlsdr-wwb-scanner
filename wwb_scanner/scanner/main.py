@@ -1,9 +1,7 @@
 import threading
 
-from rtlsdr import RtlSdr
-from rtlsdr import librtlsdr
-
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.scanner.sdrwrapper import SdrWrapper
 from wwb_scanner.scanner.sample_processing import SampleCollection
 from wwb_scanner.scan_objects import Spectrum
 
@@ -93,21 +91,14 @@ class Scanner(ScannerBase):
     '''
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
-        self.sdr = RtlSdr()
-        self.sdr.sample_rate = self.sample_rate
-        real_sr = self.sdr.sample_rate
-        if real_sr != self.sample_rate:
-            print 'real sample rate is %s' % (real_sr)
-        self.sample_rate = real_sr
-        if self.gain != 'AUTO':
-            self.sdr.gain = self.gain
-            #real_g = self.sdr.gain
-            real_g = librtlsdr.rtlsdr_get_tuner_gain(self.sdr.dev_p)
-            print 'real_g:',  real_g
-            if False:#real_g != self.gain:
-                print 'real gain value is %s' % (real_g)
-                self.gain = real_g
+        self.sdr_wrapper = SdrWrapper(sample_rate=self.sample_rate, gain=self.gain)
         self.bandwidth = self.sample_rate / 2.
+    @property
+    def sdr(self):
+        return self.sdr_wrapper.sdr
+    def run_scan(self):
+        with self.sdr_wrapper:
+            super(Scanner, self).run_scan()
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum

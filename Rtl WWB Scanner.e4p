@@ -30,6 +30,7 @@
     <Source>wwb_scanner/core.py</Source>
     <Source>wwb_scanner/utils/__init__.py</Source>
     <Source>wwb_scanner/utils/numpyjson.py</Source>
+    <Source>wwb_scanner/scanner/sdrwrapper.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
