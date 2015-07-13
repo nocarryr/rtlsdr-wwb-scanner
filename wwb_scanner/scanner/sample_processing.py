@@ -33,9 +33,13 @@ class SampleSet(JSONMixin):
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
+        print 'reading %s samples' % (num_samples)
         samples = sdr.read_samples(num_samples)
-        win = get_window('hanning', int(scanner.bandwidth / (scanner.step_size * 1e6)))
-        f, powers = welch(samples, fs=scanner.sample_rate, window=win)
+        win = get_window('boxcar', int(scanner.bandwidth / (scanner.step_size * 1e6)))
+        noverlap = int(win.size / 4)
+        print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
+        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
+        self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
         if f.size % 2 == 0:
             f = f[1:]
@@ -43,7 +47,6 @@ class SampleSet(JSONMixin):
         f += freq
         f /= 1e6
         self.frequencies = f
-        self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
     def _serialize(self):
         d = {}

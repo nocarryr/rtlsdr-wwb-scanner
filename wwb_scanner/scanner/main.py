@@ -11,9 +11,9 @@ SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
     step_size=.0125,
     sample_rate=2e6,
-    sampling_period=.025, 
+    sampling_period=.05, 
     save_raw_values=False,
-    gain=40.,
+    gain=30.,
 )
 
 def mhz_to_hz(mhz):
@@ -107,7 +107,7 @@ class Scanner(ScannerBase):
             if False:#real_g != self.gain:
                 print 'real gain value is %s' % (real_g)
                 self.gain = real_g
-        self.bandwidth = self.sample_rate / 4.
+        self.bandwidth = self.sample_rate / 2.
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum
