@@ -1,7 +1,7 @@
 import threading
 
 from wwb_scanner.core import JSONMixin
-from wwb_scanner.scan_objects import Sample
+from wwb_scanner.scan_objects import Sample, TimeBasedSample
 try:
     from wwb_scanner import file_handlers
 except ImportError:
@@ -35,6 +35,8 @@ class Spectrum(JSONMixin):
         self.data_updated = threading.Event()
         self.data_update_lock = threading.Lock()
         self.samples = {}
+        self.center_frequencies = kwargs.get('center_frequencies', [])
+    def _deserialize(self, **kwargs):
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):
             for key, data in samples.items():
@@ -45,7 +47,6 @@ class Spectrum(JSONMixin):
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
-        self.center_frequencies = kwargs.get('center_frequencies', [])
     @classmethod
     def import_from_file(cls, filename):
         importer = get_importer()
@@ -69,9 +70,12 @@ class Spectrum(JSONMixin):
                 sample.magnitude = kwargs.get('magnitude')
             return sample
         kwargs.setdefault('spectrum', self)
+        sample = self._build_sample(**kwargs)
+        self.set_data_updated()
+        return sample
+    def _build_sample(self, **kwargs):
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample
-        self.set_data_updated()
         return sample
     def iter_frequencies(self):
         for key in sorted(self.samples.keys()):
@@ -92,6 +96,34 @@ class Spectrum(JSONMixin):
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d
+    
+class TimeBasedSpectrum(Spectrum):
+    def _build_sample(self, **kwargs):
+        sample = TimeBasedSample(**kwargs)
+        if sample.frequency not in self.samples:
+            self.samples[sample.frequency] = {}
+        self.samples[sample.frequency][sample.timestamp] = sample
+        return sample
+    def iter_samples(self):
+        samples = self.samples
+        last_ts = None
+        for key in self.iter_frequencies():
+            if last_ts is None:
+                last_ts = min(samples[key])
+                sample = samples[key][last_ts]
+            else:
+                if last_ts in samples[key]:
+                    sample = samples[key][last_ts]
+                else:
+                    l = [ts for ts in samples[key] if last_ts < ts]
+                    if not len(l):
+                        sample = None
+                    else:
+                        last_ts = min(l)
+                        sample = samples[key][last_ts]
+            if sample is None:
+                break
+            yield sample
 
 def compare_spectra(spec1, spec2):
     diff_spec = Spectrum()
