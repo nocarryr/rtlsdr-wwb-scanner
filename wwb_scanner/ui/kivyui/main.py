@@ -89,9 +89,9 @@ class MainApp(App):
         Action.trigger_by_name(btn.action, self)
     
 class PlotContainer(BoxLayout):
+    spectrum_graph = ObjectProperty(None)
     def add_plot(self, spectrum):
-        w = plots.SpectrumGraph(spectrum=spectrum, size_hint=[.8, .8])
-        self.add_widget(w)
+        self.spectrum_graph.add_plot(spectrum=spectrum)
     
 class ScanControls(BoxLayout):
     scan_range_widget = ObjectProperty(None)

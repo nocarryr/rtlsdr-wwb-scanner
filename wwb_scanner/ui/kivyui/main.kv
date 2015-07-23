@@ -58,6 +58,9 @@
                     action: 'plots.import'
     PlotContainer:
         id: plot_container
+        spectrum_graph: spectrum_graph
+        SpectrumGraph:
+            id: spectrum_graph
     ScanControls:
         id: scan_controls
     
@@ -102,3 +105,15 @@
         id: start_btn
         text: 'Start'
         on_release: root.on_scan_button_release()
+
+<SpectrumGraph>:
+    size_hint: [.8, .8]
+    
+<SpectrumPlot>:
+    pos_hint: {'x':0, 'y':0}
+    size_hint: [1., 1.]
+    canvas:
+        Color:
+            rgb: 0., 1., 0.
+        Line:
+            points: self.points
