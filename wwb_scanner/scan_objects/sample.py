@@ -1,6 +1,9 @@
+import time
 import numbers
 
-class Sample(object):
+from wwb_scanner.core import JSONMixin
+
+class Sample(JSONMixin):
     __slots__ = ('spectrum', '_frequency', '_magnitude')
     def __init__(self, **kwargs):
         self.spectrum = kwargs.get('spectrum')
@@ -45,3 +48,13 @@ class Sample(object):
         return str(self)
     def __str__(self):
         return '%s (%s dB)' % (self.formatted_frequency, self.magnitude)
+        
+class TimeBasedSample(Sample):
+    __slots__ = ('timestamp')
+    def __init__(self, **kwargs):
+        ts = kwargs.get('timestamp')
+        if ts is None:
+            ts = time.time()
+        self.timestamp = ts
+        super(TimeBasedSample, self).__init__(**kwargs)
+        

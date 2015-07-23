@@ -1,20 +1,17 @@
-import os
 import threading
-import json
 
-from rtlsdr import RtlSdr
-
-from wwb_scanner.scanner import sample_processing
+from wwb_scanner.core import JSONMixin
+from wwb_scanner.scanner.sdrwrapper import SdrWrapper
+from wwb_scanner.scanner.sample_processing import SampleCollection
 from wwb_scanner.scan_objects import Spectrum
-from wwb_scanner.ui import plots
-from wwb_scanner.file_handlers import CSVExporter, WWBExporter
 
 SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
-    step_size=.025,
+    step_size=.0125,
     sample_rate=2e6,
+    sampling_period=.05, 
     save_raw_values=False,
-    gain=40.,
+    gain=30.,
 )
 
 def mhz_to_hz(mhz):
@@ -25,7 +22,7 @@ def hz_to_mhz(hz):
 class StopScanner(Exception):
     pass
 
-class ScannerBase(object):
+class ScannerBase(JSONMixin):
     def __init__(self, **kwargs):
         self._current_freq = None
         self._progress = 0.
@@ -37,15 +34,8 @@ class ScannerBase(object):
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
             self.spectrum = Spectrum(step_size=self.step_size)
-        self.sample_collection = sample_processing.SampleCollection(scanner=self)
-    @classmethod
-    def from_json(cls, data):
-        if isinstance(data, basestring):
-            data = json.loads(data)
-        return cls(**data)
-    def to_json(self, **kwargs):
-        d = self._serialize()
-        return json.dumps(d, **kwargs)
+        if not kwargs.get('__from_json__'):
+            self.sample_collection = SampleCollection(scanner=self)
     @property
     def current_freq(self):
         return self._current_freq
@@ -73,7 +63,7 @@ class ScannerBase(object):
         f = sample_set.frequencies
         fmax = f.max()
         fsize = fmax - f.min()
-        return (fmax + (fsize / 2.)) - 0.
+        return (fmax + (fsize / 2.)) + (f[1] - f[2])
     def run_scan(self):
         freq, end_freq = self.scan_range
         while freq < end_freq:
@@ -87,7 +77,11 @@ class ScannerBase(object):
     def _serialize(self):
         d = {k: getattr(self, k) for k in SCANNER_DEFAULTS.keys()}
         d['spectrum'] = self.spectrum._serialize()
+        d['sample_collection'] = self.sample_collection._serialize()
         return d
+    def _deserialize(self, **kwargs):
+        data = kwargs.get('sample_collection')
+        self.sample_collection = SampleCollection.from_json(data, scanner=self)
         
 class Scanner(ScannerBase):
     '''
@@ -97,48 +91,26 @@ class Scanner(ScannerBase):
     '''
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
-        self.sdr = RtlSdr()
-        self.sdr.sample_rate = self.sample_rate
-        real_sr = self.sdr.sample_rate
-        if real_sr != self.sample_rate:
-            print 'real sample rate is %s' % (real_sr)
-        self.sample_rate = real_sr
-        if self.gain != 'AUTO':
-            self.sdr.gain = self.gain
-            real_g = self.sdr.gain
-            if real_g != self.gain:
-                print 'real gain value is %s' % (real_g)
-                self.gain = real_g
-        samples_per_scan = kwargs.get('samples_per_scan')
-        if samples_per_scan is None:
-            samples_per_scan = sample_processing.calc_num_samples(self.sample_rate)
-        sample_segment_length = kwargs.get('sample_segment_length')
-        if sample_segment_length is None:
-            sample_segment_length = int(self.sample_rate / mhz_to_hz(self.step_size) * 2)
-        self.samples_per_scan = samples_per_scan
-        self.sample_segment_length = sample_segment_length
-        if self.save_raw_values:
-            self.raw_values = {}
-            if 'raw_values' in kwargs:
-                for key, val in kwargs['raw_values'].items():
-                    self.raw_values[key] = sample_processing.SampleSet.from_json(self, val)
+        self.sdr_wrapper = SdrWrapper(sample_rate=self.sample_rate, gain=self.gain)
+        self.bandwidth = self.sample_rate / 2.
+    @property
+    def sdr(self):
+        return self.sdr_wrapper.sdr
+    def run_scan(self):
+        with self.sdr_wrapper:
+            super(Scanner, self).run_scan()
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         spectrum = self.spectrum
         freqs = sample_set.frequencies
         powers = sample_set.powers
+        center_freq = freqs[freqs.size / 2]
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
-            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True)
+            is_center = f == center_freq
+            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True, 
+                                is_center_frequency=is_center)
         return sample_set
-    def _serialize(self):
-        d = super(Scanner, self)._serialize()
-        keys = ['samples_per_scan', 'sample_segment_length']
-        d.update({k: getattr(self, k) for k in keys})
-        if self.save_raw_values:
-            raw_values = self.raw_values
-            d['raw_values'] = {k: raw_values[k]._serialize() for k in raw_values.keys()}
-        return d
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
@@ -188,21 +160,11 @@ class ThreadedScanner(threading.Thread, Scanner):
 def scan_and_plot(**kwargs):
     scanner = Scanner(**kwargs)
     scanner.run_scan()
-    plot = plots.SpectrumPlot(spectrum=scanner.spectrum)
-    plot.build_plot()
+    scanner.spectrum.show_plot()
     return scanner
 
 def scan_and_save(filename=None, frequency_format=None, **kwargs):
     scanner = Scanner(**kwargs)
-    if filename is None:
-        filename = 'scan_%07.3f-%07.3f' % (scanner.scan_range[0], scanner.scan_range[1])
-    if os.path.splitext(filename)[1].lower() not in ['.csv', '.sdb', '.sdb2']:
-        filename = '.'.join([filename, 'sdb2'])
     scanner.run_scan()
-    if os.path.splitext(filename)[1].lower() == '.csv':
-        cls = CSVExporter
-    else:
-        cls = WWBExporter
-    fh = cls(filename=filename, frequency_format=frequency_format, spectrum=scanner.spectrum)
-    fh()
+    scanner.spectrum.export_to_file(filename=filename, frequency_format=frequency_format)
     return scanner

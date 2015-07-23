@@ -1,2 +1,2 @@
-from .sample import Sample
-from .spectrum import Spectrum
+from .sample import Sample, TimeBasedSample
+from .spectrum import Spectrum, TimeBasedSpectrum

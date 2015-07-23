@@ -1,6 +1,8 @@
-import json
+import time
 import numpy as np
-from scipy.signal import welch
+from scipy.signal import welch, get_window
+
+from wwb_scanner.core import JSONMixin
 
 def next_2_to_pow(val):
     val -= 1
@@ -14,55 +16,48 @@ def next_2_to_pow(val):
 def calc_num_samples(sample_rate):
     return next_2_to_pow(int(sample_rate * .25))
 
-class SampleSet(object):
-    __slots__ = ('scanner', 'center_frequency', 'samples',
-                 'raw', 'frequencies', 'powers', 'collection')
+class SampleSet(JSONMixin):
+    __slots__ = ('scanner', 'center_frequency', 'raw', 
+                 'frequencies', 'powers', 'collection')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             setattr(self, key, kwargs.get(key))
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
-        if 'from_json' in kwargs or self.raw is None:
+        if not kwargs.get('__from_json__'):
             self.read_samples()
-    @classmethod
-    def from_json(cls, scanner, data):
-        if isinstance(data, basestring):
-            data = json.loads(data)
-        obj = cls(scanner, data['center_frequency'], from_json=True)
-        np_keys = ['samples', 'frequencies', 'raw', 'powers']
-        for key, val in data.items():
-            if key in np_keys:
-                val = np.array(val)
-            setattr(obj, key, val)
-        return obj
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
+        num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
-        samples = self.samples = sdr.read_samples(scanner.samples_per_scan)
-        f, powers = welch(samples, fs=scanner.sample_rate, nperseg=scanner.sample_segment_length)#, scaling='spectrum')
+        time.sleep(.1)
+        print 'reading %s samples' % (num_samples)
+        samples = sdr.read_samples(num_samples)
+        win = get_window('boxcar', int(scanner.bandwidth / (scanner.step_size * 1e6)))
+        noverlap = int(win.size / 4)
+        print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
+        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
+        self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
+        if f.size % 2 == 0:
+            f = f[1:]
+            powers = powers[1:]
         f += freq
         f /= 1e6
-        f = f[4:-4]
-        powers = powers[4:-4]
         self.frequencies = f
-        self.raw = powers.copy()
         self.powers = 10. * np.log10(powers)
-
     def _serialize(self):
         d = {}
         for key in self.__slots__:
-            if key == 'scanner':
+            if key in ['scanner', 'collection']:
                 continue
             val = getattr(self, key)
-            if isinstance(val, np.ndarray):
-                val = val.tolist()
             d[key] = val
         return d
 
-class SampleCollection(object):
+class SampleCollection(JSONMixin):
     def __init__(self, **kwargs):
         self.scanner = kwargs.get('scanner')
         self.sample_sets = {}
@@ -72,3 +67,11 @@ class SampleCollection(object):
         sample_set = SampleSet(collection=self, center_frequency=freq)
         self.add_sample_set(sample_set)
         return sample_set
+    def _serialize(self):
+        return {'sample_sets':
+            {k: v._serialize() for k, v in self.sample_sets.items()}, 
+        }
+    def _deserialize(self, **kwargs):
+        for key, val in kwargs.get('sample_sets', {}).items():
+            sample_set = SampleSet.from_json(val, collection=self)
+            self.sample_sets[key] = sample_set
