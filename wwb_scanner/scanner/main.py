@@ -24,6 +24,7 @@ class StopScanner(Exception):
 
 class ScannerBase(JSONMixin):
     def __init__(self, **kwargs):
+        self._running = threading.Event()
         self._current_freq = None
         self._progress = 0.
         for key, val in SCANNER_DEFAULTS.items():
@@ -66,12 +67,16 @@ class ScannerBase(JSONMixin):
         return (fmax + (fsize / 2.)) + (f[1] - f[2])
     def run_scan(self):
         freq, end_freq = self.scan_range
-        while freq < end_freq:
+        running = self._running
+        running.set()
+        while freq < end_freq and running.is_set():
             self.current_freq = freq
             sample_set = self.scan_freq(mhz_to_hz(freq))
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
+    def stop_scan(self):
+        self._running.clear()
     def scan_freq(self, freq):
         pass
     def _serialize(self):
