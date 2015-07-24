@@ -70,6 +70,9 @@
     PlotToolPanel:
         id: tool_panel
     
+<ColorButton@Button>:
+    on_press: print("pressed")
+    
 <PlotToolPanel>:
     cols: 1
     rows: 8
@@ -97,21 +100,21 @@
         id: label_widget
         text: self.parent.plot.name
         size_hint_y: .5
-    RelativeLayout:
+    BoxLayout:
         orientation: 'horizontal'
         size_hint_y: .5
-        Switch:
+        CheckBox:
+            id: selected_checkbox
+            group: 'selected_plot'
+            on_active: self.parent.parent.plot.selected = self.active
+        CheckBox:
             id: switch_widget
             active: self.parent.parent.plot.enabled
             on_active: self.parent.parent.plot.enabled = self.active
-            pos_hint: {'x':0, 'y':0}
-        Button:
+        ColorButton:
             id: color_btn
             on_release: self.parent.parent.on_color_btn_release()
-            text: ''
-            pos_hint: {'right':1, 'center_y':.5}
-            size_hint_x: .2
-            canvas:
+            canvas.after:
                 Color:
                     rgba: self.parent.parent.plot.color
                 Rectangle:

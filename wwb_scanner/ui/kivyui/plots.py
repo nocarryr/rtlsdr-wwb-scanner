@@ -72,6 +72,7 @@ class SpectrumPlot(Widget):
     points = ListProperty([])
     color = ListProperty([0., 1., 0., .8])
     enabled = BooleanProperty(True)
+    selected = BooleanProperty(False)
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
         self.spectrum = kwargs.get('spectrum')
