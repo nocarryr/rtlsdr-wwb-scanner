@@ -5,7 +5,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.app import App
 from kivy.properties import (
-    ObjectProperty, NumericProperty, ListProperty
+    ObjectProperty, NumericProperty, ListProperty, StringProperty
 )
 from kivy.garden.filebrowser import FileBrowser
 
@@ -100,6 +100,18 @@ class RootWidget(BoxLayout):
         self._popup.dismiss()
         self._popup = None
         self._popup_content = None
+    def show_message(self, **kwargs):
+        self.close_message()
+        content = MessageDialog(**kwargs)
+        self._message_popup = Popup(content=content, title=kwargs.get('title', ''), 
+                                    size_hint=[.6, .6], auto_dismiss=False)
+        self._message_popup.open()
+    def close_message(self):
+        if getattr(self, '_message_popup', None) is None:
+            return
+        self._message_popup.dismiss()
+        self._message_popup = None
+        
     
 
 
@@ -156,6 +168,10 @@ class ScanRangeTextInput(TextInput):
         t = '%07.3f' % (value)
         if self.text != t:
             self.text = t
+    
+class MessageDialog(BoxLayout):
+    message = StringProperty()
+    close_text = StringProperty('Close')
     
 def run():
     MainApp().run()

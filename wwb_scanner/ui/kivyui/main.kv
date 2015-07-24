@@ -219,3 +219,14 @@
         text: 'Cancel'
         on_release: self.parent.cancel_scan()
     
+<MessageDialog>:
+    orientation: 'vertical'
+    Label:
+        id: lbl_widget
+        multiline: True
+        size_hint_y: .8
+        text: self.parent.message
+    Button:
+        id: close_btn
+        text: self.parent.close_text
+        on_release: app.root.close_message()
