@@ -52,11 +52,17 @@ class FileAction(object):
         return getattr(self, 'select_string', '')
     def get_title(self):
         return getattr(self, 'title', '')
+    def get_filters(self):
+        return getattr(self, 'filters', [])
+    def build_browser(self, **kwargs):
+        kwargs.setdefault('select_string', self.get_select_string())
+        kwargs.setdefault('path', self.last_path)
+        kwargs.setdefault('filters', self.get_filters())
+        return FileBrowser(**kwargs)
     def do_action(self, app):
         self.app = app
-        select_string = self.get_select_string()
         title = self.get_title()
-        browser = FileBrowser(select_string=select_string, path=self.last_path)
+        browser = self.build_browser()
         browser.bind(on_success=self.on_browser_success)
         browser.bind(on_canceled=self.on_browser_canceled)
         app.root.show_popup(title=title, content=browser, 
@@ -72,6 +78,11 @@ class PlotsImport(Action, FileAction):
     name = 'plots.import'
     select_string = 'Import'
     title = 'Import Plot'
+    def get_filters(self):
+        exts = ['csv', 'sbd2']
+        filters = ['.'.join(['*', ext]) for ext in exts]
+        filters.extend(['.'.join(['*', ext.upper()]) for ext in exts])
+        return filters
     def on_browser_success(self, instance):
         filename = instance.selection[0]
         self.dismiss()
@@ -82,6 +93,29 @@ class PlotsExport(Action, FileAction):
     name = 'plots.export'
     select_string = 'Export'
     title = 'Export Selected Plot'
+    filters = ['*.csv', '*.CSV']
+    def do_action(self, app):
+        self.plot = app.root.plot_container.spectrum_graph.selected
+        if self.plot is None:
+            app.root.show_message(message='There is not plot to export')
+            return
+        super(PlotsExport, self).do_action(app)
+    def on_browser_success(self, instance):
+        filename = instance.filename
+        if not len(filename):
+            self.app.root.show_message(message='Please enter a filename')
+            return
+        _fn, ext = os.path.splitext(filename)
+        if not len(ext):
+            filename = os.path.extsep.join([_fn, 'csv'])
+        elif '*.%s' % (ext) not in self.filters:
+            self.app.root.show_message(message='Only "csv" files are currently supported')
+            return
+        filename = os.path.join(instance.path, filename)
+        self.dismiss()
+        self.plot.spectrum.export_to_file(filename=filename)
+        self.app.root.show_message(title='Success', message='File exported to\n%s' % (filename))
+        
     
 Action.build_from_subclasses()
 
