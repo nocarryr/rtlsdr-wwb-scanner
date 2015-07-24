@@ -19,6 +19,7 @@ class SpectrumGraph(RelativeLayout):
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
+    selected = ObjectProperty(None)
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -34,10 +35,19 @@ class SpectrumGraph(RelativeLayout):
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
     def add_plot(self, **kwargs):
+        if self.selected is None:
+            kwargs['selected'] = True
         plot = SpectrumPlot(**kwargs)
+        plot.bind(selected=self.on_plot_selected)
         self.add_widget(plot)
         self.calc_plot_scale()
+        if plot.selected:
+            self.selected = plot
         return plot
+    def on_plot_selected(self, instance, value):
+        if not value:
+            return
+        self.selected = instance
     def calc_plot_scale(self):
         d = {}
         for w in self.children:
