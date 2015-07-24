@@ -10,6 +10,7 @@ from kivy.properties import (
 from kivy.garden.filebrowser import FileBrowser
 
 from wwb_scanner.ui.kivyui import plots
+from wwb_scanner.ui.kivyui.scan import ScanProgress
 from wwb_scanner.file_handlers import BaseImporter
 
 class Action(object):
@@ -104,7 +105,10 @@ class ScanControls(BoxLayout):
     gain_txt = ObjectProperty(None)
     start_btn = ObjectProperty(None)
     def on_scan_button_release(self):
-        print self.scan_range_widget.scan_range
+        self.scan_progress = ScanProgress(scan_controls=self)
+        self.parent.show_popup(title='Scanning', content=self.scan_progress, 
+                               size_hint=(.5, .8), auto_dismiss=False)
+        self.scan_progress.run_scan()
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)
@@ -116,14 +120,15 @@ class ScanRangeTextInput(TextInput):
     value = NumericProperty()
     def __init__(self, **kwargs):
         super(ScanRangeTextInput, self).__init__(**kwargs)
-        self.bind(value=self.on_value_changed)
+        #self.bind(value=self.on_value_changed)
         self.bind(range_index=self.on_range_index_set)
     def on_range_index_set(self, instance, value):
         self.value = self.parent.scan_range[self.range_index]
         self.set_text_from_value()
     def validate_input(self):
         self.value = float(self.text)
-    def on_value_changed(self, instance, value):
+    def on_value(self, instance, value):
+        print instance, value
         self.parent.scan_range[self.range_index] = value
         self.set_text_from_value(value)
     def set_text_from_value(self, value=None):

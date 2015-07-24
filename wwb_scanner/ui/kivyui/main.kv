@@ -182,6 +182,7 @@
             text: 'Gain'
         TextInput:
             id: gain_txt
+            text: '30'
     Button:
         id: start_btn
         text: 'Start'
@@ -198,3 +199,17 @@
             rgba: self.color
         Line:
             points: self.points
+
+<ScanProgress>:
+    orientation: 'vertical'
+    progress_bar: progress_bar
+    cancel_btn: cancel_btn
+    root_widget: app.root
+    ProgressBar:
+        id: progress_bar
+        value_normalized: self.parent.progress
+    Button:
+        id: cancel_btn
+        text: 'Cancel'
+        on_release: self.parent.cancel_scan()
+    
