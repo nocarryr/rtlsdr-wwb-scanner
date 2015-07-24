@@ -87,6 +87,7 @@ class MainApp(App):
     def build(self):
         return RootWidget()
     def on_action_button_release(self, btn):
+        btn.parent.parent.dismiss()
         Action.trigger_by_name(btn.action, self)
     
 class PlotContainer(BoxLayout):
