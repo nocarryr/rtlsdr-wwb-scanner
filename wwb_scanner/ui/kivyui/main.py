@@ -33,37 +33,56 @@ class Action(object):
         if cb is not None:
             return cb(action=self, app=app)
         return self.do_action(app)
-    def do_action(self, app):
-        pass
     
 class FileQuit(Action):
     name = 'file.quit'
     def do_action(self, app):
         app.stop()
     
-class PlotsImport(Action):
-    name = 'plots.import'
+class FileAction(object):
     @property
     def last_path(self):
+        return self.get_last_path()
+    def get_last_path(self):
         p = getattr(self, '_last_path', None)
         if p is None:
             p = os.getcwd()
         return p
+    def get_select_string(self):
+        return getattr(self, 'select_string', '')
+    def get_title(self):
+        return getattr(self, 'title', '')
     def do_action(self, app):
         self.app = app
-        browser = FileBrowser(select_string='Import', path=self.last_path)
+        select_string = self.get_select_string()
+        title = self.get_title()
+        browser = FileBrowser(select_string=select_string, path=self.last_path)
         browser.bind(on_success=self.on_browser_success)
         browser.bind(on_canceled=self.on_browser_canceled)
-        app.root.show_popup(title='Import Plot', content=browser, 
+        app.root.show_popup(title=title, content=browser, 
                             size_hint=(.9, .9), auto_dismiss=False)
+    def dismiss(self):
+        self.app.root.close_popup()
+    def on_browser_success(self, instance):
+        self.dismiss()
+    def on_browser_canceled(self, instance):
+        self.dismiss()
+        
+class PlotsImport(Action, FileAction):
+    name = 'plots.import'
+    select_string = 'Import'
+    title = 'Import Plot'
     def on_browser_success(self, instance):
         filename = instance.selection[0]
-        self.app.root.close_popup()
+        self.dismiss()
         spectrum = BaseImporter.import_file(filename)
         self.app.root.plot_container.add_plot(spectrum=spectrum, filename=filename)
-    def on_browser_canceled(self, instance):
-        self.app.root.close_popup()
         
+class PlotsExport(Action, FileAction):
+    name = 'plots.export'
+    select_string = 'Export'
+    title = 'Export Selected Plot'
+    
 Action.build_from_subclasses()
 
 class RootWidget(BoxLayout):
