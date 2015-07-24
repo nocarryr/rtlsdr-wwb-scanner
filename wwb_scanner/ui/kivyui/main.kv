@@ -109,6 +109,7 @@
         CheckBox:
             id: selected_checkbox
             group: 'selected_plot'
+            active: self.parent.parent.plot.selected
             on_active: self.parent.parent.plot.selected = self.active
         CheckBox:
             id: switch_widget
