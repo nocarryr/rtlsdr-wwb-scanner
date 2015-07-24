@@ -59,7 +59,7 @@ class PlotsImport(Action):
         filename = instance.selection[0]
         self.app.root.close_popup()
         spectrum = BaseImporter.import_file(filename)
-        self.app.root.plot_container.add_plot(spectrum)
+        self.app.root.plot_container.add_plot(spectrum=spectrum, filename=filename)
     def on_browser_canceled(self, instance):
         self.app.root.close_popup()
         
@@ -73,6 +73,7 @@ class RootWidget(BoxLayout):
         self._popup_content = kwargs.get('content')
         self._popup = Popup(**kwargs)
         self._popup.open()
+        return self._popup
     def close_popup(self):
         if getattr(self, '_popup', None) is None:
             return
@@ -90,8 +91,12 @@ class MainApp(App):
     
 class PlotContainer(BoxLayout):
     spectrum_graph = ObjectProperty(None)
-    def add_plot(self, spectrum):
-        self.spectrum_graph.add_plot(spectrum=spectrum)
+    def add_plot(self, **kwargs):
+        fn = kwargs.get('filename')
+        if fn is not None:
+            kwargs.setdefault('name', os.path.basename(fn))
+        plot = self.spectrum_graph.add_plot(**kwargs)
+        self.tool_panel.add_plot(plot)
     
 class ScanControls(BoxLayout):
     scan_range_widget = ObjectProperty(None)

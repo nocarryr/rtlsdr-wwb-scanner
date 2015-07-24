@@ -1,9 +1,19 @@
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.widget import Widget
-from kivy.properties import ListProperty, DictProperty, NumericProperty, AliasProperty
+from kivy.properties import (
+    ListProperty, 
+    DictProperty, 
+    NumericProperty, 
+    AliasProperty, 
+    BooleanProperty, 
+    StringProperty, 
+    ObjectProperty, 
+)
 
 class SpectrumGraph(RelativeLayout):
     plot_params = DictProperty()
@@ -24,12 +34,16 @@ class SpectrumGraph(RelativeLayout):
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
     def add_plot(self, **kwargs):
-        self.add_widget(SpectrumPlot(**kwargs))
+        plot = SpectrumPlot(**kwargs)
+        self.add_widget(plot)
         self.calc_plot_scale()
+        return plot
     def calc_plot_scale(self):
         d = {}
         for w in self.children:
             if not isinstance(w, SpectrumPlot):
+                continue
+            if not w.enabled:
                 continue
             pscale = w.calc_plot_scale()
             for key, val in pscale.items():
@@ -54,7 +68,10 @@ class SpectrumGraph(RelativeLayout):
         return y * self.height
         
 class SpectrumPlot(Widget):
+    name = StringProperty('')
     points = ListProperty([])
+    color = ListProperty([0., 1., 0., .8])
+    enabled = BooleanProperty(True)
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
         self.spectrum = kwargs.get('spectrum')
@@ -69,6 +86,11 @@ class SpectrumPlot(Widget):
             return
         self.parent.bind(plot_params=self._trigger_update)
         self.parent.calc_plot_scale()
+    def on_enabled(self, instance, value):
+        if value:
+            self._trigger_update()
+        else:
+            self.points = []
     def _trigger_update(self, *args, **kwargs):
         self.draw_plot()
     def draw_plot(self):
@@ -77,6 +99,8 @@ class SpectrumPlot(Widget):
         freq_to_x = self.parent.freq_to_x
         db_to_y = self.parent.db_to_y
         self.points = []
+        if not self.enabled:
+            return
         for sample in self.spectrum.iter_samples():
             xy = [freq_to_x(sample.frequency), 
                   db_to_y(sample.magnitude)]
@@ -100,3 +124,33 @@ class SpectrumPlot(Widget):
                     val += 1
                 d[_key] = val
         return d
+
+class PlotToolPanel(GridLayout):
+    def add_plot(self, plot_widget):
+        self.add_widget(PlotTools(plot=plot_widget))
+        
+class PlotTools(BoxLayout):
+    label_widget = ObjectProperty(None)
+    switch_widget = ObjectProperty(None)
+    color_btn = ObjectProperty(None)
+    plot = ObjectProperty(None)
+    root_widget = ObjectProperty(None)
+    def on_color_btn_release(self, *args, **kwargs):
+        self.color_picker = PlotColorPicker(color=self.plot.color)
+        self.color_picker.bind(color=self.on_color_picker_color)
+        root = self.root_widget
+        popup = root.show_popup(title='Choose Color', content=self.color_picker, 
+                                size_hint=(.9, .9), auto_dismiss=False)
+        popup.bind(on_dismiss=self.on_popup_dismiss)
+    def on_color_picker_color(self, instance, value):
+        self.plot.color = value
+        self.root_widget.close_popup()
+    def on_popup_dismiss(self, *args, **kwargs):
+        self.color_picker = None
+        
+class PlotColorPicker(BoxLayout):
+    color = ListProperty([])
+    color_picker = ObjectProperty(None)
+    ok_btn = ObjectProperty(None)
+    cancel_btn = ObjectProperty(None)
+    

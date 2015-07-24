@@ -58,15 +58,86 @@
                     action: 'plots.import'
     PlotContainer:
         id: plot_container
-        spectrum_graph: spectrum_graph
-        SpectrumGraph:
-            id: spectrum_graph
     ScanControls:
         id: scan_controls
     
 <PlotContainer>:
-    orientation: 'vertical'
+    orientation: 'horizontal'
+    tool_panel: tool_panel
+    spectrum_graph: spectrum_graph
+    SpectrumGraph:
+        id: spectrum_graph
+    PlotToolPanel:
+        id: tool_panel
     
+<PlotToolPanel>:
+    cols: 1
+    rows: 8
+    row_default_height: self.height / self.rows
+    row_force_default: True
+    size_hint_x: .2
+    canvas:
+        Color:
+            rgb: .8, .8, .8
+        Line:
+            rectangle: self.x+1, self.y+1,self.width-1, self.height-1
+    
+<PlotTools>:
+    orientation: 'vertical'
+    label_widget: label_widget
+    switch_widget: switch_widget
+    color_btn: color_btn
+    root_widget: app.root
+    canvas:
+        Color:
+            rgb: .8, .8, .8
+        Line:
+            rectangle: self.x+1, self.y+1,self.width-1, self.height-1
+    Label:
+        id: label_widget
+        text: self.parent.plot.name
+        size_hint_y: .5
+    RelativeLayout:
+        orientation: 'horizontal'
+        size_hint_y: .5
+        Switch:
+            id: switch_widget
+            active: self.parent.parent.plot.enabled
+            on_active: self.parent.parent.plot.enabled = self.active
+            pos_hint: {'x':0, 'y':0}
+        Button:
+            id: color_btn
+            on_release: self.parent.parent.on_color_btn_release()
+            text: ''
+            pos_hint: {'right':1, 'center_y':.5}
+            size_hint_x: .2
+            canvas:
+                Color:
+                    rgba: self.parent.parent.plot.color
+                Rectangle:
+                    size: self.size
+                    pos: self.pos
+        
+<PlotColorPicker>:
+    orientation: 'vertical'
+    color_picker: color_picker
+    ok_btn: ok_btn
+    cancel_btn: cancel_btn
+    ColorPicker:
+        id: color_picker
+        color: self.color
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: .2
+        Button:
+            id: ok_btn
+            text: 'Ok'
+            on_press: self.parent.parent.color = color_picker.color
+        Button:
+            id: cancel_btn
+            text: 'Cancel'
+            on_release: root.close_popup()
+            
 <ScanRangeControls>:
     orientation: 'horizontal'
     
@@ -81,8 +152,18 @@
     scan_range_widget: scan_range
     gain_txt: gain_txt
     start_btn: start_btn
+    canvas:
+        Color:
+            rgb: .8, .8, .8
+        Line:
+            rectangle: self.x+1, self.y+1,self.width-1, self.height-1
     BoxLayout:
         orientation: 'vertical'
+        canvas:
+            Color:
+                rgb: .8, .8, .8
+            Line:
+                rectangle: self.x+1, self.y+1,self.width-1, self.height-1
         Label:
             text: 'Scan Range'
         ScanRangeControls:
@@ -114,6 +195,6 @@
     size_hint: [1., 1.]
     canvas:
         Color:
-            rgb: 0., 1., 0.
+            rgba: self.color
         Line:
             points: self.points
