@@ -178,17 +178,15 @@ class ScanControls(BoxLayout):
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
         self.scan_progress.root_widget = self.parent
-    def on_scanning(self, *args, **kwargs):
-        self.idle = not self.scanning
-        print 'scanning=%s, idle=%s' % (self.scanning, self.idle)
-    def on_idle(self, *args, **kwargs):
-        print 'scanning=%s, idle=%s' % (self.scanning, self.idle)
+    def on_idle(self, instance, value):
+        self.stop_btn.disabled = value
     def on_scan_button_release(self):
         self.scanning = True
+        self.idle = False
         self.scan_progress.build_scanner()
     def on_stop_button_release(self):
         self.scan_progress.cancel_scan()
-        self.scanning = False
+        self.idle = True
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)

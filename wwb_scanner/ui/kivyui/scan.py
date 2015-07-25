@@ -63,6 +63,7 @@ class ScanProgress(EventDispatcher):
         if self.scan_thread is not None:
             self.scan_thread = None
         self.scan_controls.scanning = False
+        self.scan_controls.idle = True
     def show_scan(self):
         if self.scanner is None:
             return
