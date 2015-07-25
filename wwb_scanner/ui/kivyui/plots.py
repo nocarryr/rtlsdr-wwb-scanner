@@ -19,6 +19,8 @@ class SpectrumGraph(RelativeLayout):
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
+    auto_scale_x = BooleanProperty(True)
+    auto_scale_y = BooleanProperty(True)
     selected = ObjectProperty(None)
     def get_x_size(self):
         return self.x_max - self.x_min
@@ -57,6 +59,10 @@ class SpectrumGraph(RelativeLayout):
             return
         self.selected = instance
     def calc_plot_scale(self):
+        auto_x = self.auto_scale_x
+        auto_y = self.auto_scale_y
+        if not auto_x and not auto_y:
+            return
         d = {}
         for w in self.children:
             if not isinstance(w, SpectrumPlot):
@@ -74,8 +80,11 @@ class SpectrumGraph(RelativeLayout):
                 elif 'max' in key:
                     if val > d[key]:
                         d[key] = val
-        print d
         for attr, val in d.items():
+            if not auto_x and attr.split('_')[0] == 'x':
+                continue
+            if not auto_y and attr.split('_')[0] == 'y':
+                continue
             setattr(self, attr, val)
     def freq_to_x(self, freq):
         x = (freq - self.x_min) / self.x_size
