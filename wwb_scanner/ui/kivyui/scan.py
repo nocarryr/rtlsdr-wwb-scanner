@@ -11,6 +11,7 @@ class ScanProgress(EventDispatcher):
     scan_controls = ObjectProperty(None)
     status_bar = ObjectProperty(None)
     root_widget = ObjectProperty(None)
+    plot = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(ScanProgress, self).__init__(**kwargs)
         self.scanner = None
@@ -28,6 +29,10 @@ class ScanProgress(EventDispatcher):
     def build_scanner(self):
         self.get_widgets()
         scan_range = self.scan_controls.scan_range_widget.scan_range
+        graph_widget = self.root_widget.plot_container.spectrum_graph
+        graph_widget.auto_scale_x = False
+        graph_widget.x_min = scan_range[0]
+        graph_widget.x_max = scan_range[1]
         gain = self.scan_controls.gain_txt.text
         if not gain:
             gain = None
@@ -45,6 +50,8 @@ class ScanProgress(EventDispatcher):
     def update_progress(self, *args, **kwargs):
         progress = float(self.scanner.progress)
         self.status_bar.progress = progress
+        if int(progress * 100) % 2 == 0:
+            self.show_scan()
     def run_scan(self):
         Clock.schedule_once(self._run_scan)
     def _run_scan(self, *args, **kwargs):
@@ -68,7 +75,12 @@ class ScanProgress(EventDispatcher):
         if self.scanner is None:
             return
         spectrum = self.scanner.spectrum
-        self.root_widget.plot_container.add_plot(spectrum=spectrum, name=self.name)
+        if self.plot is None:
+            plot_container = self.root_widget.plot_container
+            self.plot = plot_container.add_plot(spectrum=spectrum, name=self.name)
+        else:
+            self.plot.update_data()
+        
     
 class ScanThread(threading.Thread):
     def __init__(self, **kwargs):

@@ -165,6 +165,7 @@ class PlotContainer(BoxLayout):
             kwargs.setdefault('name', os.path.basename(fn))
         plot = self.spectrum_graph.add_plot(**kwargs)
         self.tool_panel.add_plot(plot)
+        return plot
     
 class ScanControls(BoxLayout):
     scan_range_widget = ObjectProperty(None)
