@@ -172,20 +172,28 @@ class PlotTools(BoxLayout):
     root_widget = ObjectProperty(None)
     def on_color_btn_release(self, *args, **kwargs):
         self.color_picker = PlotColorPicker(color=self.plot.color)
-        self.color_picker.bind(color=self.on_color_picker_color)
+        self.color_picker.bind(on_select=self.on_color_picker_select, 
+                               on_cancel=self.on_color_picker_cancel)
         root = self.root_widget
         popup = root.show_popup(title='Choose Color', content=self.color_picker, 
                                 size_hint=(.9, .9), auto_dismiss=False)
         popup.bind(on_dismiss=self.on_popup_dismiss)
-    def on_color_picker_color(self, instance, value):
-        self.plot.color = value
+    def on_color_picker_select(self, *args):
+        self.plot.color = self.color_picker.color
+        self.root_widget.close_popup()
+    def on_color_picker_cancel(self, *args):
         self.root_widget.close_popup()
     def on_popup_dismiss(self, *args, **kwargs):
         self.color_picker = None
         
 class PlotColorPicker(BoxLayout):
-    color = ListProperty([])
+    color = ListProperty([.8, .8, .8, 1.])
     color_picker = ObjectProperty(None)
     ok_btn = ObjectProperty(None)
     cancel_btn = ObjectProperty(None)
-    
+    __events__ = ('on_select', 'on_cancel')
+    def on_select(self, *args):
+        pass
+    def on_cancel(self, *args):
+        pass
+        

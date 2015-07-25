@@ -130,23 +130,40 @@
         
 <PlotColorPicker>:
     orientation: 'vertical'
+    spacing: 2
     color_picker: color_picker
     ok_btn: ok_btn
     cancel_btn: cancel_btn
     ColorPicker:
         id: color_picker
-        color: self.color
+        color: root.color
+        on_color: root.color[:3] = self.color[:3]
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint_y: .2
+        Label:
+            text: 'Alpha'
+        BoxLayout:
+            orientation: 'horizontal'
+            Label:
+                text: '%05.3f' % (alpha_slider.value)
+            Slider:
+                id: alpha_slider
+                min: 0.0
+                max: 1.0
+                value: root.color[3]
+                on_value: root.color[3] = self.value
     BoxLayout:
         orientation: 'horizontal'
-        size_hint_y: .2
+        size_hint_y: .1
         Button:
             id: ok_btn
             text: 'Ok'
-            on_press: self.parent.parent.color = color_picker.color
+            on_release: root.dispatch('on_select', root)
         Button:
             id: cancel_btn
             text: 'Cancel'
-            on_release: app.root.close_popup()
+            on_release: root.dispatch('on_cancel', root)
             
 <ScanRangeControls>:
     orientation: 'horizontal'
