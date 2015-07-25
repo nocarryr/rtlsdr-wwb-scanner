@@ -120,6 +120,7 @@ class SpectrumPlot(Widget):
         if not self.spectrum.data_updated.is_set():
             return
         self.build_data()
+        self.parent.calc_plot_scale()
         self.draw_plot()
     def build_data(self):
         spectrum = self.spectrum
