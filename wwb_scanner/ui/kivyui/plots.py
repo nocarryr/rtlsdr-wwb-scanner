@@ -103,11 +103,14 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         d = {attr:getattr(self, attr) for attr in attrs}
         d['plots'] = []
         for plot in self.children:
+            if not isinstance(plot, SpectrumPlot):
+                continue
             d['plots'].append(plot._serialize())
         return d
     def _deserialize(self, **kwargs):
-        if len(self.children):
-            self.clear_widgets()
+        for c in self.children[:]:
+            if isinstance(c, SpectrumPlot):
+                self.remove_widget(c)
         for key, val in kwargs.items():
             if key == 'plots':
                 for pldata in val:
