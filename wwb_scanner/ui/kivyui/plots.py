@@ -112,16 +112,23 @@ class SpectrumPlot(Widget):
         self.points = []
         if not self.enabled:
             return
-        for sample in self.spectrum.iter_samples():
-            xy = [freq_to_x(sample.frequency), 
-                  db_to_y(sample.magnitude)]
+        xy_data = self.xy_data
+        for freq, db in zip(xy_data['x'], xy_data['y']):
+            xy = [freq_to_x(freq), db_to_y(db)]
             self.points.extend(xy)
+    def update_data(self):
+        if not self.spectrum.data_updated.is_set():
+            return
+        self.build_data()
+        self.draw_plot()
     def build_data(self):
         spectrum = self.spectrum
         dtype = np.dtype(float)
-        x = np.fromiter(spectrum.iter_frequencies(), dtype)
-        y = np.fromiter((s.magnitude for s in spectrum.iter_samples()), dtype)
-        self.xy_data = {'x':x, 'y':y}
+        with spectrum.data_update_lock:
+            x = np.fromiter(spectrum.iter_frequencies(), dtype)
+            y = np.fromiter((s.magnitude for s in spectrum.iter_samples()), dtype)
+            self.xy_data = {'x':x, 'y':y}
+            spectrum.data_updated.clear()
     def calc_plot_scale(self):
         d = {}
         for key, data in self.xy_data.items():
