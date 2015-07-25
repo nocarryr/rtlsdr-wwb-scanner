@@ -5,7 +5,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.app import App
 from kivy.properties import (
-    ObjectProperty, NumericProperty, ListProperty, StringProperty
+    ObjectProperty, NumericProperty, ListProperty, StringProperty, BooleanProperty
 )
 from kivy.garden.filebrowser import FileBrowser
 
@@ -122,6 +122,7 @@ Action.build_from_subclasses()
 class RootWidget(BoxLayout):
     plot_container = ObjectProperty(None)
     scan_controls = ObjectProperty(None)
+    status_bar = ObjectProperty(None)
     def show_popup(self, **kwargs):
         self.close_popup()
         self._popup_content = kwargs.get('content')
@@ -169,11 +170,25 @@ class ScanControls(BoxLayout):
     scan_range_widget = ObjectProperty(None)
     gain_txt = ObjectProperty(None)
     start_btn = ObjectProperty(None)
+    stop_btn = ObjectProperty(None)
+    scanning = BooleanProperty(False)
+    idle = BooleanProperty(True)
+    def __init__(self, **kwargs):
+        super(ScanControls, self).__init__(**kwargs)
+        self.scan_progress = ScanProgress()
+    def on_parent(self, *args, **kwargs):
+        self.scan_progress.root_widget = self.parent
+    def on_scanning(self, *args, **kwargs):
+        self.idle = not self.scanning
+        print 'scanning=%s, idle=%s' % (self.scanning, self.idle)
+    def on_idle(self, *args, **kwargs):
+        print 'scanning=%s, idle=%s' % (self.scanning, self.idle)
     def on_scan_button_release(self):
-        self.scan_progress = ScanProgress(scan_controls=self)
-        self.parent.show_popup(title='Scanning', content=self.scan_progress, 
-                               size_hint=(.5, .8), auto_dismiss=False)
-        self.scan_progress.run_scan()
+        self.scanning = True
+        self.scan_progress.build_scanner()
+    def on_stop_button_release(self):
+        self.scan_progress.cancel_scan()
+        self.scanning = False
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)
@@ -206,6 +221,12 @@ class ScanRangeTextInput(TextInput):
 class MessageDialog(BoxLayout):
     message = StringProperty()
     close_text = StringProperty('Close')
+    
+class StatusBar(BoxLayout):
+    message_box = ObjectProperty(None)
+    progress_bar = ObjectProperty(None)
+    message_text = StringProperty('')
+    progress = NumericProperty(0.)
     
 def run():
     MainApp().run()

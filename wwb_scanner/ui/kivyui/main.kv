@@ -5,6 +5,7 @@
     orientation: 'vertical'
     plot_container: plot_container
     scan_controls: scan_controls
+    status_bar: status_bar
     ActionBar:
         pos_hint: {'top':1}
         ActionView:
@@ -63,6 +64,8 @@
         id: plot_container
     ScanControls:
         id: scan_controls
+    StatusBar:
+        id: status_bar
     
 <PlotContainer>:
     orientation: 'horizontal'
@@ -159,6 +162,7 @@
     scan_range_widget: scan_range
     gain_txt: gain_txt
     start_btn: start_btn
+    stop_btn: stop_btn
     canvas:
         Color:
             rgb: .8, .8, .8
@@ -193,8 +197,28 @@
     Button:
         id: start_btn
         text: 'Start'
+        disabled: root.scanning
         on_release: root.on_scan_button_release()
+    Button:
+        id: stop_btn
+        text: 'Stop'
+        diabled: root.idle
+        on_release: root.on_stop_button_release()
 
+<StatusBar>
+    orientation: 'horizontal'
+    size_hint_y: .1
+    message_box: message_box
+    progress_bar: progress_bar
+    Label:
+        id: message_box
+        size_hint_x: .75
+        text: self.parent.message_text
+    ProgressBar:
+        id: progress_bar
+        size_hint_x: .25
+        value_normalized: self.parent.progress
+        
 <SpectrumGraph>:
     size_hint: [.8, .8]
     
@@ -206,19 +230,6 @@
             rgba: self.color
         Line:
             points: self.points
-
-<ScanProgress>:
-    orientation: 'vertical'
-    progress_bar: progress_bar
-    cancel_btn: cancel_btn
-    root_widget: app.root
-    ProgressBar:
-        id: progress_bar
-        value_normalized: self.parent.progress
-    Button:
-        id: cancel_btn
-        text: 'Cancel'
-        on_release: self.parent.cancel_scan()
     
 <MessageDialog>:
     orientation: 'vertical'
