@@ -34,6 +34,14 @@ class SpectrumGraph(RelativeLayout):
     y_size = AliasProperty(get_y_size, set_y_size, bind=('y_min', 'y_max'))
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
+    def on_x_min(self, instance, value):
+        self.plot_params['x_min'] = value
+    def on_x_max(self, instance, value):
+        self.plot_params['x_max'] = value
+    def on_y_min(self, instance, value):
+        self.plot_params['y_min'] = value
+    def on_y_max(self, instance, value):
+        self.plot_params['y_max'] = value
     def add_plot(self, **kwargs):
         if self.selected is None:
             kwargs['selected'] = True
@@ -69,7 +77,6 @@ class SpectrumGraph(RelativeLayout):
         print d
         for attr, val in d.items():
             setattr(self, attr, val)
-        self.plot_params.update(d)
     def freq_to_x(self, freq):
         x = (freq - self.x_min) / self.x_size
         return x * self.width
