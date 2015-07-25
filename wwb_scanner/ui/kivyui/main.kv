@@ -238,6 +238,9 @@
         
 <SpectrumGraph>:
     size_hint: [.8, .8]
+    tick_container: tick_container
+    TickContainer:
+        id: tick_container
     
 <SpectrumPlot>:
     pos_hint: {'x':0, 'y':0}
@@ -247,6 +250,15 @@
             rgba: self.color
         Line:
             points: self.points
+        
+<TickContainer>:
+    pos_hint: {'x':0, 'y':0}
+    size_hint: [1., 1.]
+    
+#<Tickline>:
+#    size_hint: [1., 1.]
+#    #pos: [0, 0] if self.parent is None else self.parent.pos
+#    size: [200, 200] if self.parent is None else self.parent.size
     
 <MessageDialog>:
     orientation: 'vertical'

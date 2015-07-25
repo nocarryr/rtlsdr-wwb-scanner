@@ -1,9 +1,11 @@
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
+from kivy.garden.tickline import Tickline, Tick, LabellessTick
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 from kivy.properties import (
     ListProperty, 
@@ -18,6 +20,15 @@ from kivy.properties import (
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scan_objects import Spectrum
 
+class TickContainer(FloatLayout):
+    def do_layout(self, *args, **kwargs):
+        super(TickContainer, self).do_layout(*args, **kwargs)
+        print 'container: ', self.pos, self.size
+        for c in self.children:
+            if isinstance(c, Tickline):
+                c.redraw()
+            print c, c.pos, c.size
+    
 class SpectrumGraph(RelativeLayout, JSONMixin):
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
@@ -25,6 +36,11 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     auto_scale_x = BooleanProperty(True)
     auto_scale_y = BooleanProperty(True)
     selected = ObjectProperty(None)
+    tick_container = ObjectProperty(None)
+    x_tick_line = ObjectProperty(None)
+    y_tick_line = ObjectProperty(None)
+    x_ticks = DictProperty()
+    y_ticks = DictProperty()
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -39,6 +55,10 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     y_size = AliasProperty(get_y_size, set_y_size, bind=('y_min', 'y_max'))
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
+    def on_tick_container(self, *args):
+        if self.tick_container is None:
+            return
+        self.build_ticklines()
     def on_x_min(self, instance, value):
         self.plot_params['x_min'] = value
     def on_x_max(self, instance, value):
@@ -91,6 +111,31 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             if not auto_y and attr.split('_')[0] == 'y':
                 continue
             setattr(self, attr, val)
+        if self.x_tick_line is None:
+            self.build_ticklines()
+    def build_tick_labels(self):
+        pass
+    def build_ticklines(self):
+        self.x_ticks = dict(
+            #minor=LabellessTick(tick_size=[1, 4], scale_factor=25.), 
+            #major=Tick(tick_size=[2, 10], scale_factor=5.), 
+            #label=DataListTick(
+        )
+        self.y_ticks = dict(
+            #minor=LabellessTick(tick_size=[1, 4], scale_factor=25.), 
+            #major=Tick(tick_size=[2, 10], scale_factor=5.), 
+            #label=DataListTick(
+        )
+        #keys = ['major', 'minor']
+        #x_tick_list = [self.x_ticks[key] for key in keys]
+        #y_tick_list = [self.y_ticks[key] for key in keys]
+        self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
+                                    orientation='horizontal', ticks=[Tick()])#x_tick_list)
+        self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
+                                    orientation='vertical', ticks=[Tick()])#y_tick_list)
+        self.tick_container.add_widget(self.x_tick_line)
+        self.tick_container.add_widget(self.y_tick_line)
+        
     def freq_to_x(self, freq):
         x = (freq - self.x_min) / self.x_size
         return x * self.width
