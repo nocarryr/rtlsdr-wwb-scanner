@@ -10,6 +10,11 @@ class JSONMixin(object):
         obj = cls(**kwargs)
         obj._deserialize(**kwargs)
         return obj
+    def instance_from_json(self, data, **kwargs):
+        if isinstance(data, basestring):
+            data = json.loads(data)
+        kwargs.update(data)
+        self._deserialize(**kwargs)
     def to_json(self, **kwargs):
         d = self._serialize()
         return json.dumps(d, **kwargs)
