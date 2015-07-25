@@ -9,6 +9,7 @@ from kivy.properties import (
 )
 from kivy.garden.filebrowser import FileBrowser
 
+from wwb_scanner.core import JSONMixin
 from wwb_scanner.ui.kivyui import plots
 from wwb_scanner.ui.kivyui.scan import ScanProgress
 from wwb_scanner.file_handlers import BaseImporter
@@ -74,6 +75,55 @@ class FileAction(object):
     def on_browser_canceled(self, instance):
         self.dismiss()
         
+class FileSaveAs(Action, FileAction):
+    name = 'file.save_as'
+    select_string = 'Save As'
+    title = 'Save Session As'
+    filters = ['*.json', '*.JSON']
+    def on_browser_success(self, instance):
+        filename = instance.filename
+        if not len(filename):
+            self.app.root.show_message(message='Please enter a filename')
+            return
+        _fn, ext = os.path.splitext(filename)
+        if not len(ext):
+            filename = os.path.extsep.join([_fn, 'json'])
+        #elif '*.%s' % (ext) not in self.filters:
+        #    self.app.root.show_message(message='Only "json" files are currently supported')
+        #    return
+        filename = os.path.join(instance.path, filename)
+        self.dismiss()
+        s = self.app.root.to_json(indent=2)
+        with open(filename, 'w') as f:
+            f.write(s)
+        self.app.root.current_filename = filename
+        self.app.root.show_message(title='Success', message='File saved as\n%s' % (filename))
+    
+class FileSave(Action):
+    name = 'file.save'
+    def do_action(self, app):
+        filename = app.root.current_filename
+        if not filename:
+            Action.trigger_by_name('file.save_as', app)
+            return
+        s = app.root.to_json(indent=2)
+        with open(filename, 'w') as f:
+            f.write(s)
+        app.root.status_bar.message_text = 'File saved'
+    
+class FileOpen(Action, FileAction):
+    name = 'file.open'
+    select_string = 'Open'
+    title = 'Open Session'
+    filters = ['*.json', '*.JSON']
+    def on_browser_success(self, instance):
+        filename = os.path.join(instance.path, instance.filename)
+        with open(filename, 'r') as f:
+            s = f.read()
+        self.dismiss()
+        self.app.root.instance_from_json(s)
+        self.app.root.current_filename = filename
+    
 class PlotsImport(Action, FileAction):
     name = 'plots.import'
     select_string = 'Import'
@@ -119,10 +169,11 @@ class PlotsExport(Action, FileAction):
     
 Action.build_from_subclasses()
 
-class RootWidget(BoxLayout):
+class RootWidget(BoxLayout, JSONMixin):
     plot_container = ObjectProperty(None)
     scan_controls = ObjectProperty(None)
     status_bar = ObjectProperty(None)
+    current_filename = StringProperty()
     def show_popup(self, **kwargs):
         self.close_popup()
         self._popup_content = kwargs.get('content')
@@ -146,7 +197,14 @@ class RootWidget(BoxLayout):
             return
         self._message_popup.dismiss()
         self._message_popup = None
-        
+    def _serialize(self):
+        attrs = ['plot_container', 'scan_controls']
+        d = {attr:getattr(self, attr)._serialize() for attr in attrs}
+        return d
+    def _deserialize(self, **kwargs):
+        for key, data in kwargs.items():
+            obj = getattr(self, key)
+            obj.instance_from_json(data)
     
 
 
@@ -157,7 +215,7 @@ class MainApp(App):
         btn.parent.parent.dismiss()
         Action.trigger_by_name(btn.action, self)
     
-class PlotContainer(BoxLayout):
+class PlotContainer(BoxLayout, JSONMixin):
     spectrum_graph = ObjectProperty(None)
     def add_plot(self, **kwargs):
         fn = kwargs.get('filename')
@@ -166,8 +224,14 @@ class PlotContainer(BoxLayout):
         plot = self.spectrum_graph.add_plot(**kwargs)
         self.tool_panel.add_plot(plot)
         return plot
+    def _serialize(self):
+        d = {'spectrum_graph':self.spectrum_graph._serialize()}
+        return d
+    def _deserialize(self, **kwargs):
+        data = kwargs.get('spectrum_graph')
+        self.spectrum_graph.instance_from_json(data)
     
-class ScanControls(BoxLayout):
+class ScanControls(BoxLayout, JSONMixin):
     scan_range_widget = ObjectProperty(None)
     gain_txt = ObjectProperty(None)
     start_btn = ObjectProperty(None)
@@ -188,6 +252,18 @@ class ScanControls(BoxLayout):
     def on_stop_button_release(self):
         self.scan_progress.cancel_scan()
         self.idle = True
+    def _serialize(self):
+        d = dict(
+            scan_range=self.scan_range_widget.scan_range, 
+            gain=self.gain_txt.text, 
+        )
+        return d
+    def _deserialize(self, **kwargs):
+        scan_range = kwargs.get('scan_range')
+        gain = kwargs.get('gain')
+        self.scan_range_widget.scan_range_start_txt = scan_range[0]
+        self.scan_range_widget.scan_range_end_txt = scan_range[1]
+        self.gain_txt.text = gain
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)

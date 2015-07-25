@@ -15,7 +15,10 @@ from kivy.properties import (
     ObjectProperty, 
 )
 
-class SpectrumGraph(RelativeLayout):
+from wwb_scanner.core import JSONMixin
+from wwb_scanner.scan_objects import Spectrum
+
+class SpectrumGraph(RelativeLayout, JSONMixin):
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
@@ -45,9 +48,11 @@ class SpectrumGraph(RelativeLayout):
     def on_y_max(self, instance, value):
         self.plot_params['y_max'] = value
     def add_plot(self, **kwargs):
-        if self.selected is None:
-            kwargs['selected'] = True
-        plot = SpectrumPlot(**kwargs)
+        plot = kwargs.get('plot')
+        if plot is None:
+            if self.selected is None:
+                kwargs['selected'] = True
+            plot = SpectrumPlot(**kwargs)
         plot.bind(selected=self.on_plot_selected)
         self.add_widget(plot)
         self.calc_plot_scale()
@@ -92,8 +97,27 @@ class SpectrumGraph(RelativeLayout):
     def db_to_y(self, db):
         y = (db - self.y_min) / self.y_size
         return y * self.height
+    def _serialize(self):
+        attrs = ['x_max', 'x_min', 'y_max', 'y_min', 
+                 'auto_scale_x', 'auto_scale_y']
+        d = {attr:getattr(self, attr) for attr in attrs}
+        d['plots'] = []
+        for plot in self.children:
+            d['plots'].append(plot._serialize())
+        return d
+    def _deserialize(self, **kwargs):
+        if len(self.children):
+            self.clear_widgets()
+        for key, val in kwargs.items():
+            if key == 'plots':
+                for pldata in val:
+                    plot = SpectrumPlot.from_json(pldata)
+                    self.add_plot(plot=plot)
+                    self.parent.tool_panel.add_plot(plot)
+            else:
+                setattr(self, key, val)
         
-class SpectrumPlot(Widget):
+class SpectrumPlot(Widget, JSONMixin):
     name = StringProperty('')
     points = ListProperty([])
     color = ListProperty([0., 1., 0., .8])
@@ -102,7 +126,8 @@ class SpectrumPlot(Widget):
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
         self.spectrum = kwargs.get('spectrum')
-        self.build_data()
+        if self.spectrum is not None:
+            self.build_data()
         if self.parent is not None:
             self.parent.bind(plot_params=self._trigger_update)
             self.parent.calc_plot_scale()
@@ -159,6 +184,15 @@ class SpectrumPlot(Widget):
                     val += 1
                 d[_key] = val
         return d
+    def _serialize(self):
+        attrs = ['name', 'color', 'enabled', 'selected']
+        d = {attr: getattr(self, attr) for attr in attrs}
+        d['spectrum_data'] = self.spectrum._serialize()
+        return d
+    def _deserialize(self, **kwargs):
+        spdata = kwargs.get('spectrum_data')
+        self.spectrum = Spectrum.from_json(spdata)
+        self.build_data()
 
 class PlotToolPanel(GridLayout):
     def add_plot(self, plot_widget):
@@ -170,6 +204,15 @@ class PlotTools(BoxLayout):
     color_btn = ObjectProperty(None)
     plot = ObjectProperty(None)
     root_widget = ObjectProperty(None)
+    def on_plot(self, *args, **kwargs):
+        if self.plot is None:
+            return
+        self.plot.bind(parent=self.on_plot_parent)
+    def on_plot_parent(self, *args, **kwargs):
+        if self.plot is None:
+            return
+        if self.plot.parent is None:
+            self.parent.remove_widget(self)
     def on_color_btn_release(self, *args, **kwargs):
         self.color_picker = PlotColorPicker(color=self.plot.color)
         self.color_picker.bind(on_select=self.on_color_picker_select, 
