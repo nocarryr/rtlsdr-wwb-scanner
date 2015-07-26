@@ -28,16 +28,12 @@ class ScanProgress(EventDispatcher):
             self.status_bar = r.status_bar
     def build_scanner(self):
         self.get_widgets()
-        scan_range = self.scan_controls.scan_range_widget.scan_range
+        scan_range = self.scan_controls.scan_range
         graph_widget = self.root_widget.plot_container.spectrum_graph
         graph_widget.auto_scale_x = False
         graph_widget.x_min = scan_range[0]
         graph_widget.x_max = scan_range[1]
-        gain = self.scan_controls.gain_txt.text
-        if not gain:
-            gain = None
-        else:
-            gain = float(gain)
+        gain = self.scan_controls.gain
         self.name = ' - '.join([str(v) for v in scan_range])
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)

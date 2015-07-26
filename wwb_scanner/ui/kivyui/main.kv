@@ -210,7 +210,9 @@
             text: 'Gain'
         TextInput:
             id: gain_txt
-            text: '30'
+            text: str(root.gain)
+            on_text: root.gain = float(self.text)
+            input_filter: float
     Button:
         id: start_btn
         text: 'Start'

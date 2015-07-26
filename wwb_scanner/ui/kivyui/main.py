@@ -5,7 +5,12 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.popup import Popup
 from kivy.app import App
 from kivy.properties import (
-    ObjectProperty, NumericProperty, ListProperty, StringProperty, BooleanProperty
+    ObjectProperty,
+    NumericProperty, 
+    ListProperty, 
+    StringProperty,
+    BooleanProperty, 
+    AliasProperty, 
 )
 from kivy.garden.filebrowser import FileBrowser
 
@@ -238,6 +243,14 @@ class ScanControls(BoxLayout, JSONMixin):
     stop_btn = ObjectProperty(None)
     scanning = BooleanProperty(False)
     idle = BooleanProperty(True)
+    gain = NumericProperty(30.)
+    def get_scan_range(self):
+        return self.scan_range_widget.scan_range
+    def set_scan_range(self, value):
+        self.scan_range_widget.scan_range = value
+    scan_range = AliasProperty(get_scan_range, set_scan_range)
+    def get_gain(self):
+        return self.gain_txt.text
     def __init__(self, **kwargs):
         super(ScanControls, self).__init__(**kwargs)
         self.scan_progress = ScanProgress()
@@ -254,16 +267,15 @@ class ScanControls(BoxLayout, JSONMixin):
         self.idle = True
     def _serialize(self):
         d = dict(
-            scan_range=self.scan_range_widget.scan_range, 
-            gain=self.gain_txt.text, 
+            scan_range=self.scan_range, 
+            gain=self.gain, 
         )
         return d
     def _deserialize(self, **kwargs):
         scan_range = kwargs.get('scan_range')
         gain = kwargs.get('gain')
-        self.scan_range_widget.scan_range_start_txt = scan_range[0]
-        self.scan_range_widget.scan_range_end_txt = scan_range[1]
-        self.gain_txt.text = gain
+        self.scan_range = scan_range
+        self.gain = float(gain)
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)
