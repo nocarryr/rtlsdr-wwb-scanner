@@ -1,7 +1,7 @@
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
-from kivy.garden.tickline import Tickline, Tick, LabellessTick
+from kivy.garden.tickline import Tickline, Tick, LabellessTick, DataListTick
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
@@ -30,6 +30,7 @@ class TickContainer(FloatLayout):
             print c, c.pos, c.size
     
 class SpectrumGraph(RelativeLayout, JSONMixin):
+    scan_controls = ObjectProperty(None)
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
@@ -39,15 +40,15 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     tick_container = ObjectProperty(None)
     x_tick_line = ObjectProperty(None)
     y_tick_line = ObjectProperty(None)
-    x_ticks = DictProperty()
-    y_ticks = DictProperty()
+    x_tick_data = ListProperty()
+    y_tick_data = ListProperty()
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
         pass
     x_size = AliasProperty(get_x_size, set_x_size, bind=('x_min', 'x_max'))
-    y_min = NumericProperty(0.)
-    y_max = NumericProperty(1.)
+    y_min = NumericProperty(-100.)
+    y_max = NumericProperty(0.)
     def get_y_size(self):
         return self.y_max - self.y_min
     def set_y_size(self, value):
@@ -61,12 +62,22 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         self.build_ticklines()
     def on_x_min(self, instance, value):
         self.plot_params['x_min'] = value
+        self.build_tick_data()
     def on_x_max(self, instance, value):
         self.plot_params['x_max'] = value
+        self.build_tick_data()
     def on_y_min(self, instance, value):
         self.plot_params['y_min'] = value
+        self.build_tick_data()
     def on_y_max(self, instance, value):
         self.plot_params['y_max'] = value
+        self.build_tick_data()
+    def on_scan_controls(self, *args):
+        if self.scan_controls is None:
+            return
+        scan_range = self.scan_controls.scan_range
+        self.x_min = scan_range[0]
+        self.x_max = scan_range[1]
     def add_plot(self, **kwargs):
         plot = kwargs.get('plot')
         if plot is None:
@@ -113,8 +124,14 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             setattr(self, attr, val)
         if self.x_tick_line is None:
             self.build_ticklines()
-    def build_tick_labels(self):
-        pass
+    def build_tick_data(self):
+        x = np.linspace(self.x_min, self.x_max, 10)
+        y = np.linspace(self.y_min, self.y_max, 10)
+        self.x_tick_data = x.tolist()
+        self.y_tick_data = y.tolist()
+        if self.x_tick_line is not None:
+            self.x_tick_line.ticks[1].data = self.x_tick_data
+            self.y_tick_line.ticks[1].data = self.y_tick_data
     def build_ticklines(self):
         self.x_ticks = dict(
             #minor=LabellessTick(tick_size=[1, 4], scale_factor=25.), 
@@ -129,10 +146,14 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         #keys = ['major', 'minor']
         #x_tick_list = [self.x_ticks[key] for key in keys]
         #y_tick_list = [self.y_ticks[key] for key in keys]
+        self.build_tick_data()
+        print self.x_tick_data, self.y_tick_data
         self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
-                                    orientation='horizontal', ticks=[Tick()])#x_tick_list)
+                                    orientation='horizontal', 
+                                    ticks=[Tick(), DataListTick(data=self.x_tick_data, scale_factor=10., valign='line_top')])
         self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
-                                    orientation='vertical', ticks=[Tick()])#y_tick_list)
+                                    orientation='vertical', 
+                                    ticks=[Tick(), DataListTick(data=self.y_tick_data, scale_factor=10., halign='line_left')])
         self.tick_container.add_widget(self.x_tick_line)
         self.tick_container.add_widget(self.y_tick_line)
         

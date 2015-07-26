@@ -62,19 +62,19 @@
                     action: 'plots.export'
     PlotContainer:
         id: plot_container
+        orientation: 'horizontal'
+        tool_panel: tool_panel
+        spectrum_graph: spectrum_graph
+        SpectrumGraph:
+            id: spectrum_graph
+            scan_controls: scan_controls
+        PlotToolPanel:
+            id: tool_panel
     ScanControls:
         id: scan_controls
     StatusBar:
         id: status_bar
     
-<PlotContainer>:
-    orientation: 'horizontal'
-    tool_panel: tool_panel
-    spectrum_graph: spectrum_graph
-    SpectrumGraph:
-        id: spectrum_graph
-    PlotToolPanel:
-        id: tool_panel
     
 <ColorButton@Button>:
     on_press: print("pressed")
