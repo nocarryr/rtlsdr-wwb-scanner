@@ -1,6 +1,8 @@
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
+from kivy.core.window import Window
+from kivy.graphics import Color, Line
 from kivy.garden.tickline import Tickline, Tick, LabellessTick
 from kivy.core.text import Label as CoreLabel
 from kivy.uix.boxlayout import BoxLayout
@@ -106,6 +108,14 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         if plot.selected:
             self.selected = plot
         return plot
+    def add_widget(self, w, index=0, canvas=None):
+        if isinstance(w, GraphOverlay):
+            index = 0
+        elif len(self.children):
+            index += 1
+        print w, index
+        super(SpectrumGraph, self).add_widget(w, index)
+        print self.children
     def on_plot_selected(self, instance, value):
         if not value:
             return
@@ -259,6 +269,18 @@ class SpectrumPlot(Widget, JSONMixin):
                     val += 1
                 d[_key] = val
         return d
+    def get_nearest_by_freq(self, freq):
+        spectrum = self.spectrum
+        sample = spectrum.samples.get(freq)
+        if sample is not None:
+            return sample.frequency, sample.magnitude
+        xy_data = self.xy_data
+        if freq > xy_data['x'].max():
+            return None, None
+        if freq < xy_data['x'].min():
+            return None, None
+        i = np.abs(xy_data['x'] - freq).argmin()
+        return xy_data['x'][i], xy_data['y'][i]
     def _serialize(self):
         attrs = ['name', 'color', 'enabled', 'selected']
         d = {attr: getattr(self, attr) for attr in attrs}
@@ -315,3 +337,63 @@ class PlotColorPicker(BoxLayout):
     def on_cancel(self, *args):
         pass
         
+class GraphOverlay(Widget):
+    spectrum_graph = ObjectProperty(None)
+    label_widget = ObjectProperty(None)
+    crosshair_widget = ObjectProperty(None)
+    label_text = StringProperty()
+    plot_values = DictProperty()
+    def __init__(self, **kwargs):
+        super(GraphOverlay, self).__init__(**kwargs)
+        Window.bind(mouse_pos=self.on_mouse_pos)
+    def on_mouse_pos(self, instance, pos):
+        graph = self.spectrum_graph
+        if graph is None:
+            return
+        plot = graph.selected
+        if plot is None:
+            return
+        if not self.collide_point(*pos):
+            return
+        #plot = self.selected
+        #if plot is None or not self.collide_point(*touch.pos):
+        #    return super(SpectrumGraph, self).on_touch_move(touch)
+        _x, _y = self.to_widget(*pos)
+        #x, y = self.parent.to_local(_x, _y, relative=True)
+        x, y = self.to_parent(_x, _y, relative=True)
+        print pos[0], _x, x, ' - ', pos[1], _y, y
+        freq = graph.x_to_freq(x)
+        freq, db = plot.get_nearest_by_freq(freq)
+        if freq is None:
+            return
+        x = graph.freq_to_x(x)
+        y = graph.db_to_y(db)
+        x, y = self.to_local(x, y)
+        self.plot_values.update({'freq':freq, 'db':db, 'x':x, 'y':y})
+    def on_plot_values(self, *args, **kwargs):
+        freq = self.plot_values.get('freq')
+        db = self.plot_values.get('db')
+        if freq is None or db is None:
+            self.label_text = ''
+        else:
+            self.label_text = '%07.3f (MHz) - %04.1f (dBm)' % (freq, db)
+    
+class GraphCrosshair(Widget):
+    def on_parent(self, *args, **kwargs):
+        if self.parent is None:
+            return
+        self.parent.bind(plot_values=self.on_plot_values)
+    def on_plot_values(self, *args, **kwargs):
+        self._trigger_update()
+    def _trigger_update(self, *args, **kwargs):
+        self.draw_crosshairs()
+    def draw_crosshairs(self, *args, **kwargs):
+        plot_values = self.parent.plot_values
+        self.canvas.clear()
+        x, y, f = [plot_values.get(key) for key in ['x', 'y', 'freq']]
+        if f is None:
+            return
+        with self.canvas:
+            Color(1., 1., 1.)
+            Line(points=[x, self.y, x, self.height])
+            Line(points=[self.x, y, self.width, y])
