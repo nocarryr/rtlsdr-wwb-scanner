@@ -8,6 +8,7 @@
     status_bar: status_bar
     ActionBar:
         pos_hint: {'top':1}
+        size_hint_y: .1
         ActionView:
             use_separator: True
             ActionPrevious:
@@ -68,12 +69,16 @@
         SpectrumGraph:
             id: spectrum_graph
             scan_controls: scan_controls
+            #pos_hint: {'x':0, 'y':0}
         PlotToolPanel:
             id: tool_panel
+            size_hint_x: .2
     ScanControls:
         id: scan_controls
+        size_hint_y: .15
     StatusBar:
         id: status_bar
+        size_hint_y: .05
     
     
 <ColorButton@Button>:
@@ -175,7 +180,6 @@
     
 <ScanControls>:
     orientation: 'horizontal'
-    size_hint_y: .15
     scan_range_widget: scan_range
     gain_txt: gain_txt
     start_btn: start_btn
@@ -226,7 +230,6 @@
 
 <StatusBar>
     orientation: 'horizontal'
-    size_hint_y: .1
     message_box: message_box
     progress_bar: progress_bar
     Label:
@@ -239,10 +242,15 @@
         value_normalized: self.parent.progress
         
 <SpectrumGraph>:
-    size_hint: [.8, .8]
+    #size_hint: [1., 1.]
+    #pos_hint: {'x':0, 'y':0}
     tick_container: tick_container
     TickContainer:
         id: tick_container
+        pos_hint: {'x':0, 'y':0}
+        size_hint: [1., 1.]
+        #size: root.size
+        #pos: root.pos
     
 <SpectrumPlot>:
     pos_hint: {'x':0, 'y':0}
@@ -254,8 +262,9 @@
             points: self.points
         
 <TickContainer>:
-    pos_hint: {'x':0, 'y':0}
-    size_hint: [1., 1.]
+    #pos_hint: {'x':0, 'y':0}
+    #size_hint: [.8, .8]
+    
     
 #<Tickline>:
 #    size_hint: [1., 1.]
