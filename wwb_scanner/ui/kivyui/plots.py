@@ -1,7 +1,7 @@
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
-from kivy.garden.tickline import Tickline, Tick, LabellessTick, DataListTick
+from kivy.garden.tickline import Tickline, Tick, LabellessTick
 from kivy.core.text import Label as CoreLabel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
@@ -24,11 +24,9 @@ from wwb_scanner.scan_objects import Spectrum
 class TickContainer(FloatLayout):
     def do_layout(self, *args, **kwargs):
         super(TickContainer, self).do_layout(*args, **kwargs)
-        print 'container: ', self.pos, self.size
         for c in self.children:
             if isinstance(c, Tickline):
                 c.redraw()
-            print c, c.pos, c.size
     
 class CustomLabelTick(Tick):
     spectrum_graph = ObjectProperty(None)
@@ -53,13 +51,6 @@ class DbTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
         return str(self.spectrum_graph.y_to_db(pos))
         
-class UpdatingDataListTick(DataListTick):
-    tickline_parent = ObjectProperty(None)
-    def on_data(self, *args):
-        if self.tickline_parent is None:
-            return
-        self.tickline_parent.redraw()
-        
 class SpectrumGraph(RelativeLayout, JSONMixin):
     scan_controls = ObjectProperty(None)
     plot_params = DictProperty()
@@ -71,8 +62,6 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     tick_container = ObjectProperty(None)
     x_tick_line = ObjectProperty(None)
     y_tick_line = ObjectProperty(None)
-    x_tick_data = ListProperty()
-    y_tick_data = ListProperty()
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -93,16 +82,12 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         self.build_ticklines()
     def on_x_min(self, instance, value):
         self.plot_params['x_min'] = value
-        self.build_tick_data()
     def on_x_max(self, instance, value):
         self.plot_params['x_max'] = value
-        self.build_tick_data()
     def on_y_min(self, instance, value):
         self.plot_params['y_min'] = value
-        self.build_tick_data()
     def on_y_max(self, instance, value):
         self.plot_params['y_max'] = value
-        self.build_tick_data()
     def on_scan_controls(self, *args):
         if self.scan_controls is None:
             return
@@ -155,38 +140,14 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             setattr(self, attr, val)
         if self.x_tick_line is None:
             self.build_ticklines()
-    def build_tick_data(self):
-        return
-        x = np.linspace(self.x_min, self.x_max, 10)
-        y = np.linspace(self.y_min, self.y_max, 10)
-        self.x_tick_data = x.tolist()
-        self.y_tick_data = y.tolist()
-        if self.x_tick_line is not None:
-            self.x_tick_line.ticks[0].data = self.x_tick_data
-            self.y_tick_line.ticks[0].data = self.y_tick_data
-        print self.x_tick_data, self.y_tick_data
     def build_ticklines(self):
-        self.build_tick_data()
         x_ticks = [
             FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
-            #Tick(), 
             LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
-            #UpdatingDataListTick(
-            #    data=self.x_tick_data, 
-            #    scale_factor=10., 
-            #    halign='line_right', 
-            #    valign='line_top', 
-            #), 
         ]
         y_ticks = [
             DbTick(spectrum_graph=self, halign='left', valign='bottom'), 
-            #Tick(halign='left', valign='bottom'), 
             LabellessTick(scale_factor=2., halign='left'), 
-            #UpdatingDataListTick(
-            #    data=self.y_tick_data, 
-            #    scale_factor=10., 
-            #    halign='line_left', 
-            #), 
         ]
         self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
                                     orientation='horizontal', 
