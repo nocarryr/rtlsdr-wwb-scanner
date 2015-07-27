@@ -2,6 +2,7 @@ import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
 from kivy.garden.tickline import Tickline, Tick, LabellessTick, DataListTick
+from kivy.core.text import Label as CoreLabel
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.relativelayout import RelativeLayout
@@ -29,6 +30,36 @@ class TickContainer(FloatLayout):
                 c.redraw()
             print c, c.pos, c.size
     
+class CustomLabelTick(Tick):
+    spectrum_graph = ObjectProperty(None)
+    tickline_parent = ObjectProperty(None)
+    def get_label_texture(self, index, **kwargs):
+        if self.tickline_parent is None:
+            return super(CustomLabelTick, self).get_label_texture(index, **kwargs)
+        kwargs['font_size'] = self.tick_size[1] * 2
+        pos = self.tickline_parent.index2pos(index)
+        lbl_text = self._get_custom_label_text(pos)
+        label = CoreLabel(
+            text=lbl_text, 
+            **kwargs)
+        label.refresh()
+        return label.texture
+        
+class FrequencyTick(CustomLabelTick):
+    def _get_custom_label_text(self, pos):
+        return str(self.spectrum_graph.x_to_freq(pos))
+        
+class DbTick(CustomLabelTick):
+    def _get_custom_label_text(self, pos):
+        return str(self.spectrum_graph.y_to_db(pos))
+        
+class UpdatingDataListTick(DataListTick):
+    tickline_parent = ObjectProperty(None)
+    def on_data(self, *args):
+        if self.tickline_parent is None:
+            return
+        self.tickline_parent.redraw()
+        
 class SpectrumGraph(RelativeLayout, JSONMixin):
     scan_controls = ObjectProperty(None)
     plot_params = DictProperty()
@@ -125,44 +156,58 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         if self.x_tick_line is None:
             self.build_ticklines()
     def build_tick_data(self):
+        return
         x = np.linspace(self.x_min, self.x_max, 10)
         y = np.linspace(self.y_min, self.y_max, 10)
         self.x_tick_data = x.tolist()
         self.y_tick_data = y.tolist()
         if self.x_tick_line is not None:
-            self.x_tick_line.ticks[1].data = self.x_tick_data
-            self.y_tick_line.ticks[1].data = self.y_tick_data
-    def build_ticklines(self):
-        self.x_ticks = dict(
-            #minor=LabellessTick(tick_size=[1, 4], scale_factor=25.), 
-            #major=Tick(tick_size=[2, 10], scale_factor=5.), 
-            #label=DataListTick(
-        )
-        self.y_ticks = dict(
-            #minor=LabellessTick(tick_size=[1, 4], scale_factor=25.), 
-            #major=Tick(tick_size=[2, 10], scale_factor=5.), 
-            #label=DataListTick(
-        )
-        #keys = ['major', 'minor']
-        #x_tick_list = [self.x_ticks[key] for key in keys]
-        #y_tick_list = [self.y_ticks[key] for key in keys]
-        self.build_tick_data()
+            self.x_tick_line.ticks[0].data = self.x_tick_data
+            self.y_tick_line.ticks[0].data = self.y_tick_data
         print self.x_tick_data, self.y_tick_data
-        self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
+    def build_ticklines(self):
+        self.build_tick_data()
+        x_ticks = [
+            FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
+            #Tick(), 
+            LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
+            #UpdatingDataListTick(
+            #    data=self.x_tick_data, 
+            #    scale_factor=10., 
+            #    halign='line_right', 
+            #    valign='line_top', 
+            #), 
+        ]
+        y_ticks = [
+            DbTick(spectrum_graph=self, halign='left', valign='bottom'), 
+            #Tick(halign='left', valign='bottom'), 
+            LabellessTick(scale_factor=2., halign='left'), 
+            #UpdatingDataListTick(
+            #    data=self.y_tick_data, 
+            #    scale_factor=10., 
+            #    halign='line_left', 
+            #), 
+        ]
+        self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
                                     orientation='horizontal', 
-                                    ticks=[Tick(), DataListTick(data=self.x_tick_data, scale_factor=10., valign='line_top')])
-        self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,#size_hint=[1., 1.], pos_hint={'x':0., 'y':0.}, 
+                                    ticks=x_ticks)
+        self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
                                     orientation='vertical', 
-                                    ticks=[Tick(), DataListTick(data=self.y_tick_data, scale_factor=10., halign='line_left')])
+                                    ticks=y_ticks)
+        x_ticks[0].tickline_parent = self.x_tick_line
+        y_ticks[0].tickline_parent = self.y_tick_line
         self.tick_container.add_widget(self.x_tick_line)
         self.tick_container.add_widget(self.y_tick_line)
-        
     def freq_to_x(self, freq):
         x = (freq - self.x_min) / self.x_size
         return x * self.width
+    def x_to_freq(self, x):
+        return (x / self.width * self.x_size) + self.x_min
     def db_to_y(self, db):
         y = (db - self.y_min) / self.y_size
         return y * self.height
+    def y_to_db(self, y):
+        return (y / self.height * self.y_size) + self.y_min
     def _serialize(self):
         attrs = ['x_max', 'x_min', 'y_max', 'y_min', 
                  'auto_scale_x', 'auto_scale_y']
