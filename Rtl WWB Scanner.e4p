@@ -37,6 +37,7 @@
     <Source>kivyapp.py</Source>
     <Source>wwb_scanner/ui/kivyui/plots.py</Source>
     <Source>wwb_scanner/ui/kivyui/scan.py</Source>
+    <Source>wwb_scanner/ui/kivyui/actions.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
