@@ -170,6 +170,8 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         if self.x_tick_line is None:
             self.build_ticklines()
     def build_ticklines(self):
+        def fake_collide_point(*args):
+            return False
         x_ticks = [
             FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
             LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
@@ -179,11 +181,13 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             LabellessTick(scale_factor=2., halign='left'), 
         ]
         self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='horizontal', 
+                                    orientation='horizontal', zoomable=False, 
                                     ticks=x_ticks)
         self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='vertical', 
+                                    orientation='vertical', zoomable=False, 
                                     ticks=y_ticks)
+        self.x_tick_line.collide_point = fake_collide_point
+        self.y_tick_line.collide_point = fake_collide_point
         x_ticks[0].tickline_parent = self.x_tick_line
         y_ticks[0].tickline_parent = self.y_tick_line
         self.tick_container.add_widget(self.x_tick_line)
