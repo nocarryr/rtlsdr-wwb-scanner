@@ -78,6 +78,27 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     y_size = AliasProperty(get_y_size, set_y_size, bind=('y_min', 'y_max'))
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
+        Window.bind(mouse_pos=self.on_mouse_pos)
+    def on_mouse_pos(self, instance, pos):
+        if self.parent is None:
+            return
+        if self.graph_overlay is None:
+            return
+        if self.selected is None:
+            return
+        ppos = self.parent.to_widget(*pos)
+        real_x, real_y = self.to_local(*ppos)
+        if not self.collide_point(real_x, real_y):
+            return
+        real_freq = self.x_to_freq(real_x)
+        freq, db = self.selected.get_nearest_by_freq(real_freq)
+        if freq is None:
+            return
+        x = self.freq_to_x(freq)
+        y = self.db_to_y(db)
+        self.graph_overlay.plot_values.update({
+            'x':x, 'y':y, 'freq':freq, 'db':db, 
+        })
     def on_tick_container(self, *args):
         if self.tick_container is None:
             return
@@ -343,33 +364,6 @@ class GraphOverlay(Widget):
     crosshair_widget = ObjectProperty(None)
     label_text = StringProperty()
     plot_values = DictProperty()
-    def __init__(self, **kwargs):
-        super(GraphOverlay, self).__init__(**kwargs)
-        Window.bind(mouse_pos=self.on_mouse_pos)
-    def on_mouse_pos(self, instance, pos):
-        graph = self.spectrum_graph
-        if graph is None:
-            return
-        plot = graph.selected
-        if plot is None:
-            return
-        if not self.collide_point(*pos):
-            return
-        #plot = self.selected
-        #if plot is None or not self.collide_point(*touch.pos):
-        #    return super(SpectrumGraph, self).on_touch_move(touch)
-        _x, _y = self.to_widget(*pos)
-        #x, y = self.parent.to_local(_x, _y, relative=True)
-        x, y = self.to_parent(_x, _y, relative=True)
-        print pos[0], _x, x, ' - ', pos[1], _y, y
-        freq = graph.x_to_freq(x)
-        freq, db = plot.get_nearest_by_freq(freq)
-        if freq is None:
-            return
-        x = graph.freq_to_x(x)
-        y = graph.db_to_y(db)
-        x, y = self.to_local(x, y)
-        self.plot_values.update({'freq':freq, 'db':db, 'x':x, 'y':y})
     def on_plot_values(self, *args, **kwargs):
         freq = self.plot_values.get('freq')
         db = self.plot_values.get('db')
