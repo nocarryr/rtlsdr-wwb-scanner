@@ -1,4 +1,5 @@
 #:include wwb_scanner/ui/kivyui/plots.kv
+#:include wwb_scanner/ui/kivyui/scan.kv
 
 <ActionButton>:
     on_release: app.on_action_button_release(self)
@@ -81,64 +82,6 @@
     StatusBar:
         id: status_bar
         size_hint_y: .05
-        
-<ScanRangeControls>:
-    orientation: 'horizontal'
-    
-<ScanRangeTextInput>:
-    multiline: False
-    on_text_validate: self.validate_input()
-    input_filter: 'float'
-    
-<ScanControls>:
-    orientation: 'horizontal'
-    scan_range_widget: scan_range
-    gain_txt: gain_txt
-    start_btn: start_btn
-    stop_btn: stop_btn
-    canvas:
-        Color:
-            rgb: .8, .8, .8
-        Line:
-            rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-    BoxLayout:
-        orientation: 'vertical'
-        canvas:
-            Color:
-                rgb: .8, .8, .8
-            Line:
-                rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-        Label:
-            text: 'Scan Range'
-        ScanRangeControls:
-            id: scan_range
-            scan_range_start_txt: scan_range_start
-            scan_range_end_txt: scan_range_end
-            ScanRangeTextInput:
-                id: scan_range_start
-                range_index: 0
-            ScanRangeTextInput:
-                id: scan_range_end
-                range_index: 1
-    BoxLayout:
-        orientation: 'vertical'
-        Label:
-            text: 'Gain'
-        TextInput:
-            id: gain_txt
-            text: str(root.gain)
-            on_text: root.gain = float(self.text)
-            input_filter: float
-    Button:
-        id: start_btn
-        text: 'Start'
-        disabled: root.scanning
-        on_release: root.on_scan_button_release()
-    Button:
-        id: stop_btn
-        text: 'Stop'
-        diabled: True
-        on_release: root.on_stop_button_release()
 
 <StatusBar>
     orientation: 'horizontal'

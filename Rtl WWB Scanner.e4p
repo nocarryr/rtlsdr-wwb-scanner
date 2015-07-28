@@ -46,6 +46,7 @@
   <Others>
     <Other>requirements.txt</Other>
     <Other>wwb_scanner/ui/kivyui/plots.kv</Other>
+    <Other>wwb_scanner/ui/kivyui/scan.kv</Other>
   </Others>
   <Vcs>
     <VcsType>Git</VcsType>
