@@ -231,16 +231,38 @@ class SpectrumPlot(Widget, JSONMixin):
     color = ListProperty([0., 1., 0., .8])
     enabled = BooleanProperty(True)
     selected = BooleanProperty(False)
+    spectrum = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
-        self.spectrum = kwargs.get('spectrum')
-        if self.spectrum is not None:
-            self.build_data()
         if self.parent is not None:
             self.parent.bind(plot_params=self._trigger_update)
             self.parent.calc_plot_scale()
         self.bind(parent=self.on_parent_set)
         self.bind(pos=self._trigger_update, size=self._trigger_update)
+    def on_spectrum(self, *args):
+        if self.spectrum is None:
+            return
+        self.build_data()
+        if self.spectrum.name is not None:
+            self.name = self.spectrum.name
+        else:
+            self.spectrum.name = self.name
+        if self.color != [0., 1., 0., .8]:
+            self.spectrum.color.from_list(self.color)
+        else:
+            self.color = self.spectrum.color.to_list()
+    def on_name(self, instance, value):
+        if self.spectrum is None:
+            return
+        if self.spectrum.name == value:
+            return
+        self.spectrum.name = value
+    def on_color(self, instance, value):
+        if self.spectrum is None:
+            return
+        if list(value) == self.spectrum.color.to_list():
+            return
+        self.spectrum.color.from_list(value)
     def on_parent_set(self, *args, **kwargs):
         if self.parent is None:
             return
@@ -312,7 +334,6 @@ class SpectrumPlot(Widget, JSONMixin):
     def _deserialize(self, **kwargs):
         spdata = kwargs.get('spectrum_data')
         self.spectrum = Spectrum.from_json(spdata)
-        self.build_data()
 
 class PlotToolPanel(GridLayout):
     def add_plot(self, plot_widget):
