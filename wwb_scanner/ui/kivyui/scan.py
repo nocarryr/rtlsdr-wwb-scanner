@@ -76,7 +76,6 @@ class ScanRangeTextInput(TextInput):
     def validate_input(self):
         self.value = float(self.text)
     def on_value(self, instance, value):
-        print instance, value
         self.parent.scan_range[self.range_index] = value
         self.set_text_from_value(value)
     def set_text_from_value(self, value=None):

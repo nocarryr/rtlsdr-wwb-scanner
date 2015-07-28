@@ -134,9 +134,7 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             index = 0
         elif len(self.children):
             index += 1
-        print w, index
         super(SpectrumGraph, self).add_widget(w, index)
-        print self.children
     def on_plot_selected(self, instance, value):
         if not value:
             return
