@@ -1,3 +1,5 @@
+#:include wwb_scanner/ui/kivyui/plots.kv
+
 <ActionButton>:
     on_release: app.on_action_button_release(self)
     
@@ -241,41 +243,7 @@
         size_hint_x: .25
         value_normalized: self.parent.progress
         
-<SpectrumGraph>:
-    tick_container: tick_container
-    graph_overlay: graph_overlay
-    TickContainer:
-        id: tick_container
-        pos_hint: {'x':0, 'y':0}
-        size_hint: [1., 1.]
-    GraphOverlay:
-        id: graph_overlay
-        spectrum_graph: root
-        pos_hint: {'x':0, 'y':0}
-        size_hint: [1., 1.]
-    
-<GraphOverlay>:
-    label_widget: label_widget
-    crosshair_widget: crosshair_widget
-    Label:
-        id: label_widget
-        top: root.top
-        center_x: root.center_x
-        text: root.label_text
-    GraphCrosshair:
-        id: crosshair_widget
-        pos: root.pos
-        size: root.size
         
-<SpectrumPlot>:
-    pos_hint: {'x':0, 'y':0}
-    size_hint: [1., 1.]
-    canvas:
-        Color:
-            rgba: self.color
-        Line:
-            points: self.points
-    
 <MessageDialog>:
     orientation: 'vertical'
     Label:
