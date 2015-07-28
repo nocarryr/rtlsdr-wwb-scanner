@@ -1,6 +1,9 @@
 import threading
+import datetime
+import time
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils.color import Color
 from wwb_scanner.scan_objects import Sample, TimeBasedSample
 try:
     from wwb_scanner import file_handlers
@@ -11,6 +14,8 @@ try:
 except ImportError:
     SpectrumPlot = None
     
+EPOCH = datetime.datetime(1970, 1, 1)
+
 def get_file_handlers():
     global file_handlers
     if file_handlers is None:
@@ -31,11 +36,48 @@ def get_spectrum_plot():
 
 class Spectrum(JSONMixin):
     def __init__(self, **kwargs):
+        self.name = kwargs.get('name')
+        self.color = Color(kwargs.get('color'))
+        datetime_utc = kwargs.get('datetime_utc')
+        timestamp_utc = kwargs.get('timestamp_utc')
+        if datetime_utc is not None:
+            self.datetime_utc = datetime_utc
+        else:
+            if timestamp_utc is None:
+                timestamp_utc = time.time()
+            self.timestamp_utc = timestamp_utc
         self.step_size = kwargs.get('step_size')
         self.data_updated = threading.Event()
         self.data_update_lock = threading.Lock()
         self.samples = {}
         self.center_frequencies = kwargs.get('center_frequencies', [])
+    @property
+    def datetime_utc(self):
+        return getattr(self, '_datetime_utc', None)
+    @datetime_utc.setter
+    def datetime_utc(self, value):
+        if value == self.datetime_utc:
+            return
+        if value is None:
+            return
+        self._datetime_utc = value
+        td = value - EPOCH
+        timestamp = td.total_seconds()
+        if timestamp != self.timestamp_utc:
+            self.timestamp_utc = timestamp
+    @property
+    def timestamp_utc(self):
+        return getattr(self, '_timestamp_utc', None)
+    @timestamp_utc.setter
+    def timestamp_utc(self, value):
+        if value == self.timestamp_utc:
+            return
+        if value is None:
+            return
+        self._timestamp_utc = value
+        dt = datetime.datetime.utcfromtimestamp(value)
+        if dt != self.datetime_utc:
+            self.datetime_utc = dt
     def _deserialize(self, **kwargs):
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):
@@ -92,7 +134,8 @@ class Spectrum(JSONMixin):
         with self.data_update_lock:
             self.data_updated.set()
     def _serialize(self):
-        d = {'step_size':self.step_size, 'center_frequencies':self.center_frequencies}
+        attrs = ['name', 'color', 'timestamp_utc', 'step_size', 'center_frequencies']
+        d = {attr: getattr(self, attr) for attr in attrs}
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d
