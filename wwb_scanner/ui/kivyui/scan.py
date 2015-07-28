@@ -1,10 +1,90 @@
 import threading
 
 from kivy.event import EventDispatcher
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.textinput import TextInput
+from kivy.properties import (
+    ObjectProperty, 
+    StringProperty, 
+    BooleanProperty, 
+    NumericProperty, 
+    ListProperty, 
+    AliasProperty, 
+)
 from kivy.clock import Clock
+
+from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner import Scanner
 
+
+class ScanControls(BoxLayout, JSONMixin):
+    scan_range_widget = ObjectProperty(None)
+    gain_txt = ObjectProperty(None)
+    start_btn = ObjectProperty(None)
+    stop_btn = ObjectProperty(None)
+    scanning = BooleanProperty(False)
+    idle = BooleanProperty(True)
+    gain = NumericProperty(30.)
+    def get_scan_range(self):
+        return self.scan_range_widget.scan_range
+    def set_scan_range(self, value):
+        self.scan_range_widget.scan_range = value
+    scan_range = AliasProperty(get_scan_range, set_scan_range)
+    def get_gain(self):
+        return self.gain_txt.text
+    def __init__(self, **kwargs):
+        super(ScanControls, self).__init__(**kwargs)
+        self.scan_progress = ScanProgress()
+    def on_parent(self, *args, **kwargs):
+        self.scan_progress.root_widget = self.parent
+    def on_idle(self, instance, value):
+        self.stop_btn.disabled = value
+    def on_scan_button_release(self):
+        self.scanning = True
+        self.idle = False
+        self.scan_progress.build_scanner()
+    def on_stop_button_release(self):
+        self.scan_progress.cancel_scan()
+        self.idle = True
+    def _serialize(self):
+        d = dict(
+            scan_range=self.scan_range, 
+            gain=self.gain, 
+        )
+        return d
+    def _deserialize(self, **kwargs):
+        scan_range = kwargs.get('scan_range')
+        gain = kwargs.get('gain')
+        self.scan_range = scan_range
+        self.gain = float(gain)
+    
+class ScanRangeControls(BoxLayout):
+    scan_range_start_txt = ObjectProperty(None)
+    scan_range_end_txt = ObjectProperty(None)
+    scan_range = ListProperty([470., 900.])
+    
+class ScanRangeTextInput(TextInput):
+    range_index = NumericProperty(-1.)
+    value = NumericProperty()
+    def __init__(self, **kwargs):
+        super(ScanRangeTextInput, self).__init__(**kwargs)
+        #self.bind(value=self.on_value_changed)
+        self.bind(range_index=self.on_range_index_set)
+    def on_range_index_set(self, instance, value):
+        self.value = self.parent.scan_range[self.range_index]
+        self.set_text_from_value()
+    def validate_input(self):
+        self.value = float(self.text)
+    def on_value(self, instance, value):
+        print instance, value
+        self.parent.scan_range[self.range_index] = value
+        self.set_text_from_value(value)
+    def set_text_from_value(self, value=None):
+        if value is None:
+            value = self.value
+        t = '%07.3f' % (value)
+        if self.text != t:
+            self.text = t
 
 class ScanProgress(EventDispatcher):
     name = StringProperty()
