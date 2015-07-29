@@ -4,10 +4,10 @@ class Color(dict):
     def __init__(self, initdict=None, **kwargs):
         if initdict is None:
             initdict = {}
-        kwargs.setdefault('r', 0.)
-        kwargs.setdefault('g', 1.)
-        kwargs.setdefault('b', 0.)
-        kwargs.setdefault('a', 1.)
+        initdict.setdefault('r', 0.)
+        initdict.setdefault('g', 1.)
+        initdict.setdefault('b', 0.)
+        initdict.setdefault('a', 1.)
         super(Color, self).__init__(initdict, **kwargs)
     def from_list(self, l):
         for i, val in enumerate(l):
