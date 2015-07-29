@@ -119,7 +119,7 @@ class PlotsImport(Action, FileAction):
     select_string = 'Import'
     title = 'Import Plot'
     def get_filters(self):
-        exts = ['csv', 'sbd2']
+        exts = ['csv', 'sdb2']
         filters = ['.'.join(['*', ext]) for ext in exts]
         filters.extend(['.'.join(['*', ext.upper()]) for ext in exts])
         return filters
