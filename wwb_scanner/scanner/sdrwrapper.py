@@ -6,6 +6,7 @@ class SdrWrapper(object):
     def __init__(self, **kwargs):
         self.sdr = None
         self.sample_rate = kwargs.get('sample_rate')
+        self.bandwidth = kwargs.get('bandwidth')
         self.gain = kwargs.get('gain')
         self.timeout = kwargs.get('timeout', 60.)
         self.device_open = threading.Event()
@@ -29,6 +30,8 @@ class SdrWrapper(object):
         self.sdr = sdr
         if self.sample_rate is not None:
             sdr.sample_rate = self.sample_rate
+        if self.bandwidth is not None:
+            sdr.set_bandwidth(self.bandwidth)
         if self.gain is not None:
             sdr.gain = self.gain
         self.device_open.set()

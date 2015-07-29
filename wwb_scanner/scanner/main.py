@@ -96,8 +96,10 @@ class Scanner(ScannerBase):
     '''
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
-        self.sdr_wrapper = SdrWrapper(sample_rate=self.sample_rate, gain=self.gain)
         self.bandwidth = self.sample_rate / 2.
+        sdr_bandwidth = mhz_to_hz(self.step_size * 8)
+        self.sdr_wrapper = SdrWrapper(sample_rate=self.sample_rate, gain=self.gain, 
+                                      bandwidth=sdr_bandwidth)
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
