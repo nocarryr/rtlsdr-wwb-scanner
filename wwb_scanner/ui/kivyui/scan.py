@@ -3,6 +3,8 @@ import threading
 from kivy.event import EventDispatcher
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
+from kivy.uix.dropdown import DropDown
+from kivy.uix.button import Button
 from kivy.properties import (
     ObjectProperty, 
     StringProperty, 
@@ -19,7 +21,7 @@ from wwb_scanner.scanner import Scanner
 
 class ScanControls(BoxLayout, JSONMixin):
     scan_range_widget = ObjectProperty(None)
-    gain_txt = ObjectProperty(None)
+    gain_dropdown = ObjectProperty(None)
     start_btn = ObjectProperty(None)
     stop_btn = ObjectProperty(None)
     scanning = BooleanProperty(False)
@@ -34,6 +36,7 @@ class ScanControls(BoxLayout, JSONMixin):
         return self.gain_txt.text
     def __init__(self, **kwargs):
         super(ScanControls, self).__init__(**kwargs)
+        self.gain_dropdown = ScanGainDropDown(scan_controls=self)
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
         self.scan_progress.root_widget = self.parent
@@ -84,6 +87,44 @@ class ScanRangeTextInput(TextInput):
         t = '%07.3f' % (value)
         if self.text != t:
             self.text = t
+
+class ScanGainDropDown(DropDown):
+    scan_controls = ObjectProperty(None)
+    gains = ListProperty()
+    gain_buttons = ListProperty()
+    def on_scan_controls(self, *args, **kwargs):
+        if self.scan_controls is None:
+            return
+        self.get_gains()
+    def get_gains(self, *args, **kwargs):
+        scanner = Scanner()
+        gains = scanner.get_gains()
+        if gains is None:
+            self.gains.append(0.)
+            return
+        self.gains = gains
+    def on_gains(self, *args, **kwargs):
+        scan_controls = self.scan_controls
+        for i, gain in enumerate(self.gains):
+            try:
+                btn = self.gain_buttons[i]
+            except IndexError:
+                btn = None
+            if btn is not None:
+                if btn.gain == gain:
+                    continue
+                old_gain = btn.gain
+                btn.gain = gain
+                if scan_controls is not None and scan_controls.gain == old_gain:
+                    scan_controls.gain = gain
+            else:
+                btn = ScanGainDropDownBtn(gain=gain)
+                self.add_widget(btn)
+                if scan_controls is not None and i == 0:
+                    scan_controls.gain = gain
+
+class ScanGainDropDownBtn(Button):
+    gain = NumericProperty()
 
 class ScanProgress(EventDispatcher):
     name = StringProperty()

@@ -9,7 +9,6 @@
 <ScanControls>:
     orientation: 'horizontal'
     scan_range_widget: scan_range
-    gain_txt: gain_txt
     start_btn: start_btn
     stop_btn: stop_btn
     canvas:
@@ -40,11 +39,9 @@
         orientation: 'vertical'
         Label:
             text: 'Gain'
-        TextInput:
-            id: gain_txt
+        Button:
             text: str(root.gain)
-            on_text: root.gain = float(self.text)
-            input_filter: float
+            on_release: root.gain_dropdown.open(self)
     Button:
         id: start_btn
         text: 'Start'
@@ -55,3 +52,12 @@
         text: 'Stop'
         diabled: True
         on_release: root.on_stop_button_release()
+
+<ScanGainDropDown>:
+    on_select: self.scan_controls.gain = args[1]
+
+<ScanGainDropDownBtn>:
+    size_hint_y: None
+    height: 44
+    text: str(self.gain)
+    on_release: self.parent.parent.select(self.gain)
