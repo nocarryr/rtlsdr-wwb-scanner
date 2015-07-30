@@ -33,7 +33,6 @@
     <Source>wwb_scanner/scanner/sdrwrapper.py</Source>
     <Source>wwb_scanner/ui/kivyui/__init__.py</Source>
     <Source>wwb_scanner/ui/kivyui/main.py</Source>
-    <Source>wwb_scanner/ui/kivyui/main.kv</Source>
     <Source>kivyapp.py</Source>
     <Source>wwb_scanner/ui/kivyui/plots.py</Source>
     <Source>wwb_scanner/ui/kivyui/scan.py</Source>
@@ -48,6 +47,7 @@
     <Other>requirements.txt</Other>
     <Other>wwb_scanner/ui/kivyui/plots.kv</Other>
     <Other>wwb_scanner/ui/kivyui/scan.kv</Other>
+    <Other>wwb_scanner/ui/kivyui/rtlsdrscanner.kv</Other>
   </Others>
   <Vcs>
     <VcsType>Git</VcsType>
