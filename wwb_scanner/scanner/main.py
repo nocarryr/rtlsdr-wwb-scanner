@@ -9,7 +9,7 @@ SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
     step_size=.0125,
     sample_rate=2e6,
-    sampling_period=.05, 
+    sampling_period=.05,
     save_raw_values=False,
     gain=30.,
 )
@@ -87,7 +87,7 @@ class ScannerBase(JSONMixin):
     def _deserialize(self, **kwargs):
         data = kwargs.get('sample_collection')
         self.sample_collection = SampleCollection.from_json(data, scanner=self)
-        
+
 class Scanner(ScannerBase):
     '''
         params:
@@ -101,6 +101,26 @@ class Scanner(ScannerBase):
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
+    @property
+    def gain(self):
+        return getattr(self, '_gain', None)
+    @gain.setter
+    def gain(self, value):
+        if value == self.gain:
+            return
+        self._gain = value
+        if hasattr(self, 'sdr_wrapper'):
+            self.sdr_wrapper.gain = value
+    @property
+    def sample_rate(self):
+        return getattr(self, '_sample_rate', None)
+    @sample_rate.setter
+    def sample_rate(self, value):
+        if value == self.sample_rate:
+            return
+        self._sample_rate = value
+        if hasattr(self, 'sdr_wrapper'):
+            self.sdr_wrapper.sample_rate = value
     def run_scan(self):
         with self.sdr_wrapper:
             super(Scanner, self).run_scan()
@@ -113,7 +133,7 @@ class Scanner(ScannerBase):
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             is_center = f == center_freq
-            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True, 
+            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 is_center_frequency=is_center)
         return sample_set
 
