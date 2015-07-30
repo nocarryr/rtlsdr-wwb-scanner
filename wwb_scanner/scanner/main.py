@@ -121,6 +121,23 @@ class Scanner(ScannerBase):
         self._sample_rate = value
         if hasattr(self, 'sdr_wrapper'):
             self.sdr_wrapper.sample_rate = value
+    def get_gains(self):
+        reset_timeout = False
+        if not self.sdr_wrapper.device_open.is_set():
+            timeout = self.sdr_wrapper.timeout
+            if timeout is not None:
+                self.sdr_wrapper.timeout = None
+                reset_timeout = True
+        try:
+            with self.sdr_wrapper:
+                gains = self.sdr.get_gains()
+        except IOError:
+            gains = None
+        if reset_timeout:
+            self.sdr_wrapper.timeout = timeout
+        if gains is not None:
+            gains = [gain / 10. for gain in gains]
+        return gains
     def run_scan(self):
         with self.sdr_wrapper:
             super(Scanner, self).run_scan()
