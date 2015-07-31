@@ -97,10 +97,15 @@ class Scanner(ScannerBase):
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
         self.sdr_wrapper = SdrWrapper(scanner=self)
-        self.bandwidth = self.sample_rate / 2.
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
+    @property
+    def bandwidth(self):
+        return mhz_to_hz(self.step_size) * 2
+    @bandwidth.setter
+    def bandwidth(self, value):
+        pass
     def get_gains(self):
         reset_timeout = False
         if not self.sdr_wrapper.device_open.is_set():

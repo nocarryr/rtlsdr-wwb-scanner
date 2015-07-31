@@ -29,16 +29,16 @@ class SampleSet(JSONMixin):
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
-        num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
+        num_samples = 1024
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
         print 'reading %s samples' % (num_samples)
         samples = sdr.read_samples(num_samples)
-        win = get_window('boxcar', int(scanner.bandwidth / (scanner.step_size * 1e6)))
-        noverlap = int(win.size / 4)
-        print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
-        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
+        #win = get_window('boxcar', int(scanner.sample_rate / scanner.bandwidth))
+        #noverlap = int(win.size / 4)
+        #print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
+        f, powers = welch(samples, fs=scanner.sample_rate)#, window=win, noverlap=noverlap)
         self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
         if f.size % 2 == 0:
