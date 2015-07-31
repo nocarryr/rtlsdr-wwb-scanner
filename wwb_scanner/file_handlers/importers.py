@@ -1,4 +1,5 @@
 import os.path
+import datetime
 import xml.etree.ElementTree as ET
 import itertools
 
@@ -54,8 +55,22 @@ class WWBImporter(BaseWWBImporter):
     def parse_file_data(self):
         spectrum = self.spectrum
         root = self.file_data.getroot()
+        color = root.get('color')
+        if color is not None:
+            spectrum.color = spectrum.color.from_hex(color)
         freq_set = root.find('*/freq_set')
         data_set = root.find('*/data_set')
+        ts = data_set.get('date_time')
+        if ts is not None:
+            try:
+                spectrum.timestamp_utc = float(ts)
+            except ValueError:
+                spectrum.timestamp_utc = float(ts) / 1000.
+        else:
+            dt_str = ' '.join([root.get('date'), root.get('time')])
+            dt_fmt = '%a %b %d %Y %H:%M:%S'
+            dt = datetime.datetime.strptime(dt_str, dt_fmt)
+            spectrum.datetime_utc = dt
         for ftag, vtag in itertools.izip(freq_set.iter('f'), data_set.iter('v')):
             f = float(ftag.text) / 1000
             v = float(vtag.text)

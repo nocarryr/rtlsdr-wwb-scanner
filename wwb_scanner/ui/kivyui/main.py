@@ -53,7 +53,7 @@ class RootWidget(BoxLayout, JSONMixin):
     
 
 
-class MainApp(App):
+class RTLSDRScannerApp(App):
     def build(self):
         return RootWidget()
     def on_action_button_release(self, btn):
@@ -87,7 +87,7 @@ class StatusBar(BoxLayout):
     progress = NumericProperty(0.)
     
 def run():
-    MainApp().run()
+    RTLSDRScannerApp().run()
 
 if __name__ == '__main__':
     run()
