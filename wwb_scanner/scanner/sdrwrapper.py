@@ -5,12 +5,33 @@ from rtlsdr import RtlSdr
 class SdrWrapper(object):
     def __init__(self, **kwargs):
         self.sdr = None
-        self.sample_rate = kwargs.get('sample_rate')
-        self.bandwidth = kwargs.get('bandwidth')
-        self.gain = kwargs.get('gain')
+        self.scanner = kwargs.get('scanner')
         self.timeout = kwargs.get('timeout', 60.)
         self.device_open = threading.Event()
         self.device_wait = threading.Event()
+    def set_sdr_values(self):
+        scanner = self.scanner
+        if scanner is None:
+            return
+        sdr = self.sdr
+        if sdr is None:
+            return
+        keys = ['sample_rate', 'gain']
+        scanner_vals = {key: getattr(scanner, key, None) for key in keys}
+        for key, scanner_val in scanner_vals.items():
+            if key == 'gain':
+                sdr_val = None
+            else:
+                sdr_val = getattr(sdr, key)
+            if sdr_val == scanner_val:
+                continue
+            setattr(sdr, key, scanner_val)
+            if key == 'gain' and scanner_val == 0:
+                sdr_val = 0.
+            else:
+                sdr_val = getattr(sdr, key)
+            if sdr_val != scanner_val:
+                setattr(scanner, key, sdr_val)
     def open_sdr(self):
         if self.sdr is not None:
             if self.sdr.device_opened:
@@ -28,12 +49,7 @@ class SdrWrapper(object):
             self.device_wait(self.timeout)
             sdr = RtlSdr()
         self.sdr = sdr
-        if self.sample_rate is not None:
-            sdr.sample_rate = self.sample_rate
-        if self.bandwidth is not None:
-            sdr.set_bandwidth(self.bandwidth)
-        if self.gain is not None:
-            sdr.gain = self.gain
+        self.set_sdr_values()
         self.device_open.set()
         return sdr
     def close_sdr(self):
