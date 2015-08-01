@@ -2,7 +2,7 @@ import threading
 
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
-from wwb_scanner.scanner.sample_processing import SampleCollection
+from wwb_scanner.scanner.sample_processing import SampleCollection, calc_num_samples
 from wwb_scanner.scan_objects import Spectrum
 
 SCANNER_DEFAULTS = dict(
@@ -95,12 +95,42 @@ class Scanner(ScannerBase):
             step_size:  increment (in MHz) to return scan values
     '''
     def __init__(self, **kwargs):
+        self._samples_per_scan = None
+        self._window_size = None
         super(Scanner, self).__init__(**kwargs)
+        self.samples_per_scan = kwargs.get('samples_per_scan')
+        self.window_size = kwargs.get('window_size')
+        self.window_type = kwargs.get('window_type', 'boxcar')
         self.sdr_wrapper = SdrWrapper(scanner=self)
         self.bandwidth = self.sample_rate / 2.
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
+    @property
+    def samples_per_scan(self):
+        v = self._samples_per_scan
+        if v is None:
+            v = self.sample_rate * self.sampling_period
+            v = self._samples_per_scan = calc_num_samples(v)
+        return v
+    @samples_per_scan.setter
+    def samples_per_scan(self, value):
+        if value == self._samples_per_scan:
+            return
+        if value is not None:
+            value = calc_num_samples(value)
+        self._samples_per_scan = value
+    @property
+    def window_size(self):
+        v = self._window_size
+        if v is None:
+            v = self._window_size = int(self.bandwidth / mhz_to_hz(self.step_size))
+        return v
+    @window_size.setter
+    def window_size(self, value):
+        if value == self._window_size:
+            return
+        self._window_size = value
     def get_gains(self):
         reset_timeout = False
         if not self.sdr_wrapper.device_open.is_set():
@@ -133,6 +163,11 @@ class Scanner(ScannerBase):
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 is_center_frequency=is_center)
         return sample_set
+    def _serialize(self):
+        d = super(Scanner, self)._serialize()
+        keys = ['samples_per_scan', 'window_size', 'window_type']
+        d.update({key: getattr(self, key) for key in keys})
+        return d
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):

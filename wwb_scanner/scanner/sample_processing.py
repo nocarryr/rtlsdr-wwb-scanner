@@ -13,8 +13,8 @@ def next_2_to_pow(val):
     val |= val >> 16
     return val + 1
 
-def calc_num_samples(sample_rate):
-    return next_2_to_pow(int(sample_rate * .25))
+def calc_num_samples(num_samples):
+    return next_2_to_pow(int(num_samples))
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 
@@ -29,13 +29,13 @@ class SampleSet(JSONMixin):
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
-        num_samples = next_2_to_pow(int(scanner.sample_rate * scanner.sampling_period))
+        num_samples = scanner.samples_per_scan
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
         print 'reading %s samples' % (num_samples)
         samples = sdr.read_samples(num_samples)
-        win = get_window('boxcar', int(scanner.bandwidth / (scanner.step_size * 1e6)))
+        win = get_window(scanner.window_type, scanner.window_size)
         noverlap = int(win.size / 4)
         print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
         f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
