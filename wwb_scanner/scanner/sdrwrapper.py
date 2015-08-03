@@ -6,10 +6,13 @@ class SdrWrapper(object):
     def __init__(self, **kwargs):
         self.sdr = None
         self.scanner = kwargs.get('scanner')
+        self.enable_scanner_updates = kwargs.get('enable_scanner_updates', True)
         self.device_open = threading.Event()
         self.device_wait = threading.Event()
         self.device_lock = threading.RLock()
     def set_sdr_values(self):
+        if not self.enable_scanner_updates:
+            return
         scanner = self.scanner
         if scanner is None:
             return

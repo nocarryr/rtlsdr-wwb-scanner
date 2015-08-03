@@ -1,5 +1,7 @@
 import threading
 
+import numpy as np
+
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
 from wwb_scanner.scanner.sample_processing import SampleCollection, calc_num_samples
@@ -103,6 +105,7 @@ class Scanner(ScannerBase):
         self.window_type = kwargs.get('window_type', 'boxcar')
         self.sdr_wrapper = SdrWrapper(scanner=self)
         self.bandwidth = self.sample_rate / 2.
+        self.gain = self.gain
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
@@ -132,21 +135,37 @@ class Scanner(ScannerBase):
             return
         self._window_size = value
     @property
+    def gain(self):
+        return getattr(self, '_gain', None)
+    @gain.setter
+    def gain(self, value):
+        if value is not None and hasattr(self, 'sdr_wrapper'):
+            value = self.get_nearest_gain(value)
+        self._gain = value
+    @property
     def gains(self):
         gains = getattr(self, '_gains', None)
         if gains is None:
             gains = self._gains = self.get_gains()
         return gains
     def get_gains(self):
+        self.sdr_wrapper.enable_scanner_updates = False
         with self.sdr_wrapper:
             sdr = self.sdr
             if sdr is None:
                 gains = None
             else:
                 gains = self.sdr.get_gains()
+        self.sdr_wrapper.enable_scanner_updates = True
         if gains is not None:
             gains = [gain / 10. for gain in gains]
         return gains
+    def get_nearest_gain(self, gain):
+        gains = self.gains
+        if gains is None:
+            return gain
+        npgains = np.array(gains)
+        return gains[np.abs(npgains - gain).argmin()]
     def run_scan(self):
         with self.sdr_wrapper:
             super(Scanner, self).run_scan()
