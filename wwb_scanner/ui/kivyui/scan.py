@@ -38,7 +38,8 @@ class ScanControls(BoxLayout, JSONMixin):
         return self.gain_txt.text
     def __init__(self, **kwargs):
         super(ScanControls, self).__init__(**kwargs)
-        self.get_scan_defaults()
+        if not kwargs.get('__from_json__'):
+            self.get_scan_defaults()
         self.gain_dropdown = ScanGainDropDown(scan_controls=self)
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
@@ -57,16 +58,14 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.cancel_scan()
         self.idle = True
     def _serialize(self):
-        d = dict(
-            scan_range=self.scan_range, 
-            gain=self.gain, 
-        )
-        return d
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size']
+        return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
-        scan_range = kwargs.get('scan_range')
-        gain = kwargs.get('gain')
-        self.scan_range = scan_range
-        self.gain = float(gain)
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size']
+        for key in keys:
+            if key not in kwargs:
+                continue
+            setattr(self, key, kwargs.get(key))
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)
