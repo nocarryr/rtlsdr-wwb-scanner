@@ -35,9 +35,13 @@ class SampleSet(JSONMixin):
         time.sleep(.1)
         print 'reading %s samples' % (num_samples)
         samples = sdr.read_samples(num_samples)
-        win = get_window(scanner.window_type, scanner.window_size)
-        noverlap = int(win.size / 4)
-        print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
+        if scanner.window_size is None:
+            win = scanner.window_type
+            noverlap = int(win.size / 4)
+            print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
+        else:
+            win = get_window(scanner.window_type, scanner.window_size)
+            noverlap = None
         f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
         self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
