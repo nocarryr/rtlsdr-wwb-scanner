@@ -15,42 +15,75 @@
             rgb: .8, .8, .8
         Line:
             rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-    BoxLayout:
-        orientation: 'vertical'
+    TabbedPanel:
+        do_default_tab: False
         canvas:
             Color:
                 rgb: .8, .8, .8
             Line:
                 rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-        Label:
-            text: 'Scan Range'
-        ScanRangeControls:
-            id: scan_range
-            scan_range_start_txt: scan_range_start
-            scan_range_end_txt: scan_range_end
-            ScanRangeTextInput:
-                id: scan_range_start
-                range_index: 0
-            ScanRangeTextInput:
-                id: scan_range_end
-                range_index: 1
+        TabbedPanelItem:
+            text: 'General'
+            BoxLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Scan Range'
+                    ScanRangeControls:
+                        id: scan_range
+                        scan_range_start_txt: scan_range_start
+                        scan_range_end_txt: scan_range_end
+                        ScanRangeTextInput:
+                            id: scan_range_start
+                            scan_controls: root
+                            range_index: 0
+                        ScanRangeTextInput:
+                            id: scan_range_end
+                            scan_controls: root
+                            range_index: 1
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Gain'
+                    Button:
+                        text: str(root.gain)
+                        on_release: root.gain_dropdown.open(self)
+        TabbedPanelItem:
+            text: 'Advanced'
+            BoxLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Samples per scan'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.samples_per_scan)
+                        on_focus: if not self.focus: root.samples_per_scan = int(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Window Size'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.window_size)
+                        on_focus: if not self.focus: root.window_size = int(self.text)
     BoxLayout:
         orientation: 'vertical'
-        Label:
-            text: 'Gain'
+        size_hint_x: .2
         Button:
-            text: str(root.gain)
-            on_release: root.gain_dropdown.open(self)
-    Button:
-        id: start_btn
-        text: 'Start'
-        disabled: root.scanning
-        on_release: root.on_scan_button_release()
-    Button:
-        id: stop_btn
-        text: 'Stop'
-        diabled: True
-        on_release: root.on_stop_button_release()
+            id: start_btn
+            text: 'Start'
+            disabled: root.scanning
+            on_release: root.on_scan_button_release()
+        Button:
+            id: stop_btn
+            text: 'Stop'
+            diabled: True
+            on_release: root.on_stop_button_release()
 
 <ScanGainDropDown>:
     on_select: self.scan_controls.gain = args[1]

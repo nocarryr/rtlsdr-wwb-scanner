@@ -27,6 +27,8 @@ class ScanControls(BoxLayout, JSONMixin):
     scanning = BooleanProperty(False)
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
+    samples_per_scan = NumericProperty()
+    window_size = NumericProperty()
     def get_scan_range(self):
         return self.scan_range_widget.scan_range
     def set_scan_range(self, value):
@@ -36,10 +38,15 @@ class ScanControls(BoxLayout, JSONMixin):
         return self.gain_txt.text
     def __init__(self, **kwargs):
         super(ScanControls, self).__init__(**kwargs)
+        self.get_scan_defaults()
         self.gain_dropdown = ScanGainDropDown(scan_controls=self)
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
         self.scan_progress.root_widget = self.parent
+    def get_scan_defaults(self):
+        scanner = Scanner()
+        self.samples_per_scan = scanner.samples_per_scan
+        self.window_size = scanner.window_size
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):
@@ -67,17 +74,25 @@ class ScanRangeControls(BoxLayout):
     scan_range = ListProperty([470., 900.])
     
 class ScanRangeTextInput(TextInput):
+    scan_controls = ObjectProperty(None)
     range_index = NumericProperty(-1.)
     value = NumericProperty()
     def __init__(self, **kwargs):
         super(ScanRangeTextInput, self).__init__(**kwargs)
-        #self.bind(value=self.on_value_changed)
-        self.bind(range_index=self.on_range_index_set)
-    def on_range_index_set(self, instance, value):
-        self.value = self.parent.scan_range[self.range_index]
+    def on_scan_controls(self, *args):
+        if self.scan_controls is None:
+            return
+        if self.range_index < 0:
+            return
+        self.value = self.scan_controls.scan_range[self.range_index]
+        self.set_text_from_value()
+    def on_range_index(self, instance, value):
+        if self.scan_controls is None:
+            return
+        self.value = self.scan_controls.scan_range[self.range_index]
         self.set_text_from_value()
     def on_value(self, instance, value):
-        self.parent.scan_range[self.range_index] = value
+        self.scan_controls.scan_range[self.range_index] = value
         self.set_text_from_value(value)
     def on_focus(self, instance, value):
         if value:
@@ -159,7 +174,9 @@ class ScanProgress(EventDispatcher):
         self.name = ' - '.join([str(v) for v in scan_range])
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
-        self.scanner = Scanner(scan_range=scan_range, gain=gain)
+        self.scanner = Scanner(scan_range=scan_range, gain=gain, 
+                               samples_per_scan=self.scan_controls.samples_per_scan, 
+                               window_size=self.scan_controls.window_size)
         self.scanner.on_progress = self.on_scanner_progress
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()
