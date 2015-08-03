@@ -115,7 +115,7 @@ class ScanGainDropDown(DropDown):
         self.get_gains()
     def get_gains(self, *args, **kwargs):
         scanner = Scanner()
-        gains = scanner.get_gains()
+        gains = scanner.gains
         if gains is None:
             self.gains.append(0.)
             return
