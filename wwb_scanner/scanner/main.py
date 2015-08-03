@@ -103,6 +103,7 @@ class Scanner(ScannerBase):
         self.samples_per_scan = kwargs.get('samples_per_scan')
         self.window_size = kwargs.get('window_size')
         self.window_type = kwargs.get('window_type', 'boxcar')
+        self.fft_size = kwargs.get('fft_size')
         self.sdr_wrapper = SdrWrapper(scanner=self)
         self.bandwidth = self.sample_rate / 2.
         self.gain = self.gain
@@ -183,7 +184,7 @@ class Scanner(ScannerBase):
         return sample_set
     def _serialize(self):
         d = super(Scanner, self)._serialize()
-        keys = ['samples_per_scan', 'window_size', 'window_type']
+        keys = ['samples_per_scan', 'window_size', 'window_type', 'fft_size']
         d.update({key: getattr(self, key) for key in keys})
         return d
 

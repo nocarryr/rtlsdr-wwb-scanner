@@ -42,7 +42,8 @@ class SampleSet(JSONMixin):
         else:
             win = get_window(scanner.window_type, scanner.window_size)
             noverlap = None
-        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap)
+        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap, 
+                          nfft=scanner.fft_size)
         self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
         if f.size % 2 == 0:
