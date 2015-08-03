@@ -120,6 +120,7 @@ class ScanGainDropDown(DropDown):
             self.gains.append(0.)
             return
         self.gains = gains
+        self.scan_controls.gain = scanner.gain
     def on_gains(self, *args, **kwargs):
         scan_controls = self.scan_controls
         for i, gain in enumerate(self.gains):
@@ -137,8 +138,6 @@ class ScanGainDropDown(DropDown):
             else:
                 btn = ScanGainDropDownBtn(gain=gain)
                 self.add_widget(btn)
-                if scan_controls is not None and i == 0:
-                    scan_controls.gain = gain
 
 class ScanGainDropDownBtn(Button):
     gain = NumericProperty()
