@@ -131,6 +131,12 @@ class Scanner(ScannerBase):
         if value == self._window_size:
             return
         self._window_size = value
+    @property
+    def gains(self):
+        gains = getattr(self, '_gains', None)
+        if gains is None:
+            gains = self._gains = self.get_gains()
+        return gains
     def get_gains(self):
         reset_timeout = False
         if not self.sdr_wrapper.device_open.is_set():
