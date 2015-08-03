@@ -12,6 +12,7 @@ from kivy.properties import (
     NumericProperty, 
     ListProperty, 
     AliasProperty, 
+    OptionProperty, 
 )
 from kivy.clock import Clock
 
@@ -22,13 +23,17 @@ from wwb_scanner.scanner import Scanner
 class ScanControls(BoxLayout, JSONMixin):
     scan_range_widget = ObjectProperty(None)
     gain_dropdown = ObjectProperty(None)
+    window_type_dropdown = ObjectProperty(None)
     start_btn = ObjectProperty(None)
     stop_btn = ObjectProperty(None)
     scanning = BooleanProperty(False)
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
     samples_per_scan = NumericProperty()
-    window_size = NumericProperty()
+    window_size = NumericProperty(allownone=True)
+    window_type = OptionProperty('boxcar', 
+                                 options=Scanner.WINDOW_TYPES + ['None'])
+    fft_size = NumericProperty(None, allownone=True)
     def get_scan_range(self):
         return self.scan_range_widget.scan_range
     def set_scan_range(self, value):
@@ -41,6 +46,7 @@ class ScanControls(BoxLayout, JSONMixin):
         if not kwargs.get('__from_json__'):
             self.get_scan_defaults()
         self.gain_dropdown = ScanGainDropDown(scan_controls=self)
+        self.window_type_dropdown = WindowTypeDropDown(scan_controls=self)
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
         self.scan_progress.root_widget = self.parent
@@ -58,10 +64,12 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.cancel_scan()
         self.idle = True
     def _serialize(self):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size']
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
+                'window_type', 'fft_size']
         return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size']
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
+                'window_type', 'fft_size']
         for key in keys:
             if key not in kwargs:
                 continue
@@ -140,6 +148,19 @@ class ScanGainDropDown(DropDown):
 
 class ScanGainDropDownBtn(Button):
     gain = NumericProperty()
+    
+class WindowTypeDropDown(DropDown):
+    scan_controls = ObjectProperty(None)
+    def on_scan_controls(self, *args):
+        if self.scan_controls is None:
+            return
+        prop = self.scan_controls.property('window_type')
+        for win_type in prop.options:
+            btn = WindowTypeDropDownBtn(text=win_type)
+            self.add_widget(btn)
+
+class WindowTypeDropDownBtn(Button):
+    pass
 
 class ScanProgress(EventDispatcher):
     name = StringProperty()
@@ -163,18 +184,28 @@ class ScanProgress(EventDispatcher):
             self.status_bar = r.status_bar
     def build_scanner(self):
         self.get_widgets()
+        scan_controls = self.scan_controls
         scan_range = self.scan_controls.scan_range
         graph_widget = self.root_widget.plot_container.spectrum_graph
         graph_widget.auto_scale_x = False
         graph_widget.x_min = scan_range[0]
         graph_widget.x_max = scan_range[1]
-        gain = self.scan_controls.gain
         self.name = ' - '.join([str(v) for v in scan_range])
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
-        self.scanner = Scanner(scan_range=scan_range, gain=gain, 
-                               samples_per_scan=self.scan_controls.samples_per_scan, 
-                               window_size=self.scan_controls.window_size)
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
+                'window_type', 'fft_size']
+        scan_kwargs = {}
+        for key in keys:
+            val = getattr(scan_controls, key)
+            if key == 'window_type' and val == 'None':
+                val = None
+            elif key == 'window_size' and not val:
+                val = None
+            if isinstance(val, basestring):
+                val = str(val)
+            scan_kwargs[key] = val
+        self.scanner = Scanner(**scan_kwargs)
         self.scanner.on_progress = self.on_scanner_progress
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()

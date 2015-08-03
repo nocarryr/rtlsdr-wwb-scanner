@@ -71,6 +71,22 @@
                         input_filter: 'int'
                         text: str(root.window_size)
                         on_focus: if not self.focus: root.window_size = int(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Window Type'
+                    Button:
+                        text: root.window_type
+                        on_release: root.window_type_dropdown.open(self)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'FFT Size'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.fft_size)
+                        on_focus: if not self.focus: root.fft_size = int(self.text)
     BoxLayout:
         orientation: 'vertical'
         size_hint_x: .2
@@ -93,3 +109,11 @@
     height: 44
     text: str(self.gain)
     on_release: self.parent.parent.select(self.gain)
+
+<WindowTypeDropDown>:
+    on_select: self.scan_controls.window_type = args[1]
+    
+<WindowTypeDropDownBtn>:
+    size_hint_y: None
+    height: 44
+    on_release: self.parent.parent.select(self.text)
