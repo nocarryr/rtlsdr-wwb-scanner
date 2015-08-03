@@ -6,9 +6,9 @@ class SdrWrapper(object):
     def __init__(self, **kwargs):
         self.sdr = None
         self.scanner = kwargs.get('scanner')
-        self.timeout = kwargs.get('timeout', 60.)
         self.device_open = threading.Event()
         self.device_wait = threading.Event()
+        self.device_lock = threading.RLock()
     def set_sdr_values(self):
         scanner = self.scanner
         if scanner is None:
@@ -33,34 +33,34 @@ class SdrWrapper(object):
             if sdr_val != scanner_val:
                 setattr(scanner, key, sdr_val)
     def open_sdr(self):
-        if self.sdr is not None:
-            if self.sdr.device_opened:
-                return self.sdr
+        with self.device_lock:
+            new_sdr = True
+            if self.sdr is not None:
+                if not self.sdr.device_opened:
+                    self.sdr.close()
+                    self.sdr = None
+                    self.device_open.clear()
+                else:
+                    self.device_open.wait()
+            if self.sdr is not None:
+                new_sdr = False
             else:
+                try:
+                    self.sdr = RtlSdr()
+                except IOError:
+                    self.sdr = None
+                    new_sdr = False
+                if new_sdr:
+                    self.set_sdr_values()
+                    self.device_open.set()
+        return self.sdr
+    def close_sdr(self):
+        with self.device_lock:
+            if self.sdr is not None:
+                self.sdr.close()
                 self.sdr = None
                 self.device_open.clear()
-        try:
-            sdr = RtlSdr()
-        except IOError:
-            if self.timeout is None:
-                raise
-            sdr = None
-        if sdr is None:
-            self.device_wait(self.timeout)
-            sdr = RtlSdr()
-        self.sdr = sdr
-        self.set_sdr_values()
-        self.device_open.set()
-        return sdr
-    def close_sdr(self):
-        if self.sdr is None:
-            return
-        self.sdr.close()
-        self.sdr = None
-        self.device_open.clear()
     def __enter__(self):
-        if self.device_open.is_set():
-            return
         self.open_sdr()
     def __exit__(self, *args):
         self.close_sdr()

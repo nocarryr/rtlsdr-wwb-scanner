@@ -138,19 +138,12 @@ class Scanner(ScannerBase):
             gains = self._gains = self.get_gains()
         return gains
     def get_gains(self):
-        reset_timeout = False
-        if not self.sdr_wrapper.device_open.is_set():
-            timeout = self.sdr_wrapper.timeout
-            if timeout is not None:
-                self.sdr_wrapper.timeout = None
-                reset_timeout = True
-        try:
-            with self.sdr_wrapper:
+        with self.sdr_wrapper:
+            sdr = self.sdr
+            if sdr is None:
+                gains = None
+            else:
                 gains = self.sdr.get_gains()
-        except IOError:
-            gains = None
-        if reset_timeout:
-            self.sdr_wrapper.timeout = timeout
         if gains is not None:
             gains = [gain / 10. for gain in gains]
         return gains
