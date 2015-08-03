@@ -4,7 +4,11 @@ import numpy as np
 
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
-from wwb_scanner.scanner.sample_processing import SampleCollection, calc_num_samples
+from wwb_scanner.scanner.sample_processing import (
+    SampleCollection, 
+    calc_num_samples, 
+    WINDOW_TYPES, 
+)
 from wwb_scanner.scan_objects import Spectrum
 
 SCANNER_DEFAULTS = dict(
@@ -25,6 +29,7 @@ class StopScanner(Exception):
     pass
 
 class ScannerBase(JSONMixin):
+    WINDOW_TYPES = WINDOW_TYPES
     def __init__(self, **kwargs):
         self._running = threading.Event()
         self._current_freq = None

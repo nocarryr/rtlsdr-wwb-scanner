@@ -1,8 +1,11 @@
 import time
 import numpy as np
+from scipy.signal.windows import __all__ as WINDOW_TYPES
 from scipy.signal import welch, get_window
 
 from wwb_scanner.core import JSONMixin
+
+WINDOW_TYPES = [s for s in WINDOW_TYPES if s != 'get_window']
 
 def next_2_to_pow(val):
     val -= 1
