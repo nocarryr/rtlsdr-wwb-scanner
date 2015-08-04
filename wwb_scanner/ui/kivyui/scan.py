@@ -167,7 +167,7 @@ class ScanProgress(EventDispatcher):
     scan_controls = ObjectProperty(None)
     status_bar = ObjectProperty(None)
     root_widget = ObjectProperty(None)
-    plot = ObjectProperty(None)
+    plot = ObjectProperty(None, allownone=True)
     def __init__(self, **kwargs):
         super(ScanProgress, self).__init__(**kwargs)
         self.scanner = None
@@ -233,6 +233,7 @@ class ScanProgress(EventDispatcher):
             self.scanner = None
         if self.scan_thread is not None:
             self.scan_thread = None
+        self.plot = None
         self.scan_controls.scanning = False
         self.scan_controls.idle = True
     def show_scan(self):
