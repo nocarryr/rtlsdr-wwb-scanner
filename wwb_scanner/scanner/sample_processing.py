@@ -33,11 +33,20 @@ class SampleSet(JSONMixin):
         scanner = self.scanner
         freq = self.center_frequency
         num_samples = scanner.samples_per_scan
+        sweeps_per_scan = scanner.sample_rate / num_samples
+        samples_per_second = int(num_samples / sweeps_per_scan)
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
         print 'reading %s samples' % (num_samples)
         samples = sdr.read_samples(num_samples)
+        total_size = samples.size
+        if total_size % samples_per_second != 0:
+            total_size -= samples.size % samples_per_second
+            print 'sweeps_per_scan=%s, samples_per_second=%s, total_size=%s, tsize/spersec=%s' % (
+                sweeps_per_scan, samples_per_second, total_size, total_size/samples_per_second)
+            samples.resize(total_size)
+        samples.resize(total_size / samples_per_second, samples_per_second)
         if scanner.window_size is None:
             win = scanner.window_type
             noverlap = int(win.size / 4)
@@ -45,8 +54,18 @@ class SampleSet(JSONMixin):
         else:
             win = get_window(scanner.window_type, scanner.window_size)
             noverlap = None
-        f, powers = welch(samples, fs=scanner.sample_rate, window=win, noverlap=noverlap, 
-                          nfft=scanner.fft_size)
+        f = None
+        powers = None
+        for i, sample_chunk in enumerate(samples):
+            _f, _powers = welch(sample_chunk, fs=scanner.sample_rate, window=win, 
+                                noverlap=noverlap, nfft=scanner.fft_size)
+            if f is None:
+                f = _f
+            if powers is None:
+                powers = np.zeros((samples.shape[0], _powers.size), dtype=_powers.dtype)
+            powers[i] = _powers
+        powers = np.array(powers)
+        powers = powers.mean(axis=-1)
         self.raw = [f.copy(), powers.copy()]
         f = np.fft.fftshift(f)
         if f.size % 2 == 0:
