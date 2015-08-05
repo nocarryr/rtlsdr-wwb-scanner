@@ -21,9 +21,12 @@ def calc_num_samples(num_samples):
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 
-                 'frequencies', 'powers', 'collection')
+                 'frequencies', 'powers', 'collection', '_serialization_attrs')
+    _serialization_attrs = ['center_frequency', 'raw', 'frequencies', 'powers']
     def __init__(self, **kwargs):
         for key in self.__slots__:
+            if key == '_serialization_attrs':
+                continue
             setattr(self, key, kwargs.get(key))
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
@@ -75,14 +78,6 @@ class SampleSet(JSONMixin):
         f /= 1e6
         self.frequencies = f
         self.powers = 10. * np.log10(powers)
-    def _serialize(self):
-        d = {}
-        for key in self.__slots__:
-            if key in ['scanner', 'collection']:
-                continue
-            val = getattr(self, key)
-            d[key] = val
-        return d
 
 class SampleCollection(JSONMixin):
     def __init__(self, **kwargs):

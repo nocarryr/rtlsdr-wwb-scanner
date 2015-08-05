@@ -4,7 +4,8 @@ import numbers
 from wwb_scanner.core import JSONMixin
 
 class Sample(JSONMixin):
-    __slots__ = ('spectrum', '_frequency', '_magnitude')
+    __slots__ = ('spectrum', '_frequency', '_magnitude', '_serialization_attrs')
+    _serialization_attrs = ['frequency', 'magnitude']
     def __init__(self, **kwargs):
         self.spectrum = kwargs.get('spectrum')
         self.frequency = kwargs.get('frequency')
@@ -41,9 +42,6 @@ class Sample(JSONMixin):
     @property
     def formatted_magnitude(self):
         return '%03.1f' % (self.magnitude)
-    def _serialize(self):
-        keys = ['frequency', 'magnitude']
-        return {k: getattr(self, k) for k in keys}
     def __repr__(self):
         return str(self)
     def __str__(self):

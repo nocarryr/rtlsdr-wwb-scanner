@@ -30,6 +30,7 @@ class StopScanner(Exception):
 
 class ScannerBase(JSONMixin):
     WINDOW_TYPES = WINDOW_TYPES
+    _serialization_attrs = SCANNER_DEFAULTS.keys()
     def __init__(self, **kwargs):
         self._running = threading.Event()
         self._current_freq = None
@@ -87,7 +88,7 @@ class ScannerBase(JSONMixin):
     def scan_freq(self, freq):
         pass
     def _serialize(self):
-        d = {k: getattr(self, k) for k in SCANNER_DEFAULTS.keys()}
+        d = super(ScannerBase, self)._serialize()
         d['spectrum'] = self.spectrum._serialize()
         d['sample_collection'] = self.sample_collection._serialize()
         return d
@@ -101,6 +102,8 @@ class Scanner(ScannerBase):
             scan_range: (list) frequency range to scan (in MHz)
             step_size:  increment (in MHz) to return scan values
     '''
+    _serialization_attrs = ['samples_per_scan', 'window_size', 
+                            'window_type', 'fft_size']
     def __init__(self, **kwargs):
         self._samples_per_scan = None
         self._window_size = None
@@ -187,11 +190,6 @@ class Scanner(ScannerBase):
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 is_center_frequency=is_center)
         return sample_set
-    def _serialize(self):
-        d = super(Scanner, self)._serialize()
-        keys = ['samples_per_scan', 'window_size', 'window_type', 'fft_size']
-        d.update({key: getattr(self, key) for key in keys})
-        return d
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):

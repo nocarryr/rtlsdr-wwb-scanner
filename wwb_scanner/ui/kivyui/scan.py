@@ -34,6 +34,8 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type = OptionProperty('boxcar', 
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
+    _serialization_attrs = ['scan_range', 'gain', 'samples_per_scan', 
+                            'window_size', 'window_type', 'fft_size']
     def get_scan_range(self):
         return self.scan_range_widget.scan_range
     def set_scan_range(self, value):
@@ -63,17 +65,6 @@ class ScanControls(BoxLayout, JSONMixin):
     def on_stop_button_release(self):
         self.scan_progress.cancel_scan()
         self.idle = True
-    def _serialize(self):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
-                'window_type', 'fft_size']
-        return {key: getattr(self, key) for key in keys}
-    def _deserialize(self, **kwargs):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
-                'window_type', 'fft_size']
-        for key in keys:
-            if key not in kwargs:
-                continue
-            setattr(self, key, kwargs.get(key))
     
 class ScanRangeControls(BoxLayout):
     scan_range_start_txt = ObjectProperty(None)

@@ -35,6 +35,8 @@ def get_spectrum_plot():
     return SpectrumPlot
 
 class Spectrum(JSONMixin):
+    _serialization_attrs = ['name', 'color', 'timestamp_utc', 
+                            'step_size', 'center_frequencies']
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')
         self.color = Color(kwargs.get('color'))
@@ -134,8 +136,7 @@ class Spectrum(JSONMixin):
         with self.data_update_lock:
             self.data_updated.set()
     def _serialize(self):
-        attrs = ['name', 'color', 'timestamp_utc', 'step_size', 'center_frequencies']
-        d = {attr: getattr(self, attr) for attr in attrs}
+        d = super(Spectrum, self)._serialize()
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d

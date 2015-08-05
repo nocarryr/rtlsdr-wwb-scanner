@@ -64,6 +64,8 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     tick_container = ObjectProperty(None)
     x_tick_line = ObjectProperty(None)
     y_tick_line = ObjectProperty(None)
+    _serialization_attrs = ['x_max', 'x_min', 'y_max', 'y_min', 
+                            'auto_scale_x', 'auto_scale_y']
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -203,9 +205,7 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     def y_to_db(self, y):
         return (y / self.height * self.y_size) + self.y_min
     def _serialize(self):
-        attrs = ['x_max', 'x_min', 'y_max', 'y_min', 
-                 'auto_scale_x', 'auto_scale_y']
-        d = {attr:getattr(self, attr) for attr in attrs}
+        d = super(SpectrumGraph, self)._serialize()
         d['plots'] = []
         for plot in self.children:
             if not isinstance(plot, SpectrumPlot):
@@ -232,6 +232,7 @@ class SpectrumPlot(Widget, JSONMixin):
     enabled = BooleanProperty(True)
     selected = BooleanProperty(False)
     spectrum = ObjectProperty(None)
+    _serialization_attrs = ['name', 'color', 'enabled', 'selected']
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
         if self.parent is not None:
@@ -327,8 +328,7 @@ class SpectrumPlot(Widget, JSONMixin):
         i = np.abs(xy_data['x'] - freq).argmin()
         return xy_data['x'][i], xy_data['y'][i]
     def _serialize(self):
-        attrs = ['name', 'color', 'enabled', 'selected']
-        d = {attr: getattr(self, attr) for attr in attrs}
+        d = super(SpectrumPlot, self)._serialize()
         d['spectrum_data'] = self.spectrum._serialize()
         return d
     def _deserialize(self, **kwargs):
