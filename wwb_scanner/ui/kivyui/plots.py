@@ -48,11 +48,14 @@ class CustomLabelTick(Tick):
         
 class FrequencyTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
-        return str(self.spectrum_graph.x_to_freq(pos))
+        s = '%07.3f' % (self.spectrum_graph.x_to_freq(pos))
+        if s.split('.')[1] == '000':
+            s = s.split('.')[0]
+        return s
         
 class DbTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
-        return str(self.spectrum_graph.y_to_db(pos))
+        return '%5.1f' % (self.spectrum_graph.y_to_db(pos))
         
 class SpectrumGraph(RelativeLayout, JSONMixin):
     scan_controls = ObjectProperty(None)
