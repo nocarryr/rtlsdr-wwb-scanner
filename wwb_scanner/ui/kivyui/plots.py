@@ -2,6 +2,7 @@ import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
 from kivy.core.window import Window
+from kivy.clock import Clock
 from kivy.graphics import Color, Line
 from kivy.garden.tickline import Tickline, Tick, LabellessTick
 from kivy.core.text import Label as CoreLabel
@@ -64,6 +65,7 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     tick_container = ObjectProperty(None)
     x_tick_line = ObjectProperty(None)
     y_tick_line = ObjectProperty(None)
+    tick_redraw_event = ObjectProperty(None, allownone=True)
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -78,6 +80,9 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     y_size = AliasProperty(get_y_size, set_y_size, bind=('y_min', 'y_max'))
     def __init__(self, **kwargs):
         super(SpectrumGraph, self).__init__(**kwargs)
+        props = ['x_min', 'x_max', 'y_min', 'y_max']
+        bind_kwargs = {prop: self.trigger_tick_redraw for prop in props}
+        self.bind(**bind_kwargs)
         Window.bind(mouse_pos=self.on_mouse_pos)
     def on_mouse_pos(self, instance, pos):
         if self.parent is None:
@@ -111,6 +116,19 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         self.plot_params['y_min'] = value
     def on_y_max(self, instance, value):
         self.plot_params['y_max'] = value
+    def trigger_tick_redraw(self, *args):
+        if self.tick_redraw_event is not None:
+            return
+        if self.x_tick_line is None:
+            return
+        if self.y_tick_line is None:
+            return
+        self.tick_redraw_event = Clock.schedule_once(self._redraw_ticklines)
+    def _redraw_ticklines(self, *args, **kwargs):
+        if self.tick_redraw_event is not None:
+            self.tick_redraw_event = None
+        self.x_tick_line.redraw()
+        self.y_tick_line.redraw()
     def on_scan_controls(self, *args):
         if self.scan_controls is None:
             return
