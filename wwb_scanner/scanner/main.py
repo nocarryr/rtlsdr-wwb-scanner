@@ -72,8 +72,9 @@ class ScannerBase(JSONMixin):
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
-        if freq >= end_freq:
+        if sample_set is not False and running.is_set():
             self.save_to_dbstore()
+        running.clear()
     def stop_scan(self):
         self._running.clear()
     def scan_freq(self, freq):
