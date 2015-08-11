@@ -27,7 +27,12 @@ class ScannerBase(JSONMixin):
         self._running = threading.Event()
         self._current_freq = None
         self._progress = 0.
-        self.config = ScanConfig(kwargs.get('config', {}))
+        ckwargs = kwargs.get('config')
+        if not ckwargs:
+            ckwargs = db_store.get_scan_config()
+        if not ckwargs:
+            ckwargs = {}
+        self.config = ScanConfig(ckwargs)
         if 'spectrum' in kwargs:
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
