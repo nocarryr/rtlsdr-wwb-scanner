@@ -29,6 +29,7 @@ class ScanControls(BoxLayout, JSONMixin):
     scanning = BooleanProperty(False)
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
+    freq_correction = NumericProperty(0)
     samples_per_scan = NumericProperty()
     window_size = NumericProperty(allownone=True)
     window_type = OptionProperty('boxcar', 
@@ -193,8 +194,8 @@ class ScanProgress(EventDispatcher):
         self.name = ' - '.join([str(v) for v in scan_range])
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
-                'window_type', 'fft_size']
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
+                'window_size', 'window_type', 'fft_size']
         scan_kwargs = {}
         for key in keys:
             val = getattr(scan_controls, key)

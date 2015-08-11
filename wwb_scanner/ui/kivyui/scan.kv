@@ -49,6 +49,15 @@
                     Button:
                         text: str(root.gain)
                         on_release: root.gain_dropdown.open(self)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Freq Correction'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.freq_correction)
+                        on_focus: if not self.focus: root.freq_correction = int(self.text)
         TabbedPanelItem:
             text: 'Advanced'
             BoxLayout:
