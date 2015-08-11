@@ -3,6 +3,7 @@ import threading
 import numpy as np
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
 from wwb_scanner.scanner.config import ScanConfig
 from wwb_scanner.scanner.sample_processing import (
@@ -71,10 +72,14 @@ class ScannerBase(JSONMixin):
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
+        if freq >= end_freq:
+            self.save_to_dbstore()
     def stop_scan(self):
         self._running.clear()
     def scan_freq(self, freq):
         pass
+    def save_to_dbstore(self):
+        db_store.add_scan(self.spectrum, self.config)
     def _serialize(self):
         d = dict(
             config=self.config._serialize(), 

@@ -39,6 +39,7 @@
     <Source>wwb_scanner/ui/kivyui/actions.py</Source>
     <Source>wwb_scanner/utils/color.py</Source>
     <Source>wwb_scanner/scanner/config.py</Source>
+    <Source>wwb_scanner/utils/dbstore.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
