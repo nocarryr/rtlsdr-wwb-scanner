@@ -24,6 +24,8 @@ class SdrWrapper(object):
         for key, scanner_val in scanner_vals.items():
             if key == 'gain':
                 sdr_val = None
+            elif key == 'freq_correction' and scanner_val in [0, None]:
+                continue
             else:
                 sdr_val = getattr(sdr, key)
             if sdr_val == scanner_val:
