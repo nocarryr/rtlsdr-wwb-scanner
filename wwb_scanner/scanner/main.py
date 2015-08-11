@@ -13,9 +13,9 @@ from wwb_scanner.scan_objects import Spectrum
 
 SCANNER_DEFAULTS = dict(
     scan_range=[400., 900.],
-    step_size=.0125,
+    step_size=.05,
     sample_rate=2e6,
-    sampling_period=.05,
+    sampling_period=.0125,
     save_raw_values=False,
     gain=30.,
     freq_correction=0, 
