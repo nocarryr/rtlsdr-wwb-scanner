@@ -196,7 +196,7 @@ class ScanProgress(EventDispatcher):
         self.status_bar.message_text = 'Scanning %s' % (self.name)
         keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
                 'window_size', 'window_type', 'fft_size']
-        scan_kwargs = {}
+        scan_config = {}
         for key in keys:
             val = getattr(scan_controls, key)
             if key == 'window_type' and val == 'None':
@@ -205,8 +205,8 @@ class ScanProgress(EventDispatcher):
                 val = None
             if isinstance(val, basestring):
                 val = str(val)
-            scan_kwargs[key] = val
-        self.scanner = Scanner(**scan_kwargs)
+            scan_config[key] = val
+        self.scanner = Scanner(config=scan_config)
         self.scanner.on_progress = self.on_scanner_progress
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()

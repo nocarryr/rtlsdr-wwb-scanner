@@ -48,17 +48,17 @@ class SampleSet(JSONMixin):
             samples.resize(total_size)
         samples.resize(total_size / samples_per_second, samples_per_second)
         if scanner.window_size is None:
-            win = scanner.window_type
+            win = scanner.config.window_type
             noverlap = int(win.size / 4)
             print 'psd: window size=%s, noverlap=%s' % (win.size, noverlap)
         else:
-            win = get_window(scanner.window_type, scanner.window_size)
+            win = get_window(scanner.config.window_type, scanner.window_size)
             noverlap = None
         f = None
         powers = None
         for i, sample_chunk in enumerate(samples):
             _f, _powers = welch(sample_chunk, fs=scanner.sample_rate, window=win, 
-                                noverlap=noverlap, nfft=scanner.fft_size)
+                                noverlap=noverlap, nfft=scanner.config.get('fft_size'))
             if f is None:
                 f = _f
             if powers is None:

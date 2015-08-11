@@ -4,22 +4,13 @@ import numpy as np
 
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
+from wwb_scanner.scanner.config import ScanConfig
 from wwb_scanner.scanner.sample_processing import (
     SampleCollection, 
     calc_num_samples, 
     WINDOW_TYPES, 
 )
 from wwb_scanner.scan_objects import Spectrum
-
-SCANNER_DEFAULTS = dict(
-    scan_range=[400., 900.],
-    step_size=.05,
-    sample_rate=2e6,
-    sampling_period=.0125,
-    save_raw_values=False,
-    gain=30.,
-    freq_correction=0, 
-)
 
 def mhz_to_hz(mhz):
     return mhz * 1000000.0
@@ -35,14 +26,11 @@ class ScannerBase(JSONMixin):
         self._running = threading.Event()
         self._current_freq = None
         self._progress = 0.
-        for key, val in SCANNER_DEFAULTS.items():
-            if key in kwargs:
-                val = kwargs.get(key)
-            setattr(self, key, val)
+        self.config = ScanConfig(kwargs.get('config', {}))
         if 'spectrum' in kwargs:
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
-            self.spectrum = Spectrum(step_size=self.step_size)
+            self.spectrum = Spectrum(step_size=self.config.step_size)
         if not kwargs.get('__from_json__'):
             self.sample_collection = SampleCollection(scanner=self)
     @property
@@ -52,7 +40,7 @@ class ScannerBase(JSONMixin):
     def current_freq(self, value):
         self._current_freq = value
         if value is not None:
-            f_min, f_max = self.scan_range
+            f_min, f_max = self.config.scan_range
             self.progress = (value - f_min) / (f_max - f_min)
         self.on_current_freq(value)
     def on_current_freq(self, value):
@@ -74,7 +62,7 @@ class ScannerBase(JSONMixin):
         fsize = fmax - f.min()
         return (fmax + (fsize / 2.)) + (f[1] - f[2])
     def run_scan(self):
-        freq, end_freq = self.scan_range
+        freq, end_freq = self.config.scan_range
         running = self._running
         running.set()
         while freq < end_freq and running.is_set():
@@ -88,9 +76,11 @@ class ScannerBase(JSONMixin):
     def scan_freq(self, freq):
         pass
     def _serialize(self):
-        d = {k: getattr(self, k) for k in SCANNER_DEFAULTS.keys()}
-        d['spectrum'] = self.spectrum._serialize()
-        d['sample_collection'] = self.sample_collection._serialize()
+        d = dict(
+            config=self.config._serialize(), 
+            spectrum=self.spectrum._serialize(), 
+            sample_collection=self.sample_collection._serialize(), 
+        )
         return d
     def _deserialize(self, **kwargs):
         data = kwargs.get('sample_collection')
@@ -103,52 +93,61 @@ class Scanner(ScannerBase):
             step_size:  increment (in MHz) to return scan values
     '''
     def __init__(self, **kwargs):
-        self._samples_per_scan = None
-        self._window_size = None
         super(Scanner, self).__init__(**kwargs)
-        self.samples_per_scan = kwargs.get('samples_per_scan')
-        self.window_size = kwargs.get('window_size')
-        self.window_type = kwargs.get('window_type', 'boxcar')
-        self.fft_size = kwargs.get('fft_size')
         self.sdr_wrapper = SdrWrapper(scanner=self)
-        self.bandwidth = self.sample_rate / 2.
+        self.config.setdefault('bandwidth', self.sample_rate / 2.)
+        self.config.setdefault('window_type', 'boxcar')
         self.gain = self.gain
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
     @property
+    def sample_rate(self):
+        return self.config.get('sample_rate')
+    @sample_rate.setter
+    def sample_rate(self, value):
+        self.config.sample_rate = value
+    @property
+    def freq_correction(self):
+        return self.config.get('freq_correction')
+    @freq_correction.setter
+    def freq_correction(self, value):
+        self.config.freq_correction = value
+    @property
     def samples_per_scan(self):
-        v = self._samples_per_scan
+        v = self.config.get('samples_per_scan')
         if v is None:
-            v = self.sample_rate * self.sampling_period
-            v = self._samples_per_scan = calc_num_samples(v)
+            v = self.config.sample_rate * self.config.sampling_period
+            v = calc_num_samples(v)
+            self.config.samples_per_scan = v
         return v
     @samples_per_scan.setter
     def samples_per_scan(self, value):
-        if value == self._samples_per_scan:
+        if value == self.config.get('samples_per_scan'):
             return
         if value is not None:
             value = calc_num_samples(value)
-        self._samples_per_scan = value
+        self.config.samples_per_scan = value
     @property
     def window_size(self):
-        v = self._window_size
+        v = self.config.get('window_size')
         if v is None:
-            v = self._window_size = int(self.bandwidth / mhz_to_hz(self.step_size))
+            v = int(self.config.bandwidth / mhz_to_hz(self.config.step_size))
+            self.config.window_size = v
         return v
     @window_size.setter
     def window_size(self, value):
-        if value == self._window_size:
+        if value == self.config.get('window_size'):
             return
-        self._window_size = value
+        self.config.window_size = value
     @property
     def gain(self):
-        return getattr(self, '_gain', None)
+        return self.config.get('gain')
     @gain.setter
     def gain(self, value):
         if value is not None and hasattr(self, 'sdr_wrapper'):
             value = self.get_nearest_gain(value)
-        self._gain = value
+        self.config.gain = value
     @property
     def gains(self):
         gains = getattr(self, '_gains', None)
@@ -188,11 +187,6 @@ class Scanner(ScannerBase):
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 is_center_frequency=is_center)
         return sample_set
-    def _serialize(self):
-        d = super(Scanner, self)._serialize()
-        keys = ['samples_per_scan', 'window_size', 'window_type', 'fft_size']
-        d.update({key: getattr(self, key) for key in keys})
-        return d
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
