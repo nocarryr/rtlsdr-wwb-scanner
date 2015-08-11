@@ -19,7 +19,7 @@ class SdrWrapper(object):
         sdr = self.sdr
         if sdr is None:
             return
-        keys = ['sample_rate', 'gain']
+        keys = ['sample_rate', 'gain', 'freq_correction']
         scanner_vals = {key: getattr(scanner, key, None) for key in keys}
         for key, scanner_val in scanner_vals.items():
             if key == 'gain':

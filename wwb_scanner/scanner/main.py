@@ -18,6 +18,7 @@ SCANNER_DEFAULTS = dict(
     sampling_period=.05,
     save_raw_values=False,
     gain=30.,
+    freq_correction=0, 
 )
 
 def mhz_to_hz(mhz):
