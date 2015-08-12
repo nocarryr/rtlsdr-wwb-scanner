@@ -46,8 +46,16 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.root_widget = self.parent
     def get_scan_defaults(self):
         scanner = Scanner()
+        self.scan_range = scanner.config.scan_range
+        self.gain = scanner.config.gain
+        freq_correction = scanner.config.freq_correction
+        if freq_correction is None:
+            freq_correction = 0
+        self.freq_correction = freq_correction
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
+        self.window_type = scanner.config.window_type
+        self.fft_size = scanner.config.fft_size
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):
