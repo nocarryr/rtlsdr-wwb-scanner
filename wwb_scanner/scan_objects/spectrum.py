@@ -3,6 +3,7 @@ import datetime
 import time
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.utils.color import Color
 from wwb_scanner.scan_objects import Sample, TimeBasedSample
 try:
@@ -37,6 +38,13 @@ def get_spectrum_plot():
 class Spectrum(JSONMixin):
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')
+        self.eid = kwargs.get('eid')
+        eid = kwargs.get('scan_config_eid')
+        config = kwargs.get('scan_config')
+        if config is not None:
+            self.scan_config = config
+        elif eid is not None:
+            self.scan_config_eid = eid
         self.color = Color(kwargs.get('color'))
         datetime_utc = kwargs.get('datetime_utc')
         timestamp_utc = kwargs.get('timestamp_utc')
@@ -78,6 +86,39 @@ class Spectrum(JSONMixin):
         dt = datetime.datetime.utcfromtimestamp(value)
         if dt != self.datetime_utc:
             self.datetime_utc = dt
+    @property
+    def scan_config(self):
+        return getattr(self, '_scan_config', None)
+    @scan_config.setter
+    def scan_config(self, value):
+        if value == self.scan_config:
+            return
+        self._scan_config = value
+        if value.get('eid') is None:
+            eid = self.scan_config_eid
+            if eid is not None:
+                value.eid = eid
+    @property
+    def scan_config_eid(self):
+        eid = getattr(self, '_scan_config_eid', None)
+        if eid is None:
+            config = self.scan_config
+            if config is not None:
+                eid = self._scan_config_eid = config.get('eid')
+        return eid
+    @scan_config_eid.setter
+    def scan_config_eid(self, value):
+        if value == self.scan_config_eid:
+            return
+        self._scan_config_eid = value
+        if value is None:
+            return
+        config = self.scan_config
+        if config is None:
+            config = self._scan_config = db_store.get_scan_config(eid=value)
+        else:
+            if config.get('eid') is None:
+                config.eid = value
     def _deserialize(self, **kwargs):
         samples = kwargs.get('samples', {})
         if isinstance(samples, dict):
@@ -133,8 +174,19 @@ class Spectrum(JSONMixin):
     def set_data_updated(self):
         with self.data_update_lock:
             self.data_updated.set()
+    def save_to_dbstore(self):
+        db_store.add_scan(self)
+    @classmethod
+    def from_dbstore(cls, dbdata=None, eid=None):
+        if dbdata is None:
+            assert eid is not None
+            dbdata = db_store.get_scan(eid)
+        else:
+            eid = dbdata.eid
+        return cls.from_json(dbdata, eid=eid)
     def _serialize(self):
-        attrs = ['name', 'color', 'timestamp_utc', 'step_size', 'center_frequencies']
+        attrs = ['name', 'color', 'timestamp_utc', 'step_size', 
+                 'center_frequencies', 'scan_config_eid']
         d = {attr: getattr(self, attr) for attr in attrs}
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}

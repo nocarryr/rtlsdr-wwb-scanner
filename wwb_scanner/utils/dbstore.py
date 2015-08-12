@@ -42,16 +42,28 @@ class DBStore(object):
         else:
             dbconfig = None
         return dbconfig
-    def add_scan(self, spectrum, scan_config):
-        if scan_config.get('eid') is None:
-            self.add_scan_config(scan_config)
+    def add_scan(self, spectrum, scan_config=None):
+        if scan_config is None:
+            scan_config = spectrum.scan_config
+        if scan_config is not None:
+            if scan_config.get('eid') is None:
+                self.add_scan_config(scan_config)
+            spectrum.scan_config_eid = scan_config.eid
         data = spectrum._serialize()
-        data['scan_config_eid'] = scan_config.eid
         table = self.db.table('scans_performed')
-        table.insert(data)
+        if spectrum.eid is not None:
+            eid = spectrum.eid
+            table.update(data, eids=[eid])
+        else:
+            eid = table.insert(data)
+            spectrum.eid = eid
+        return eid
     def get_all_scans(self):
         table = self.db.table('scans_performed')
         scans = table.all()
         return scans
+    def get_scan(self, eid):
+        table = self.db.table('scans_performed')
+        return table.get(eid=eid)
     
 db_store = DBStore()

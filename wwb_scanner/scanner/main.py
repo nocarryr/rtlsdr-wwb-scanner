@@ -37,6 +37,7 @@ class ScannerBase(JSONMixin):
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
             self.spectrum = Spectrum(step_size=self.config.step_size)
+        self.spectrum.scan_config = self.config
         if not kwargs.get('__from_json__'):
             self.sample_collection = SampleCollection(scanner=self)
     @property
@@ -85,7 +86,7 @@ class ScannerBase(JSONMixin):
     def scan_freq(self, freq):
         pass
     def save_to_dbstore(self):
-        db_store.add_scan(self.spectrum, self.config)
+        self.spectrum.save_to_dbstore()
     def _serialize(self):
         d = dict(
             config=self.config._serialize(), 
