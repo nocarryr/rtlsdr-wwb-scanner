@@ -96,6 +96,34 @@
                         input_filter: 'int'
                         text: str(root.fft_size)
                         on_focus: if not self.focus: root.fft_size = int(self.text)
+        TabbedPanelItem:
+            text: 'Device'
+            BoxLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Remote Host'
+                    CheckBox:
+                        active: root.is_remote
+                        on_active: root.is_remote = self.active
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Host address'
+                    TextInput:
+                        multiline: False
+                        text: root.remote_hostname
+                        on_focus: if not self.focus: root.remote_hostname = self.text
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Host Port'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.remote_port)
+                        on_focus: if not self.focus: root.remote_port = int(self.text)
     BoxLayout:
         orientation: 'vertical'
         size_hint_x: .2

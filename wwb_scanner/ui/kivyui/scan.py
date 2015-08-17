@@ -35,6 +35,9 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type = OptionProperty('boxcar', 
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
+    is_remote = BooleanProperty(False)
+    remote_hostname = StringProperty('127.0.0.1')
+    remote_port = NumericProperty(1235)
     def get_scan_range(self):
         return self.scan_range_widget.scan_range
     def set_scan_range(self, value):
@@ -55,6 +58,9 @@ class ScanControls(BoxLayout, JSONMixin):
         scanner = Scanner()
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
+        self.is_remote = scanner.config.is_remote
+        self.remote_hostname = scanner.config.remote_hostname
+        self.remote_port = scanner.config.remote_port
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):
@@ -195,7 +201,8 @@ class ScanProgress(EventDispatcher):
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
         keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
-                'window_size', 'window_type', 'fft_size']
+                'window_size', 'window_type', 'fft_size', 
+                'is_remote', 'remote_hostname', 'remote_port']
         scan_config = {}
         for key in keys:
             val = getattr(scan_controls, key)
