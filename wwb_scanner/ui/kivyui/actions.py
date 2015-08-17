@@ -1,8 +1,14 @@
 import os
+import datetime
 
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.garden.filebrowser import FileBrowser
 
+from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.file_handlers import BaseImporter
+from wwb_scanner.scan_objects import Spectrum
 
 class Action(object):
     _instances = {}
@@ -116,6 +122,37 @@ class FileOpen(Action, FileAction):
     
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
+    def do_action(self, app):
+        self.app = app
+        scan_data = db_store.get_all_scans()
+        tree_view = TreeView(root_options={'text':'root'}, hide_root=True)
+        self.tree_view = tree_view
+        for eid, scan in scan_data.items():
+            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
+            txt = ' - '.join([scan['name'], str(dt)])
+            scan_node = tree_view.add_node(TreeViewLabel(text=txt))
+            scan_node.eid = eid
+        load_btn = Button(text='Load')
+        cancel_btn = Button(text='Cancel')
+        hbox = BoxLayout(orientation='horizontal', size_hint_y=.1)
+        hbox.add_widget(load_btn)
+        hbox.add_widget(cancel_btn)
+        vbox = BoxLayout()
+        vbox.add_widget(tree_view)
+        vbox.add_widget(hbox)
+        cancel_btn.bind(on_release=self.on_cancel)
+        load_btn.bind(on_release=self.on_load)
+        app.root.show_popup(title='Load Scan', content=vbox, size_hint=(.9, .9))
+    def on_cancel(self, *args):
+        self.app.root.close_popup()
+        self.tree_view = None
+    def on_load(self, *args):
+        node = self.tree_view.selected_node
+        if node is None:
+            return
+        spectrum = Spectrum.from_dbstore(eid=node.eid)
+        self.app.root.plot_container.add_plot(spectrum=spectrum)
+        self.on_cancel()
     
 class PlotsImport(Action, FileAction):
     name = 'plots.import'
