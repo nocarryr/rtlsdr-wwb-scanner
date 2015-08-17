@@ -114,6 +114,9 @@ class FileOpen(Action, FileAction):
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
     
+class PlotsLoadRecent(Action):
+    name = 'plots.load_recent'
+    
 class PlotsImport(Action, FileAction):
     name = 'plots.import'
     select_string = 'Import'
