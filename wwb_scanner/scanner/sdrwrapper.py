@@ -1,6 +1,6 @@
 import threading
 
-from rtlsdr import RtlSdr
+from rtlsdr import RtlSdr, RtlSdrTcpClient
 
 class SdrWrapper(object):
     def __init__(self, **kwargs):
@@ -39,7 +39,6 @@ class SdrWrapper(object):
                 setattr(scanner, key, sdr_val)
     def open_sdr(self):
         with self.device_lock:
-            new_sdr = True
             if self.sdr is not None:
                 if not self.sdr.device_opened:
                     self.sdr.close()
@@ -47,18 +46,24 @@ class SdrWrapper(object):
                     self.device_open.clear()
                 else:
                     self.device_open.wait()
-            if self.sdr is not None:
-                new_sdr = False
-            else:
-                try:
-                    self.sdr = RtlSdr()
-                except IOError:
-                    self.sdr = None
-                    new_sdr = False
-                if new_sdr:
+            if self.sdr is None:
+                if self.scanner.config.is_remote:
+                    self.sdr = self._open_sdr_remote()
+                else:
+                    self.sdr = self._open_sdr_local()
+                if self.sdr is not None:
                     self.set_sdr_values()
                     self.device_open.set()
         return self.sdr
+    def _open_sdr_local(self):
+        try:
+            sdr = RtlSdr()
+        except IOError:
+            sdr = None
+        return sdr
+    def _open_sdr_remote(self):
+        return RtlSdrTcpClient(hostname=self.scanner.config.remote_hostname, 
+                               port=self.scanner.config.remote_port)
     def close_sdr(self):
         with self.device_lock:
             if self.sdr is not None:
