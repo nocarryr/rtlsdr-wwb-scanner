@@ -3,6 +3,7 @@ import threading
 import numpy as np
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
 from wwb_scanner.scanner.config import ScanConfig
 from wwb_scanner.scanner.sample_processing import (
@@ -26,11 +27,17 @@ class ScannerBase(JSONMixin):
         self._running = threading.Event()
         self._current_freq = None
         self._progress = 0.
-        self.config = ScanConfig(kwargs.get('config', {}))
+        ckwargs = kwargs.get('config')
+        if not ckwargs:
+            ckwargs = db_store.get_scan_config()
+        if not ckwargs:
+            ckwargs = {}
+        self.config = ScanConfig(ckwargs)
         if 'spectrum' in kwargs:
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
             self.spectrum = Spectrum(step_size=self.config.step_size)
+        self.spectrum.scan_config = self.config
         if not kwargs.get('__from_json__'):
             self.sample_collection = SampleCollection(scanner=self)
     @property
@@ -71,10 +78,15 @@ class ScannerBase(JSONMixin):
             if sample_set is False:
                 break
             freq = self.calc_next_center_freq(sample_set)
+        if sample_set is not False and running.is_set():
+            self.save_to_dbstore()
+        running.clear()
     def stop_scan(self):
         self._running.clear()
     def scan_freq(self, freq):
         pass
+    def save_to_dbstore(self):
+        self.spectrum.save_to_dbstore()
     def _serialize(self):
         d = dict(
             config=self.config._serialize(), 
