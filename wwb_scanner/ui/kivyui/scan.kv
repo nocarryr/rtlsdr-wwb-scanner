@@ -1,13 +1,6 @@
-<ScanRangeControls>:
-    orientation: 'horizontal'
-    
-<ScanRangeTextInput>:
-    multiline: False
-    input_filter: 'float'
     
 <ScanControls>:
     orientation: 'horizontal'
-    scan_range_widget: scan_range
     start_btn: start_btn
     stop_btn: stop_btn
     canvas:
@@ -30,18 +23,16 @@
                     orientation: 'vertical'
                     Label:
                         text: 'Scan Range'
-                    ScanRangeControls:
-                        id: scan_range
-                        scan_range_start_txt: scan_range_start
-                        scan_range_end_txt: scan_range_end
-                        ScanRangeTextInput:
-                            id: scan_range_start
-                            scan_controls: root
-                            range_index: 0
-                        ScanRangeTextInput:
-                            id: scan_range_end
-                            scan_controls: root
-                            range_index: 1
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        TextInput:
+                            multiline: False
+                            text: '%07.3f' % (root.scan_range[0])
+                            on_focus: if not self.focus: root.scan_range[0] = float(self.text)
+                        TextInput:
+                            multiline: False
+                            text: '%07.3f' % (root.scan_range[1])
+                            on_focus: if not self.focus: root.scan_range[1] = float(self.text)
                 BoxLayout:
                     orientation: 'vertical'
                     Label:

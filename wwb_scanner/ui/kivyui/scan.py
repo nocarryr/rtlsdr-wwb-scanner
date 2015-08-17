@@ -2,7 +2,6 @@ import threading
 
 from kivy.event import EventDispatcher
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.textinput import TextInput
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
 from kivy.properties import (
@@ -11,7 +10,6 @@ from kivy.properties import (
     BooleanProperty, 
     NumericProperty, 
     ListProperty, 
-    AliasProperty, 
     OptionProperty, 
 )
 from kivy.clock import Clock
@@ -21,12 +19,12 @@ from wwb_scanner.scanner import Scanner
 
 
 class ScanControls(BoxLayout, JSONMixin):
-    scan_range_widget = ObjectProperty(None)
     gain_dropdown = ObjectProperty(None)
     window_type_dropdown = ObjectProperty(None)
     start_btn = ObjectProperty(None)
     stop_btn = ObjectProperty(None)
     scanning = BooleanProperty(False)
+    scan_range = ListProperty([470., 900.])
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
     freq_correction = NumericProperty(0)
@@ -35,14 +33,6 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type = OptionProperty('boxcar', 
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
-    is_remote = BooleanProperty(False)
-    remote_hostname = StringProperty('127.0.0.1')
-    remote_port = NumericProperty(1235)
-    def get_scan_range(self):
-        return self.scan_range_widget.scan_range
-    def set_scan_range(self, value):
-        self.scan_range_widget.scan_range = value
-    scan_range = AliasProperty(get_scan_range, set_scan_range)
     def get_gain(self):
         return self.gain_txt.text
     def __init__(self, **kwargs):
@@ -56,8 +46,16 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.root_widget = self.parent
     def get_scan_defaults(self):
         scanner = Scanner()
+        self.scan_range = scanner.config.scan_range
+        self.gain = scanner.config.gain
+        freq_correction = scanner.config.freq_correction
+        if freq_correction is None:
+            freq_correction = 0
+        self.freq_correction = freq_correction
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
+        self.window_type = scanner.config.window_type
+        self.fft_size = scanner.config.fft_size
         self.is_remote = scanner.config.is_remote
         self.remote_hostname = scanner.config.remote_hostname
         self.remote_port = scanner.config.remote_port
@@ -81,43 +79,6 @@ class ScanControls(BoxLayout, JSONMixin):
             if key not in kwargs:
                 continue
             setattr(self, key, kwargs.get(key))
-    
-class ScanRangeControls(BoxLayout):
-    scan_range_start_txt = ObjectProperty(None)
-    scan_range_end_txt = ObjectProperty(None)
-    scan_range = ListProperty([470., 900.])
-    
-class ScanRangeTextInput(TextInput):
-    scan_controls = ObjectProperty(None)
-    range_index = NumericProperty(-1.)
-    value = NumericProperty()
-    def __init__(self, **kwargs):
-        super(ScanRangeTextInput, self).__init__(**kwargs)
-    def on_scan_controls(self, *args):
-        if self.scan_controls is None:
-            return
-        if self.range_index < 0:
-            return
-        self.value = self.scan_controls.scan_range[self.range_index]
-        self.set_text_from_value()
-    def on_range_index(self, instance, value):
-        if self.scan_controls is None:
-            return
-        self.value = self.scan_controls.scan_range[self.range_index]
-        self.set_text_from_value()
-    def on_value(self, instance, value):
-        self.scan_controls.scan_range[self.range_index] = value
-        self.set_text_from_value(value)
-    def on_focus(self, instance, value):
-        if value:
-            return
-        self.value = float(self.text)
-    def set_text_from_value(self, value=None):
-        if value is None:
-            value = self.value
-        t = '%07.3f' % (value)
-        if self.text != t:
-            self.text = t
 
 class ScanGainDropDown(DropDown):
     scan_controls = ObjectProperty(None)

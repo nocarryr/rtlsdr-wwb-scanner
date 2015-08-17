@@ -12,6 +12,8 @@ Allows wide-band RF scans to be performed by an inexpensive [RTL-SDR][osmosdr-wi
     * After that, you'll need to "garen install" the "filebrowser" and "tickline" packages:
         * `garden install filebrowser`
         * `garden install tickline`
+* Install tinydb:
+   * `pip install tinydb`
 
 This project relies heavily upon the numpy and scipy libraries.  Installation for those can be found [here][scipy-install].
 
