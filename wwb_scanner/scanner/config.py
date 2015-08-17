@@ -9,6 +9,9 @@ class ScanConfig(JSONMixin):
         save_raw_values=False,
         gain=30.,
         freq_correction=0, 
+        is_remote=False, 
+        remote_hostname='127.0.0.1', 
+        remote_port=1235, 
     )
     def __init__(self, initdict=None, **kwargs):
         data = {}
