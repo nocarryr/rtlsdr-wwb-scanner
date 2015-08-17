@@ -61,7 +61,12 @@ class DBStore(object):
     def get_all_scans(self):
         table = self.db.table('scans_performed')
         scans = table.all()
-        return scans
+        scan_data = {}
+        for scan in scans:
+            excluded = ['samples', 'center_frequencies']
+            scan_data[scan.eid] = {key:scan[key] for key in scan.keys() 
+                                    if key not in excluded}
+        return scan_data
     def get_scan(self, eid):
         table = self.db.table('scans_performed')
         return table.get(eid=eid)
