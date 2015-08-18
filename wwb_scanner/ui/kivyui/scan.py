@@ -33,6 +33,9 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type = OptionProperty('boxcar', 
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
+    is_remote = BooleanProperty(False)
+    remote_hostname = StringProperty('127.0.0.1')
+    remote_port = NumericProperty(1235)
     def get_gain(self):
         return self.gain_txt.text
     def __init__(self, **kwargs):
@@ -162,7 +165,8 @@ class ScanProgress(EventDispatcher):
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
         keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
-                'window_size', 'window_type', 'fft_size']
+                'window_size', 'window_type', 'fft_size', 
+                'is_remote', 'remote_hostname', 'remote_port']
         scan_config = {}
         for key in keys:
             val = getattr(scan_controls, key)
