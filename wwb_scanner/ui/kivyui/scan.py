@@ -55,7 +55,7 @@ class ScanControls(BoxLayout, JSONMixin):
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
         self.window_type = scanner.config.window_type
-        self.fft_size = scanner.config.fft_size
+        self.fft_size = scanner.config.get('fft_size')
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):
