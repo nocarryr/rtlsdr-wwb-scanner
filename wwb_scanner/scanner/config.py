@@ -46,7 +46,7 @@ class ScanConfig(JSONMixin):
     def __getattr__(self, attr):
         if hasattr(self, '_data') and attr in self._config_keys:
             return self[attr]
-        return super(ScanConfig, self).__getattr__(attr)
+        raise AttributeError
     def __setattr__(self, attr, value):
         if attr not in ['_config_keys', '_data']:
             self[attr] = value
