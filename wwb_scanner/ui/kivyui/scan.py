@@ -55,7 +55,7 @@ class ScanControls(BoxLayout, JSONMixin):
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
         self.window_type = scanner.config.window_type
-        self.fft_size = scanner.config.fft_size
+        self.fft_size = scanner.config.get('fft_size')
         self.is_remote = scanner.config.is_remote
         self.remote_hostname = scanner.config.remote_hostname
         self.remote_port = scanner.config.remote_port
@@ -162,8 +162,7 @@ class ScanProgress(EventDispatcher):
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
         keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
-                'window_size', 'window_type', 'fft_size', 
-                'is_remote', 'remote_hostname', 'remote_port']
+                'window_size', 'window_type', 'fft_size']
         scan_config = {}
         for key in keys:
             val = getattr(scan_controls, key)
