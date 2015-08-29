@@ -212,6 +212,8 @@ class ScanProgress(EventDispatcher):
         if self.scanner is None:
             return
         spectrum = self.scanner.spectrum
+        if not len(spectrum.samples):
+            return
         if self.plot is None:
             plot_container = self.root_widget.plot_container
             self.plot = plot_container.add_plot(spectrum=spectrum, name=self.name)
