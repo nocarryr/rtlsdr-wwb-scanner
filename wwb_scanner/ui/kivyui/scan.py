@@ -184,6 +184,8 @@ class ScanProgress(EventDispatcher):
     def on_scanner_progress(self, value):
         Clock.schedule_once(self.update_progress)
     def update_progress(self, *args, **kwargs):
+        if self.scanner is None:
+            return
         progress = float(self.scanner.progress)
         self.status_bar.progress = progress
         if int(progress * 100) % 2 == 0:
