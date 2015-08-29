@@ -1,7 +1,11 @@
 import threading
 import traceback
 
-from rtlsdr import RtlSdr, RtlSdrTcpClient
+from rtlsdr import RtlSdr
+try:
+    from rtlsdr import RtlSdrTcpClient
+except ImportError:
+    RtlSdrTcpClient = None
 
 class SdrWrapper(object):
     def __init__(self, **kwargs):
@@ -64,6 +68,8 @@ class SdrWrapper(object):
         return sdr
     def _open_sdr_remote(self):
         try:
+            if RtlSdrTcpClient is None:
+                raise Exception('Tcp client not available')
             sdr = RtlSdrTcpClient(hostname=self.scanner.config.remote_hostname, 
                                   port=self.scanner.config.remote_port)
             sdr.get_sample_rate()
