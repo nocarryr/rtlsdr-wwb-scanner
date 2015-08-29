@@ -1,4 +1,5 @@
 import threading
+import traceback
 
 from rtlsdr import RtlSdr, RtlSdrTcpClient
 
@@ -62,8 +63,14 @@ class SdrWrapper(object):
             sdr = None
         return sdr
     def _open_sdr_remote(self):
-        return RtlSdrTcpClient(hostname=self.scanner.config.remote_hostname, 
-                               port=self.scanner.config.remote_port)
+        try:
+            sdr = RtlSdrTcpClient(hostname=self.scanner.config.remote_hostname, 
+                                  port=self.scanner.config.remote_port)
+            sdr.get_sample_rate()
+        except:
+            traceback.print_exc()
+            sdr = None
+        return sdr
     def close_sdr(self):
         with self.device_lock:
             if self.sdr is not None:
