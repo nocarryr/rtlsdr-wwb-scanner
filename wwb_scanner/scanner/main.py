@@ -25,6 +25,7 @@ class ScannerBase(JSONMixin):
     WINDOW_TYPES = WINDOW_TYPES
     def __init__(self, **kwargs):
         self._running = threading.Event()
+        self._stopped = threading.Event()
         self._current_freq = None
         self._progress = 0.
         ckwargs = kwargs.get('config')
@@ -72,7 +73,11 @@ class ScannerBase(JSONMixin):
         freq, end_freq = self.config.scan_range
         running = self._running
         running.set()
-        while freq < end_freq and running.is_set():
+        while running.is_set():
+            if not running.is_set():
+                break
+            if freq >= end_freq:
+                break
             self.current_freq = freq
             sample_set = self.scan_freq(mhz_to_hz(freq))
             if sample_set is False:
@@ -80,9 +85,15 @@ class ScannerBase(JSONMixin):
             freq = self.calc_next_center_freq(sample_set)
         if sample_set is not False and running.is_set():
             self.save_to_dbstore()
+        if not running.is_set():
+            self.sample_collection.cancel()
+        else:
+            self.sample_collection.stop()
         running.clear()
+        self._stopped.set()
     def stop_scan(self):
         self._running.clear()
+        self._stopped.wait()
     def scan_freq(self, freq):
         pass
     def save_to_dbstore(self):
@@ -189,16 +200,18 @@ class Scanner(ScannerBase):
             super(Scanner, self).run_scan()
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
-        spectrum = self.spectrum
-        freqs = sample_set.frequencies
+        return sample_set
+    def on_sample_set_processed(self, sample_set):
         powers = sample_set.powers
+        freqs = sample_set.frequencies
+        spectrum = self.spectrum
         center_freq = freqs[freqs.size / 2]
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             is_center = f == center_freq
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 is_center_frequency=is_center)
-        return sample_set
+        self.on_progress(self.progress)
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
