@@ -52,7 +52,7 @@ class SampleSet(JSONMixin):
         sweeps_per_scan = scanner.sample_rate / num_samples
         samples_per_second = int(num_samples / sweeps_per_scan)
         win_size = scanner.window_size
-        nfft = scanner.config.get('fft_size')
+        nfft = scanner.sampling_config.get('fft_size')
         total_size = samples.size
         if total_size % samples_per_second != 0:
             total_size -= samples.size % samples_per_second
@@ -60,7 +60,7 @@ class SampleSet(JSONMixin):
             #    sweeps_per_scan, samples_per_second, total_size, total_size/samples_per_second)
             samples.resize(total_size)
         samples.resize(total_size / samples_per_second, samples_per_second)
-        win = get_window(scanner.config.window_type, win_size)
+        win = get_window(scanner.sampling_config.window_type, win_size)
         noverlap = None
         f = None
         powers = None

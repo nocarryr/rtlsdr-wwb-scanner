@@ -52,7 +52,7 @@ class SdrWrapper(object):
                 else:
                     self.device_open.wait()
             if self.sdr is None:
-                if self.scanner.config.is_remote:
+                if self.scanner.device_config.is_remote:
                     self.sdr = self._open_sdr_remote()
                 else:
                     self.sdr = self._open_sdr_local()
@@ -70,8 +70,8 @@ class SdrWrapper(object):
         try:
             if RtlSdrTcpClient is None:
                 raise Exception('Tcp client not available')
-            sdr = RtlSdrTcpClient(hostname=self.scanner.config.remote_hostname, 
-                                  port=self.scanner.config.remote_port)
+            sdr = RtlSdrTcpClient(hostname=self.scanner.device_config.remote_hostname, 
+                                  port=self.scanner.device_config.remote_port)
             sdr.get_sample_rate()
         except:
             traceback.print_exc()

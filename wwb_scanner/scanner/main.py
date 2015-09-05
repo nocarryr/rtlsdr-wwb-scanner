@@ -34,6 +34,8 @@ class ScannerBase(JSONMixin):
         if not ckwargs:
             ckwargs = {}
         self.config = ScanConfig(ckwargs)
+        self.device_config = self.config.device
+        self.sampling_config = self.config.sampling
         if 'spectrum' in kwargs:
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
@@ -118,59 +120,61 @@ class Scanner(ScannerBase):
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
         self.sdr_wrapper = SdrWrapper(scanner=self)
-        self.config.setdefault('bandwidth', self.sample_rate / 2.)
-        self.config.setdefault('window_type', 'boxcar')
+        c = self.sampling_config
+        c.setdefault('bandwidth', c.sample_rate / 2.)
         self.gain = self.gain
     @property
     def sdr(self):
         return self.sdr_wrapper.sdr
     @property
     def sample_rate(self):
-        return self.config.get('sample_rate')
+        return self.sampling_config.get('sample_rate')
     @sample_rate.setter
     def sample_rate(self, value):
-        self.config.sample_rate = value
+        self.sampling_config.sample_rate = value
     @property
     def freq_correction(self):
-        return self.config.get('freq_correction')
+        return self.device_config.get('freq_correction')
     @freq_correction.setter
     def freq_correction(self, value):
-        self.config.freq_correction = value
+        self.device_config.freq_correction = value
     @property
     def samples_per_scan(self):
-        v = self.config.get('samples_per_scan')
+        c = self.sampling_config
+        v = c.get('samples_per_scan')
         if v is None:
-            v = self.config.sample_rate * self.config.sampling_period
+            v = c.sample_rate * c.sampling_period
             v = calc_num_samples(v)
-            self.config.samples_per_scan = v
+            c.samples_per_scan = v
         return v
     @samples_per_scan.setter
     def samples_per_scan(self, value):
-        if value == self.config.get('samples_per_scan'):
+        if value == self.sampling_config.get('samples_per_scan'):
             return
         if value is not None:
             value = calc_num_samples(value)
-        self.config.samples_per_scan = value
+        self.sampling_config.samples_per_scan = value
     @property
     def window_size(self):
+        c = self.config
         v = self.config.get('window_size')
         if v is None:
-            v = int(self.config.bandwidth / mhz_to_hz(self.config.step_size))
-            self.config.window_size = v
+            v = int(c.sampling.bandwidth / mhz_to_hz(c.step_size))
+            c.sampling.window_size = v
         return v
     @window_size.setter
     def window_size(self, value):
-        if value == self.config.get('window_size'):
+        if value == self.sampling_config.get('window_size'):
             return
-        self.config.window_size = value
+        self.sampling_config.window_size = value
     @property
     def gain(self):
-        return self.config.get('gain')
+        return self.device_config.get('gain')
     @gain.setter
     def gain(self, value):
         if value is not None and hasattr(self, 'sdr_wrapper'):
             value = self.get_nearest_gain(value)
-        self.config.gain = value
+        self.device_config.gain = value
     @property
     def gains(self):
         gains = getattr(self, '_gains', None)

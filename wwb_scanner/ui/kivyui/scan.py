@@ -50,18 +50,18 @@ class ScanControls(BoxLayout, JSONMixin):
     def get_scan_defaults(self):
         scanner = Scanner()
         self.scan_range = scanner.config.scan_range
-        self.gain = scanner.config.gain
-        freq_correction = scanner.config.freq_correction
+        self.gain = scanner.device_config.gain
+        freq_correction = scanner.device_config.freq_correction
         if freq_correction is None:
             freq_correction = 0
         self.freq_correction = freq_correction
         self.samples_per_scan = scanner.samples_per_scan
         self.window_size = scanner.window_size
-        self.window_type = scanner.config.window_type
-        self.fft_size = scanner.config.get('fft_size')
-        self.is_remote = scanner.config.is_remote
-        self.remote_hostname = scanner.config.remote_hostname
-        self.remote_port = scanner.config.remote_port
+        self.window_type = scanner.sampling_config.window_type
+        self.fft_size = scanner.sampling_config.get('fft_size')
+        self.is_remote = scanner.device_config.is_remote
+        self.remote_hostname = scanner.device_config.remote_hostname
+        self.remote_port = scanner.device_config.remote_port
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):
@@ -164,19 +164,40 @@ class ScanProgress(EventDispatcher):
         self.name = ' - '.join([str(v) for v in scan_range])
         self.status_bar.progress = 0.
         self.status_bar.message_text = 'Scanning %s' % (self.name)
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'freq_correction', 
-                'window_size', 'window_type', 'fft_size', 
-                'is_remote', 'remote_hostname', 'remote_port']
+        keys = {
+            'config':[
+                'scan_range', 
+            ], 
+            'device':[
+                'gain', 
+                'freq_correction', 
+                'is_remote', 
+                'remote_hostname', 
+                'remote_port', 
+            ], 
+            'sampling':[
+                'samples_per_scan', 
+                'window_size', 
+                'window_type', 
+                'fft_size', 
+            ], 
+        }
         scan_config = {}
-        for key in keys:
-            val = getattr(scan_controls, key)
-            if key == 'window_type' and val == 'None':
-                val = None
-            elif key == 'window_size' and not val:
-                val = None
-            if isinstance(val, basestring):
-                val = str(val)
-            scan_config[key] = val
+        for conf_name, conf_keys in keys.items():
+            for key in conf_keys:
+                val = getattr(scan_controls, key)
+                if key == 'window_type' and val == 'None':
+                    val = None
+                elif key == 'window_size' and not val:
+                    val = None
+                if isinstance(val, basestring):
+                    val = str(val)
+                if conf_name == 'config':
+                    scan_config[key] = val
+                else:
+                    if conf_name not in scan_config:
+                        scan_config[conf_name] = {}
+                    scan_config[conf_name][key] = val
         self.scanner = Scanner(config=scan_config)
         self.scanner.on_progress = self.on_scanner_progress
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
