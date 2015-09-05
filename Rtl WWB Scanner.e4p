@@ -40,6 +40,7 @@
     <Source>wwb_scanner/utils/color.py</Source>
     <Source>wwb_scanner/scanner/config.py</Source>
     <Source>wwb_scanner/utils/dbstore.py</Source>
+    <Source>wwb_scanner/utils/config.py</Source>
   </Sources>
   <Forms/>
   <Translations/>
