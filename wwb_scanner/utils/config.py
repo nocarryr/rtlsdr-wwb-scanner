@@ -8,6 +8,9 @@ class Config(JSONMixin):
         data.update(kwargs)
         if '__from_json__' in data:
             del data['__from_json__']
+        if hasattr(self, 'DEFAULTS'):
+            for key, val in self.DEFAULTS.items():
+                data.setdefault(key, val)
         self._config_keys = set(data.keys())
         self._data = data
     def __setitem__(self, key, item):
