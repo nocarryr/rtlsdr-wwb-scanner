@@ -81,7 +81,14 @@ class SampleSet(JSONMixin):
         freq = self.center_frequency
         win_size = self.scanner.window_size
         sr = self.scanner.sample_rate
-        f_expected = np.fft.fftfreq(win_size, 1 / sr)
+        num_samples = self.scanner.samples_per_scan
+        sweeps_per_scan = sr / num_samples
+        samples_per_second = int(num_samples / sweeps_per_scan)
+        fake_samples = np.random.normal(scale=1., size=samples_per_second)
+        fake_samples = np.fft.fft(fake_samples)
+        win = get_window('hanning', win_size)
+        nfft = self.scanner.sampling_config.get('fft_size')
+        f_expected, Pxx = welch(fake_samples, fs=sr, window=win, nfft=nfft)
         f_expected += freq
         f_expected /= 1e6
         return f_expected
