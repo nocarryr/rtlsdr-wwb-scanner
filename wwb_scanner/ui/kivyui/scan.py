@@ -190,6 +190,8 @@ class ScanProgress(EventDispatcher):
                     val = None
                 elif key == 'window_size' and not val:
                     val = None
+                elif key == 'fft_size' and not val:
+                    val = None
                 if isinstance(val, basestring):
                     val = str(val)
                 if conf_name == 'config':
