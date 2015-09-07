@@ -62,6 +62,12 @@ class ScanControls(BoxLayout, JSONMixin):
         self.is_remote = scanner.device_config.is_remote
         self.remote_hostname = scanner.device_config.remote_hostname
         self.remote_port = scanner.device_config.remote_port
+    def on_fft_size_input_focus(self, instance):
+        if instance.focus:
+            return
+        if not len(instance.text):
+            instance.text = '0'
+        self.fft_size = int(instance.text)
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
     def on_scan_button_release(self):

@@ -86,7 +86,7 @@
                         multiline: False
                         input_filter: 'int'
                         text: str(root.fft_size)
-                        on_focus: if not self.focus: root.fft_size = int(self.text)
+                        on_focus: root.on_fft_size_input_focus(self)
         TabbedPanelItem:
             text: 'Device'
             BoxLayout:
