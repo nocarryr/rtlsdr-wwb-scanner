@@ -72,10 +72,6 @@ class SampleSet(JSONMixin):
             powers[i] = _powers
         powers = np.array(powers)
         powers = powers.mean(axis=-1)
-        f = np.fft.fftshift(f)
-        if f.size % 2 == 0:
-            f = f[1:]
-            powers = powers[1:]
         f += freq
         f /= 1e6
         self.frequencies = f
@@ -86,9 +82,6 @@ class SampleSet(JSONMixin):
         win_size = self.scanner.window_size
         sr = self.scanner.sample_rate
         f_expected = np.fft.fftfreq(win_size, 1 / sr)
-        f_expected = np.fft.fftshift(f_expected)
-        if f_expected.size % 2 == 0:
-            f_expected = f_expected[1:]
         f_expected += freq
         f_expected /= 1e6
         return f_expected
