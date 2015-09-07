@@ -22,14 +22,25 @@ def calc_num_samples(num_samples):
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 
-                 'frequencies', 'powers', 'collection', 'process_thread')
+                 '_frequencies', 'powers', 'collection', 'process_thread')
     def __init__(self, **kwargs):
         for key in self.__slots__:
+            if key == '_frequencies':
+                key = 'frequencies'
             setattr(self, key, kwargs.get(key))
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
         if not kwargs.get('__from_json__'):
             self.read_samples()
+    @property
+    def frequencies(self):
+        f = getattr(self, '_frequencies', None)
+        if f is None:
+            f = self._frequencies= self.calc_expected_freqs()
+        return f
+    @frequencies.setter
+    def frequencies(self, value):
+        self._frequencies = value
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
@@ -39,8 +50,6 @@ class SampleSet(JSONMixin):
         time.sleep(.1)
         #print 'reading %s samples' % (num_samples)
         self.raw = sdr.read_samples(num_samples)
-        f_expected = self.calc_expected_freqs()
-        self.frequencies = f_expected
         self.launch_process_thread()
     def launch_process_thread(self):
         self.process_thread = ProcessThread(self)
@@ -74,7 +83,6 @@ class SampleSet(JSONMixin):
         powers = powers.mean(axis=-1)
         f += freq
         f /= 1e6
-        self.frequencies = f
         self.powers = 10. * np.log10(powers)
         self.collection.on_sample_set_processed(self)
     def calc_expected_freqs(self):
