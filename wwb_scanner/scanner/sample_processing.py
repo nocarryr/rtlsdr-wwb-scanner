@@ -61,12 +61,10 @@ class SampleSet(JSONMixin):
             samples.resize(total_size)
         samples.resize(total_size / samples_per_second, samples_per_second)
         win = get_window(scanner.sampling_config.window_type, win_size)
-        noverlap = None
         f = None
         powers = None
         for i, sample_chunk in enumerate(samples):
-            _f, _powers = welch(sample_chunk, fs=scanner.sample_rate, window=win, 
-                                noverlap=noverlap, nfft=nfft)
+            _f, _powers = welch(sample_chunk, fs=scanner.sample_rate, window=win, nfft=nfft)
             if f is None:
                 f = _f
             if powers is None:
