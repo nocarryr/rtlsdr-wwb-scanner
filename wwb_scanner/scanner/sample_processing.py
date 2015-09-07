@@ -30,8 +30,6 @@ class SampleSet(JSONMixin):
             setattr(self, key, kwargs.get(key))
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
-        if not kwargs.get('__from_json__'):
-            self.read_samples()
     @property
     def frequencies(self):
         f = getattr(self, '_frequencies', None)
@@ -210,24 +208,58 @@ class ProcessThread(threading.Thread):
 class SampleCollection(JSONMixin):
     def __init__(self, **kwargs):
         self.scanner = kwargs.get('scanner')
+        self.scanning = threading.Event()
+        self.stopped = threading.Event()
         self.sample_sets = {}
         self.process_pool = None
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
-    def scan_freq(self, freq):
-        if self.process_pool is None:
-            self.process_pool = ProcessPool()
-            self.process_pool.start()
-            self.process_pool.running.wait()
+    def build_sample_set(self, freq):
         sample_set = SampleSet(collection=self, center_frequency=freq)
         self.add_sample_set(sample_set)
         return sample_set
-    def stop(self):
+    def scan_freq(self, freq):
+        self.build_process_pool()
+        sample_set = self.sample_sets.get(freq)
+        if sample_set is None:
+            sample_set = self.build_sample_set(freq)
+        sample_set.read_samples()
+        return sample_set
+    def build_process_pool(self):
         if self.process_pool is not None:
-            self.process_pool.stop()
-    def cancel(self):
-        if self.process_pool is not None:
+            return
+        self.process_pool = ProcessPool()
+        self.process_pool.start()
+        self.process_pool.running.wait()
+    def scan_all_freqs(self):
+        self.build_process_pool()
+        self.scanning.set()
+        for key in sorted(self.sample_sets.keys()):
+            if not self.scanning.is_set():
+                break
+            sample_set = self.sample_sets[key]
+            sample_set.read_samples()
+        self.scanning.clear()
+        self.stop_process_pool()
+        self.stopped.set()
+    def stop_process_pool(self, cancel=False):
+        if self.process_pool is None:
+            return
+        if cancel:
             self.process_pool.cancel()
+        else:
+            self.process_pool.stop()
+        self.process_pool = None
+    def stop(self):
+        if self.scanning.is_set():
+            self.scanning.clear()
+            self.stopped.wait()
+        self.stop_process_pool()
+    def cancel(self):
+        if self.scanning.is_set():
+            self.scanning.clear()
+            self.stopped.wait()
+        self.stop_process_pool(cancel=True)
     def on_sample_set_processed(self, sample_set):
         self.scanner.on_sample_set_processed(sample_set)
     def _serialize(self):

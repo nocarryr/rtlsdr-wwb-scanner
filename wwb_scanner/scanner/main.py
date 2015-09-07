@@ -71,30 +71,25 @@ class ScannerBase(JSONMixin):
         fmax = f.max()
         fsize = fmax - f.min()
         return (fmax + (fsize / 2.)) + (f[1] - f[2])
+    def build_sample_sets(self):
+        freq,  end_freq = self.config.scan_range
+        sample_collection = self.sample_collection
+        while freq <= end_freq:
+            sample_set = sample_collection.build_sample_set(mhz_to_hz(freq))
+            freq = self.calc_next_center_freq(sample_set)
     def run_scan(self):
-        freq, end_freq = self.config.scan_range
+        self.build_sample_sets()
         running = self._running
         running.set()
-        while running.is_set():
-            if not running.is_set():
-                break
-            if freq >= end_freq:
-                break
-            self.current_freq = freq
-            sample_set = self.scan_freq(mhz_to_hz(freq))
-            if sample_set is False:
-                break
-            freq = self.calc_next_center_freq(sample_set)
-        if sample_set is not False and running.is_set():
+        self.sample_collection.scan_all_freqs()
+        self.sample_collection.stopped.wait()
+        if running.is_set():
             self.save_to_dbstore()
-        if not running.is_set():
-            self.sample_collection.cancel()
-        else:
-            self.sample_collection.stop()
         running.clear()
         self._stopped.set()
     def stop_scan(self):
         self._running.clear()
+        self.sample_collection.cancel()
         self._stopped.wait()
     def scan_freq(self, freq):
         pass
