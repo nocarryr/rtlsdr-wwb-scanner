@@ -157,7 +157,7 @@ class Scanner(ScannerBase):
     @property
     def window_size(self):
         c = self.config
-        v = self.config.get('window_size')
+        v = c.sampling.get('window_size')
         if v is None:
             v = int(c.sampling.bandwidth / mhz_to_hz(c.step_size))
             c.sampling.window_size = v
