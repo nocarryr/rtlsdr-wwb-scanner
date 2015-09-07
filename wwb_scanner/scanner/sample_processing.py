@@ -48,6 +48,7 @@ class SampleSet(JSONMixin):
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
         time.sleep(.1)
+        sdr.read_samples(2048)
         #print 'reading %s samples' % (num_samples)
         self.raw = sdr.read_samples(num_samples)
         self.launch_process_thread()
