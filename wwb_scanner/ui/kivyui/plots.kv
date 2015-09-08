@@ -1,3 +1,30 @@
+<GraphViewControls>:
+    orientation: 'horizontal'
+    h_slider: h_slider
+    zoom_in_btn: zoom_in_btn
+    zoom_out_btn: zoom_out_btn
+    Slider:
+        id: h_slider
+        orientation: 'horizontal'
+        size_hint_x: .9
+        range: root.h_scroll_range
+        step: root.h_scroll_step
+        value: root.h_scroll_value
+        on_value: root.h_scroll_value = self.value
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_x: .1
+        Button:
+            id: zoom_in_btn
+            text: '+'
+            on_press: root.on_zoom_btn_press(self)
+            on_release: root.on_zoom_btn_release(self)
+        Button:
+            id: zoom_out_btn
+            text: '-'
+            on_press: root.on_zoom_btn_press(self)
+            on_release: root.on_zoom_btn_release(self)
+            
 <SpectrumGraph>:
     tick_container: tick_container
     graph_overlay: graph_overlay

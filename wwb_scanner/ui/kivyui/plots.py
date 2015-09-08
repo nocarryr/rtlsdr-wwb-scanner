@@ -13,6 +13,7 @@ from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 from kivy.properties import (
     ListProperty, 
+    ReferenceListProperty, 
     DictProperty, 
     NumericProperty, 
     AliasProperty, 
@@ -57,6 +58,63 @@ class DbTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
         return '%5.1f' % (self.spectrum_graph.y_to_db(pos))
         
+class GraphViewControls(BoxLayout):
+    spectrum_graph = ObjectProperty(None)
+    h_slider = ObjectProperty(None)
+    zoom_in_btn = ObjectProperty(None)
+    zoom_out_btn = ObjectProperty(None)
+    h_scroll_range = ListProperty([100, 1000])
+    h_scroll_value = NumericProperty(500)
+    h_scroll_step = NumericProperty(1)
+    h_scrolling = BooleanProperty(False)
+    zoom_step = NumericProperty(1.)
+    zoom_timeout = NumericProperty(.25)
+    zoom_event = ObjectProperty(None, allownone=True)
+    def on_spectrum_graph(self, *args):
+        sg = self.spectrum_graph
+        if sg is None:
+            return
+        sg.bind(x_range=self.on_spectrum_graph_x_range, 
+                x_center=self.on_spectrum_graph_x_center)
+    def on_spectrum_graph_x_range(self, instance, value):
+        pass
+    def on_spectrum_graph_x_center(self, instance, value):
+        if self.h_scrolling:
+            return
+        self.h_scroll_value = value
+    def on_h_scroll_value(self, *args):
+        sg = self.spectrum_graph
+        if sg is None:
+            return
+        self.h_scrolling = True
+        sg.x_center = self.h_scroll_value
+        self.h_scrolling = False
+    def on_zoom_btn_press(self, btn):
+        self.cancel_zoom()
+        if btn == self.zoom_in_btn:
+            m = self.zoom_in
+        else:
+            m = self.zoom_out
+        m()
+        self.zoom_event = Clock.schedule_interval(m, self.zoom_timeout)
+    def on_zoom_btn_release(self, btn):
+        self.cancel_zoom()
+    def cancel_zoom(self, *args):
+        if self.zoom_event is None:
+            return
+        Clock.unschedule(self.zoom_event)
+        self.zoom_event = None
+    def zoom_in(self, *args):
+        sg = self.spectrum_graph
+        if sg is None:
+            return
+        sg.x_size -= self.zoom_step
+    def zoom_out(self, *args):
+        sg = self.spectrum_graph
+        if sg is None:
+            return
+        sg.x_size += self.zoom_step
+        
 class SpectrumGraph(RelativeLayout, JSONMixin):
     scan_controls = ObjectProperty(None)
     plot_params = DictProperty()
@@ -72,8 +130,22 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
-        pass
+        x_center = self.x_center
+        x_min = x_center - (value / 2.)
+        x_max = x_center + (value / 2.)
+        self.x_range = [x_min, x_max]
+        return True
     x_size = AliasProperty(get_x_size, set_x_size, bind=('x_min', 'x_max'))
+    x_range = ReferenceListProperty(x_min, x_max)
+    def get_x_center(self):
+        return (self.x_size / 2.) + self.x_min
+    def set_x_center(self, value):
+        size = self.x_size
+        x_min = value - (size / 2.)
+        x_max = x_min + size
+        self.x_range = [x_min, x_max]
+        return True
+    x_center = AliasProperty(get_x_center, set_x_center, bind=('x_min', 'x_max'))
     y_min = NumericProperty(-100.)
     y_max = NumericProperty(0.)
     def get_y_size(self):
