@@ -1,3 +1,4 @@
+from itertools import chain
 import numpy as np
 
 #from kivy.garden.graph import Graph, MeshLinePlot
@@ -26,6 +27,54 @@ from wwb_scanner.core import JSONMixin
 from wwb_scanner.scan_objects import Spectrum
 
 class TickContainer(FloatLayout):
+    spectrum_graph = ObjectProperty(None)
+    h_lines = ListProperty([])
+    v_lines = ListProperty([])
+    def __init__(self, **kwargs):
+        self._trigger_update = Clock.create_trigger(self._do_update)
+        super(TickContainer, self).__init__(**kwargs)
+    def on_spectrum_graph(self, *args):
+        sg = self.spectrum_graph
+        if sg is None:
+            return
+        if sg.y_tick_line is not None:
+            self.init_lines()
+        else:
+            sg.bind(y_tick_line=self.on_tick_lines)
+    def init_lines(self, *args):
+        sg = self.spectrum_graph
+        xline = sg.x_tick_line
+        yline = sg.y_tick_line
+        for tick in chain(xline.ticks, yline.ticks):
+            tick.bind(on_display=self.on_tick_display, 
+                      on_tick_draw=self.on_tick_draw)
+    def on_tick_display(self, *args, **kwargs):
+        tick = kwargs.get('tick')
+        if tick.tickline_parent.orientation == 'horizontal':
+            self.v_lines = []
+        else:
+            self.h_lines = []
+    def on_tick_draw(self, *args, **kwargs):
+        tick = kwargs.get('tick')
+        pos = kwargs.get('pos')
+        if tick.tickline_parent.orientation == 'horizontal':
+            self.v_lines.append(pos)
+        else:
+            self.h_lines.append(pos)
+    def on_h_lines(self, *args):
+        self._trigger_update()
+    def on_v_lines(self, *args):
+        self._trigger_update()
+    def _do_update(self, *args, **kwargs):
+        w = self.width
+        h = self.height
+        self.canvas.after.clear()
+        with self.canvas.after:
+            Color(1., 1., 1., .2)
+            for y in self.h_lines:
+                Line(points=[0, y, w, y])
+            for x in self.v_lines:
+                Line(points=[x, 0, x, h])
     def do_layout(self, *args, **kwargs):
         super(TickContainer, self).do_layout(*args, **kwargs)
         for c in self.children:
@@ -35,6 +84,10 @@ class TickContainer(FloatLayout):
 class CustomLabelTick(Tick):
     spectrum_graph = ObjectProperty(None)
     tickline_parent = ObjectProperty(None)
+    __events__ = ('on_display', 'on_tick_draw')
+    def display(self, *args):
+        self.dispatch('on_display', tick=self)
+        super(CustomLabelTick, self).display(*args)
     def get_label_texture(self, index, **kwargs):
         if self.tickline_parent is None:
             return super(CustomLabelTick, self).get_label_texture(index, **kwargs)
@@ -45,7 +98,12 @@ class CustomLabelTick(Tick):
             text=lbl_text, 
             **kwargs)
         label.refresh()
+        self.dispatch('on_tick_draw', tick=self, pos=pos)
         return label.texture
+    def on_display(self, *args, **kwargs):
+        pass
+    def on_tick_draw(self, *args, **kwargs):
+        pass
         
 class FrequencyTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
