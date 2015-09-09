@@ -373,12 +373,15 @@ class SpectrumPlot(Widget, JSONMixin):
             return
         freq_to_x = self.parent.freq_to_x
         db_to_y = self.parent.db_to_y
+        x_max = self.parent.x_max
         self.points = []
         if not self.enabled:
             return
         xy_data = self.xy_data
         for freq, db in zip(xy_data['x'], xy_data['y']):
             xy = [freq_to_x(freq), db_to_y(db)]
+            if xy[0] > x_max:
+                break
             self.points.extend(xy)
     def update_data(self):
         if not self.spectrum.data_updated.is_set():
