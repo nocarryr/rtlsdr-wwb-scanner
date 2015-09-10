@@ -56,10 +56,20 @@
     pos_hint: {'x':0, 'y':0}
     size_hint: [1., 1.]
     canvas:
+        StencilPush
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilUse
         Color:
             rgba: self.color
         Line:
             points: self.points
+        StencilUnUse
+        Rectangle:
+            pos: self.pos
+            size: self.size
+        StencilPop
         
 <ColorButton@Button>:
     on_press: print("pressed")
