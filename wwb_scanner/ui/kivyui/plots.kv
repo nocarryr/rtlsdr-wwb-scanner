@@ -28,6 +28,7 @@
 <SpectrumGraph>:
     tick_container: tick_container
     graph_overlay: graph_overlay
+    spectrum_plot_container: spectrum_plot_container
     TickContainer:
         id: tick_container
         spectrum_graph: root
@@ -38,6 +39,10 @@
         spectrum_graph: root
         pos_hint: {'x':0, 'y':0}
         size_hint: [1., 1.]
+    RelativeLayout:
+        id: spectrum_plot_container
+        pos_hint: {'x':0, 'y':0}
+        size_hint:[1., 1.]
     
 <GraphOverlay>:
     label_widget: label_widget

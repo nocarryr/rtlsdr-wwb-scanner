@@ -175,6 +175,7 @@ class GraphViewControls(BoxLayout):
         
 class SpectrumGraph(RelativeLayout, JSONMixin):
     scan_controls = ObjectProperty(None)
+    spectrum_plot_container = ObjectProperty(None)
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
@@ -275,17 +276,11 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
                 kwargs['selected'] = True
             plot = SpectrumPlot(**kwargs)
         plot.bind(selected=self.on_plot_selected)
-        self.add_widget(plot)
+        self.spectrum_plot_container.add_widget(plot)
         self.calc_plot_scale()
         if plot.selected:
             self.selected = plot
         return plot
-    def add_widget(self, w, index=0, canvas=None):
-        if isinstance(w, GraphOverlay):
-            index = 0
-        elif len(self.children):
-            index += 1
-        super(SpectrumGraph, self).add_widget(w, index)
     def on_plot_selected(self, instance, value):
         if not value:
             return
@@ -296,7 +291,7 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         if not auto_x and not auto_y:
             return
         d = {}
-        for w in self.children:
+        for w in self.spectrum_plot_container.children:
             if not isinstance(w, SpectrumPlot):
                 continue
             if not w.enabled:
@@ -358,13 +353,13 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
                  'auto_scale_x', 'auto_scale_y']
         d = {attr:getattr(self, attr) for attr in attrs}
         d['plots'] = []
-        for plot in self.children:
+        for plot in self.spectrum_plot_container.children:
             if not isinstance(plot, SpectrumPlot):
                 continue
             d['plots'].append(plot._serialize())
         return d
     def _deserialize(self, **kwargs):
-        for c in self.children[:]:
+        for c in self.spectrum_plot_container.children[:]:
             if isinstance(c, SpectrumPlot):
                 self.remove_widget(c)
         for key, val in kwargs.items():
@@ -383,12 +378,9 @@ class SpectrumPlot(Widget, JSONMixin):
     enabled = BooleanProperty(True)
     selected = BooleanProperty(False)
     spectrum = ObjectProperty(None)
+    spectrum_graph = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(SpectrumPlot, self).__init__(**kwargs)
-        if self.parent is not None:
-            self.parent.bind(plot_params=self._trigger_update)
-            self.parent.calc_plot_scale()
-        self.bind(parent=self.on_parent_set)
         self.bind(pos=self._trigger_update, size=self._trigger_update)
     def on_spectrum(self, *args):
         if self.spectrum is None:
@@ -414,11 +406,13 @@ class SpectrumPlot(Widget, JSONMixin):
         if list(value) == self.spectrum.color.to_list():
             return
         self.spectrum.color.from_list(value)
-    def on_parent_set(self, *args, **kwargs):
+    def on_parent(self, *args, **kwargs):
         if self.parent is None:
             return
-        self.parent.bind(plot_params=self._trigger_update)
-        self.parent.calc_plot_scale()
+        self.spectrum_graph = self.parent.parent
+    def on_spectrum_graph(self, *args):
+        self.spectrum_graph.bind(plot_params=self._trigger_update)
+        self.spectrum_graph.calc_plot_scale()
     def on_enabled(self, instance, value):
         if value:
             self._trigger_update()
@@ -427,25 +421,22 @@ class SpectrumPlot(Widget, JSONMixin):
     def _trigger_update(self, *args, **kwargs):
         self.draw_plot()
     def draw_plot(self):
-        if self.parent is None:
+        if self.spectrum_graph is None:
             return
-        freq_to_x = self.parent.freq_to_x
-        db_to_y = self.parent.db_to_y
-        x_max = self.parent.x_max
+        freq_to_x = self.spectrum_graph.freq_to_x
+        db_to_y = self.spectrum_graph.db_to_y
         self.points = []
         if not self.enabled:
             return
         xy_data = self.xy_data
         for freq, db in zip(xy_data['x'], xy_data['y']):
             xy = [freq_to_x(freq), db_to_y(db)]
-            if xy[0] > x_max:
-                break
             self.points.extend(xy)
     def update_data(self):
         if not self.spectrum.data_updated.is_set():
             return
         self.build_data()
-        self.parent.calc_plot_scale()
+        self.spectrum_graph.calc_plot_scale()
         self.draw_plot()
     def build_data(self):
         spectrum = self.spectrum
