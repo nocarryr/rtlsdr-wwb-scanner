@@ -129,7 +129,8 @@ class PlotsLoadRecent(Action):
         self.tree_view = tree_view
         for eid, scan in scan_data.items():
             dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
-            txt = ' - '.join([scan['name'], str(dt)])
+            name = str(scan.get('name'))
+            txt = ' - '.join([name, str(dt)])
             scan_node = tree_view.add_node(TreeViewLabel(text=txt))
             scan_node.eid = eid
         load_btn = Button(text='Load')
