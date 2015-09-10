@@ -72,8 +72,14 @@
         orientation: 'horizontal'
         tool_panel: tool_panel
         spectrum_graph: spectrum_graph
+        PlotToolPanel:
+            id: tool_panel
+            pos_hint: {'right':1., 'y':0.}
+            size_hint: [.2, 1.]
         BoxLayout:
             orientation: 'vertical'
+            pos_hint: {'x':0, 'y':0}
+            size_hint: [.8, 1.]
             SpectrumGraph:
                 id: spectrum_graph
                 graph_view_controls: graph_view_controls
@@ -84,9 +90,6 @@
                 id: graph_view_controls
                 spectrum_graph: spectrum_graph
                 size_hint_y: .1
-        PlotToolPanel:
-            id: tool_panel
-            size_hint_x: .2
     ScanControls:
         id: scan_controls
         size_hint_y: .25

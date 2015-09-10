@@ -1,6 +1,7 @@
 import os
 
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup
 from kivy.app import App
 from kivy.properties import (
@@ -60,7 +61,7 @@ class RTLSDRScannerApp(App):
         btn.parent.parent.dismiss()
         Action.trigger_by_name(btn.action, self)
     
-class PlotContainer(BoxLayout, JSONMixin):
+class PlotContainer(FloatLayout, JSONMixin):
     spectrum_graph = ObjectProperty(None)
     def add_plot(self, **kwargs):
         fn = kwargs.get('filename')
