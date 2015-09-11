@@ -122,3 +122,23 @@
         id: close_btn
         text: self.parent.close_text
         on_release: app.root.close_message()
+
+<ScrolledTree>:
+    tree: tree
+    size_hint_x: 1.
+    size_hint_y: .9
+    scroll_type: ['bars', 'content']
+    TreeView:
+        id: tree
+        root_options:{'text':'root'}
+        hide_root: True
+        #width: root.width
+        minimum_height: root.height
+        size_hint_y: None
+        
+<ScrolledTreeNode>:
+    height: 40
+    size_hint_y: None
+    size_hint_x: 1.
+    #width: 1 if self.parent is None else self.parent.width
+    

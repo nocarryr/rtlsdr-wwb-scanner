@@ -13,6 +13,7 @@ from kivy.properties import (
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.ui.kivyui import plots
 from wwb_scanner.ui.kivyui import scan
+from wwb_scanner.ui.kivyui import actions
 from wwb_scanner.ui.kivyui.actions import Action
 
 class RootWidget(BoxLayout, JSONMixin):

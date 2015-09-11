@@ -3,8 +3,10 @@ import datetime
 
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.garden.filebrowser import FileBrowser
+from kivy.properties import ObjectProperty
 
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.file_handlers import BaseImporter
@@ -120,26 +122,33 @@ class FileOpen(Action, FileAction):
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
     
+class ScrolledTree(ScrollView):
+    tree = ObjectProperty(None)
+
+class ScrolledTreeNode(TreeViewLabel):
+    pass
+    
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
     def do_action(self, app):
         self.app = app
         scan_data = db_store.get_all_scans()
-        tree_view = TreeView(root_options={'text':'root'}, hide_root=True)
+        scroll_view = ScrolledTree()
+        tree_view = scroll_view.tree
         self.tree_view = tree_view
         for eid, scan in scan_data.items():
             dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
             name = str(scan.get('name'))
             txt = ' - '.join([name, str(dt)])
-            scan_node = tree_view.add_node(TreeViewLabel(text=txt))
+            scan_node = tree_view.add_node(ScrolledTreeNode(text=txt))
             scan_node.eid = eid
         load_btn = Button(text='Load')
         cancel_btn = Button(text='Cancel')
         hbox = BoxLayout(orientation='horizontal', size_hint_y=.1)
         hbox.add_widget(load_btn)
         hbox.add_widget(cancel_btn)
-        vbox = BoxLayout()
-        vbox.add_widget(tree_view)
+        vbox = BoxLayout(orientation='vertical')
+        vbox.add_widget(scroll_view)
         vbox.add_widget(hbox)
         cancel_btn.bind(on_release=self.on_cancel)
         load_btn.bind(on_release=self.on_load)
