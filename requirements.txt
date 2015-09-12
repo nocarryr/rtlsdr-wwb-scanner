@@ -1,0 +1,6 @@
+numpy
+scipy
+git+https://github.com/roger-/pyrtlsdr.git@master#egg=pyrtlsdr
+tinydb
+ujson
+kivy
