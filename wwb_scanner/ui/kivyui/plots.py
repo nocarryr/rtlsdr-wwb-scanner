@@ -173,8 +173,7 @@ class GraphViewControls(BoxLayout):
             return
         sg.x_size += self.zoom_step
         
-class SpectrumGraph(RelativeLayout, JSONMixin):
-    scan_controls = ObjectProperty(None)
+class SpectrumGraphBase(RelativeLayout, JSONMixin):
     spectrum_plot_container = ObjectProperty(None)
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
@@ -182,10 +181,6 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     auto_scale_x = BooleanProperty(True)
     auto_scale_y = BooleanProperty(True)
     selected = ObjectProperty(None)
-    tick_container = ObjectProperty(None)
-    x_tick_line = ObjectProperty(None)
-    y_tick_line = ObjectProperty(None)
-    tick_redraw_event = ObjectProperty(None, allownone=True)
     def get_x_size(self):
         return self.x_max - self.x_min
     def set_x_size(self, value):
@@ -212,36 +207,6 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
     def set_y_size(self, value):
         pass
     y_size = AliasProperty(get_y_size, set_y_size, bind=('y_min', 'y_max'))
-    def __init__(self, **kwargs):
-        super(SpectrumGraph, self).__init__(**kwargs)
-        props = ['x_min', 'x_max', 'y_min', 'y_max']
-        bind_kwargs = {prop: self.trigger_tick_redraw for prop in props}
-        self.bind(**bind_kwargs)
-        Window.bind(mouse_pos=self.on_mouse_pos)
-    def on_mouse_pos(self, instance, pos):
-        if self.parent is None:
-            return
-        if self.graph_overlay is None:
-            return
-        if self.selected is None:
-            return
-        ppos = self.parent.to_widget(*pos)
-        real_x, real_y = self.to_local(*ppos)
-        if not self.collide_point(real_x, real_y):
-            return
-        real_freq = self.x_to_freq(real_x)
-        freq, db = self.selected.get_nearest_by_freq(real_freq)
-        if freq is None:
-            return
-        x = self.freq_to_x(freq)
-        y = self.db_to_y(db)
-        self.graph_overlay.plot_values.update({
-            'x':x, 'y':y, 'freq':freq, 'db':db, 
-        })
-    def on_tick_container(self, *args):
-        if self.tick_container is None:
-            return
-        self.build_ticklines()
     def on_x_min(self, instance, value):
         self.plot_params['x_min'] = value
     def on_x_max(self, instance, value):
@@ -250,25 +215,6 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
         self.plot_params['y_min'] = value
     def on_y_max(self, instance, value):
         self.plot_params['y_max'] = value
-    def trigger_tick_redraw(self, *args):
-        if self.tick_redraw_event is not None:
-            return
-        if self.x_tick_line is None:
-            return
-        if self.y_tick_line is None:
-            return
-        self.tick_redraw_event = Clock.schedule_once(self._redraw_ticklines)
-    def _redraw_ticklines(self, *args, **kwargs):
-        if self.tick_redraw_event is not None:
-            self.tick_redraw_event = None
-        self.x_tick_line.redraw()
-        self.y_tick_line.redraw()
-    def on_scan_controls(self, *args):
-        if self.scan_controls is None:
-            return
-        scan_range = self.scan_controls.scan_range
-        self.x_min = scan_range[0]
-        self.x_max = scan_range[1]
     def add_plot(self, **kwargs):
         plot = kwargs.get('plot')
         if plot is None:
@@ -313,31 +259,6 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
             if not auto_y and attr.split('_')[0] == 'y':
                 continue
             setattr(self, attr, val)
-        if self.x_tick_line is None:
-            self.build_ticklines()
-    def build_ticklines(self):
-        def fake_collide_point(*args):
-            return False
-        x_ticks = [
-            FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
-            LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
-        ]
-        y_ticks = [
-            DbTick(spectrum_graph=self, halign='left', valign='bottom'), 
-            LabellessTick(scale_factor=2., halign='left'), 
-        ]
-        self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='horizontal', zoomable=False, 
-                                    ticks=x_ticks)
-        self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='vertical', zoomable=False, 
-                                    ticks=y_ticks)
-        self.x_tick_line.collide_point = fake_collide_point
-        self.y_tick_line.collide_point = fake_collide_point
-        x_ticks[0].tickline_parent = self.x_tick_line
-        y_ticks[0].tickline_parent = self.y_tick_line
-        self.tick_container.add_widget(self.x_tick_line)
-        self.tick_container.add_widget(self.y_tick_line)
     def freq_to_x(self, freq):
         x = (freq - self.x_min) / self.x_size
         return x * self.width
@@ -370,7 +291,90 @@ class SpectrumGraph(RelativeLayout, JSONMixin):
                     self.parent.tool_panel.add_plot(plot)
             else:
                 setattr(self, key, val)
-        
+
+class SpectrumGraph(SpectrumGraphBase):
+    scan_controls = ObjectProperty(None)
+    tick_container = ObjectProperty(None)
+    x_tick_line = ObjectProperty(None)
+    y_tick_line = ObjectProperty(None)
+    tick_redraw_event = ObjectProperty(None, allownone=True)
+    def __init__(self, **kwargs):
+        super(SpectrumGraph, self).__init__(**kwargs)
+        props = ['x_min', 'x_max', 'y_min', 'y_max']
+        bind_kwargs = {prop: self.trigger_tick_redraw for prop in props}
+        self.bind(**bind_kwargs)
+        Window.bind(mouse_pos=self.on_mouse_pos)
+    def on_scan_controls(self, *args):
+        if self.scan_controls is None:
+            return
+        scan_range = self.scan_controls.scan_range
+        self.x_min = scan_range[0]
+        self.x_max = scan_range[1]
+    def on_tick_container(self, *args):
+        if self.tick_container is None:
+            return
+        self.build_ticklines()
+    def calc_plot_scale(self):
+        super(SpectrumGraph, self).calc_plot_scale()
+        if self.x_tick_line is None:
+            self.build_ticklines()
+    def build_ticklines(self):
+        def fake_collide_point(*args):
+            return False
+        x_ticks = [
+            FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
+            LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
+        ]
+        y_ticks = [
+            DbTick(spectrum_graph=self, halign='left', valign='bottom'), 
+            LabellessTick(scale_factor=2., halign='left'), 
+        ]
+        self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
+                                    orientation='horizontal', zoomable=False, 
+                                    ticks=x_ticks)
+        self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
+                                    orientation='vertical', zoomable=False, 
+                                    ticks=y_ticks)
+        self.x_tick_line.collide_point = fake_collide_point
+        self.y_tick_line.collide_point = fake_collide_point
+        x_ticks[0].tickline_parent = self.x_tick_line
+        y_ticks[0].tickline_parent = self.y_tick_line
+        self.tick_container.add_widget(self.x_tick_line)
+        self.tick_container.add_widget(self.y_tick_line)
+    def trigger_tick_redraw(self, *args):
+        if self.tick_redraw_event is not None:
+            return
+        if self.x_tick_line is None:
+            return
+        if self.y_tick_line is None:
+            return
+        self.tick_redraw_event = Clock.schedule_once(self._redraw_ticklines)
+    def _redraw_ticklines(self, *args, **kwargs):
+        if self.tick_redraw_event is not None:
+            self.tick_redraw_event = None
+        self.x_tick_line.redraw()
+        self.y_tick_line.redraw()
+    def on_mouse_pos(self, instance, pos):
+        if self.parent is None:
+            return
+        if self.graph_overlay is None:
+            return
+        if self.selected is None:
+            return
+        ppos = self.parent.to_widget(*pos)
+        real_x, real_y = self.to_local(*ppos)
+        if not self.collide_point(real_x, real_y):
+            return
+        real_freq = self.x_to_freq(real_x)
+        freq, db = self.selected.get_nearest_by_freq(real_freq)
+        if freq is None:
+            return
+        x = self.freq_to_x(freq)
+        y = self.db_to_y(db)
+        self.graph_overlay.plot_values.update({
+            'x':x, 'y':y, 'freq':freq, 'db':db, 
+        })
+    
 class SpectrumPlot(Widget, JSONMixin):
     name = StringProperty('')
     points = ListProperty([])
