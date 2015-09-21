@@ -21,8 +21,9 @@ def calc_num_samples(num_samples):
     return next_2_to_pow(int(num_samples))
 
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'raw', 
-                 '_frequencies', 'powers', 'collection', 'process_thread')
+    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 
+                 '_frequencies', 'powers', 'collection', 'process_thread', 
+                 'samples_per_second')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             if key == '_frequencies':
@@ -43,46 +44,68 @@ class SampleSet(JSONMixin):
         scanner = self.scanner
         freq = self.center_frequency
         num_samples = scanner.samples_per_scan
+        sweeps_per_scan = scanner.sample_rate / num_samples
+        samples_per_second = self.samples_per_second
+        if samples_per_second is None:
+            samples_per_second = next_2_to_pow(int(num_samples / sweeps_per_scan))
+            self.samples_per_second = samples_per_second
+        win_size = scanner.window_size
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
-        time.sleep(.1)
-        sdr.read_samples(2048)
+        #time.sleep(.1)
+        #sdr.read_samples(2048)
         #print 'reading %s samples' % (num_samples)
-        self.raw = sdr.read_samples(num_samples)
-        self.launch_process_thread()
+        self.raw = np.zeros((int(sweeps_per_scan), samples_per_second), 'complex')
+        self.powers = np.zeros((int(sweeps_per_scan), samples_per_second), 'float64')
+        #print 'raw: %s, powers: %s, samples_per_second: %s' % (self.raw.shape, self.powers.shape, samples_per_second)
+        sdr.read_samples_async(self.samples_callback, num_samples=samples_per_second)
+    def samples_callback(self, iq, context):
+        current_sweep = getattr(self, 'current_sweep', None)
+        if current_sweep is None:
+            current_sweep = self.current_sweep = 0
+        if current_sweep >= self.raw.shape[0]:
+            self.on_sample_read_complete()
+            return
+        try:
+            self.raw[current_sweep] = iq#[:self.samples_per_second]
+            self.process_sweep(current_sweep)
+        except:
+            self.on_sample_read_complete()
+            raise
+        self.current_sweep += 1
+        if current_sweep > self.raw.shape[0]:
+            self.on_sample_read_complete()
+    def on_sample_read_complete(self):
+        sdr = self.scanner.sdr
+        if not sdr.read_async_canceling:
+            sdr.cancel_read_async()
+        self.process_samples()
     def launch_process_thread(self):
         self.process_thread = ProcessThread(self)
-    def process_samples(self):
-        samples = self.raw.copy()
+    def process_sweep(self, sweep):
         scanner = self.scanner
         freq = self.center_frequency
-        num_samples = scanner.samples_per_scan
-        sweeps_per_scan = scanner.sample_rate / num_samples
-        samples_per_second = int(num_samples / sweeps_per_scan)
         win_size = scanner.window_size
         nfft = scanner.sampling_config.get('fft_size')
-        total_size = samples.size
-        if total_size % samples_per_second != 0:
-            total_size -= samples.size % samples_per_second
-            #print 'sweeps_per_scan=%s, samples_per_second=%s, total_size=%s, tsize/spersec=%s' % (
-            #    sweeps_per_scan, samples_per_second, total_size, total_size/samples_per_second)
-            samples.resize(total_size)
-        samples.resize(total_size / samples_per_second, samples_per_second)
         win = get_window(scanner.sampling_config.window_type, win_size)
-        f = None
-        powers = None
-        for i, sample_chunk in enumerate(samples):
-            _f, _powers = welch(sample_chunk, fs=scanner.sample_rate, window=win, nfft=nfft)
-            if f is None:
-                f = _f
-            if powers is None:
-                powers = np.zeros((samples.shape[0], _powers.size), dtype=_powers.dtype)
-            powers[i] = _powers
-        powers = np.array(powers)
-        powers = powers.mean(axis=-1)
+        f, powers = welch(self.raw[sweep], fs=scanner.sample_rate)
         f += freq
         f /= 1e6
-        self.powers = 10. * np.log10(powers)
+        powers = 10. * np.log10(powers)
+        if self.powers.shape[1] != powers.size:
+            self.powers.resize((self.powers.shape[0], powers.size))
+        if not np.array_equal(f, self.frequencies):
+            print 'freq not equal: %s, %s' % (self.frequencies.size, f.size)
+            self.frequencies = f
+        self.powers[sweep] = powers
+        self.collection.on_sweep_processed(sample_set=self, 
+                                           powers=powers, 
+                                           frequencies=f)
+    def process_samples(self):
+        powers = self.powers.copy()
+        powers = powers.mean(axis=0)
+        #powers = 10. * np.log10(powers)
+        self.powers = powers
         self.collection.on_sample_set_processed(self)
     def calc_expected_freqs(self):
         freq = self.center_frequency
@@ -90,12 +113,15 @@ class SampleSet(JSONMixin):
         sr = self.scanner.sample_rate
         num_samples = self.scanner.samples_per_scan
         sweeps_per_scan = sr / num_samples
-        samples_per_second = int(num_samples / sweeps_per_scan)
+        samples_per_second = self.samples_per_second
+        if samples_per_second is None:
+            samples_per_second = next_2_to_pow(int(num_samples / sweeps_per_scan))
+            self.samples_per_second = samples_per_second
         fake_samples = np.random.normal(scale=1., size=samples_per_second)
         fake_samples = np.fft.fft(fake_samples)
         win = get_window('hanning', win_size)
         nfft = self.scanner.sampling_config.get('fft_size')
-        f_expected, Pxx = welch(fake_samples, fs=sr, window=win, nfft=nfft)
+        f_expected, Pxx = welch(fake_samples, fs=sr)#, window=win, nfft=nfft)
         f_expected += freq
         f_expected /= 1e6
         return f_expected
@@ -226,6 +252,7 @@ class SampleCollection(JSONMixin):
         sample_set.read_samples()
         return sample_set
     def build_process_pool(self):
+        return
         if self.process_pool is not None:
             return
         self.process_pool = ProcessPool()
@@ -260,6 +287,8 @@ class SampleCollection(JSONMixin):
             self.scanning.clear()
             self.stopped.wait()
         self.stop_process_pool(cancel=True)
+    def on_sweep_processed(self, **kwargs):
+        self.scanner.on_sweep_processed(**kwargs)
     def on_sample_set_processed(self, sample_set):
         self.scanner.on_sample_set_processed(sample_set)
     def _serialize(self):

@@ -200,6 +200,8 @@ class Scanner(ScannerBase):
     def scan_freq(self, freq):
         sample_set = self.sample_collection.scan_freq(freq)
         return sample_set
+    def on_sweep_processed(self, **kwargs):
+        pass
     def on_sample_set_processed(self, sample_set):
         powers = sample_set.powers
         freqs = sample_set.frequencies
