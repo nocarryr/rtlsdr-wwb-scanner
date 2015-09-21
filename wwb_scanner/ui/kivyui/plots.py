@@ -374,6 +374,9 @@ class SpectrumGraph(SpectrumGraphBase):
         self.graph_overlay.plot_values.update({
             'x':x, 'y':y, 'freq':freq, 'db':db, 
         })
+
+class SpectrumGraphSimple(SpectrumGraphBase):
+    pass
     
 class SpectrumPlot(Widget, JSONMixin):
     name = StringProperty('')

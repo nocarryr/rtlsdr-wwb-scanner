@@ -3,6 +3,7 @@
     orientation: 'horizontal'
     start_btn: start_btn
     stop_btn: stop_btn
+    live_spectrum_graph: live_spectrum_graph
     canvas:
         Color:
             rgb: .8, .8, .8
@@ -115,6 +116,16 @@
                         input_filter: 'int'
                         text: str(root.remote_port)
                         on_focus: if not self.focus: root.remote_port = int(self.text)
+        TabbedPanelItem:
+            text: 'Live View'
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    size_hint_y: .1
+                    text: ''#'%07.3f' % (root.current_freq)
+                SpectrumGraphSimple:
+                    id: live_spectrum_graph
+                    size_hint_y: .9
     BoxLayout:
         orientation: 'vertical'
         size_hint_x: .2
