@@ -102,10 +102,12 @@ class SampleSet(JSONMixin):
                                            powers=powers, 
                                            frequencies=f)
     def process_samples(self):
-        powers = self.powers.copy()
-        powers = powers.mean(axis=0)
-        #powers = 10. * np.log10(powers)
+        f, powers = welch(self.raw.flatten(), fs=self.scanner.sample_rate)
+        f += self.center_frequency
+        f /= 1e6
+        powers = 10. * np.log10(powers)
         self.powers = powers
+        self.frequencies = f
         self.collection.on_sample_set_processed(self)
     def calc_expected_freqs(self):
         freq = self.center_frequency
