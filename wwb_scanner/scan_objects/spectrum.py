@@ -152,6 +152,9 @@ class Spectrum(JSONMixin):
             if kwargs.get('force_magnitude'):
                 sample.magnitude = kwargs.get('magnitude')
             return sample
+        if len(self.samples) and f < max(self.samples.keys()):
+            if not kwargs.get('force_lower_freq', True):
+                return
         kwargs.setdefault('spectrum', self)
         sample = self._build_sample(**kwargs)
         self.set_data_updated()
