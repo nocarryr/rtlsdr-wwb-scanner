@@ -119,8 +119,7 @@ class SampleSet(JSONMixin):
         if samples_per_second is None:
             samples_per_second = next_2_to_pow(int(num_samples / sweeps_per_scan))
             self.samples_per_second = samples_per_second
-        fake_samples = np.random.normal(scale=1., size=samples_per_second)
-        fake_samples = np.fft.fft(fake_samples)
+        fake_samples = np.zeros(samples_per_second, 'complex')
         win = get_window('hanning', win_size)
         nfft = self.scanner.sampling_config.get('fft_size')
         f_expected, Pxx = welch(fake_samples, fs=sr)#, window=win, nfft=nfft)
