@@ -68,9 +68,15 @@ class ScannerBase(JSONMixin):
         print '%s%%' % (int(value * 100))
     def calc_next_center_freq(self, sample_set):
         f = sample_set.frequencies
+        step_divisor = 1 / 16.
+        fmin = f.min()
         fmax = f.max()
-        fsize = fmax - f.min()
-        return (fmax + (fsize / 2.)) + (f[1] - f[2])
+        fmax -= fmax % step_divisor
+        fsize = fmax - fmin
+        fc = (fmax + (fsize / 2.))
+        fc -= fc % step_divisor
+        fc -= step_divisor
+        return fc
     def build_sample_sets(self):
         freq,  end_freq = self.config.scan_range
         sample_collection = self.sample_collection
