@@ -50,6 +50,15 @@
                         input_filter: 'int'
                         text: str(root.freq_correction)
                         on_focus: if not self.focus: root.freq_correction = int(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Sample Rate'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(int(root.sample_rate / 1000))
+                        on_focus: if not self.focus: root.sample_rate = float(self.text) * 1000
         TabbedPanelItem:
             text: 'Advanced'
             BoxLayout:

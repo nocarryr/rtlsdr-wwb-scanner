@@ -28,6 +28,7 @@ class ScanControls(BoxLayout, JSONMixin):
     scan_range = ListProperty([470., 900.])
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
+    sample_rate = NumericProperty(2e6)
     freq_correction = NumericProperty(0)
     samples_per_scan = NumericProperty()
     window_size = NumericProperty(allownone=True)
@@ -52,6 +53,7 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.root_widget = self.parent
     def get_scan_defaults(self):
         scanner = Scanner()
+        self.sample_rate = scanner.sampling_config.sample_rate
         self.scan_range = scanner.config.scan_range
         self.gain = scanner.device_config.gain
         freq_correction = scanner.device_config.freq_correction
@@ -186,6 +188,7 @@ class ScanProgress(EventDispatcher):
                 'remote_port', 
             ], 
             'sampling':[
+                'sample_rate', 
                 'samples_per_scan', 
                 'window_size', 
                 'window_type', 
