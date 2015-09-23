@@ -68,14 +68,11 @@ class ScannerBase(JSONMixin):
         print '%s%%' % (int(value * 100))
     def calc_next_center_freq(self, sample_set):
         f = sample_set.frequencies
-        step_divisor = 1 / 16.
         fmin = f.min()
         fmax = f.max()
-        fmax -= fmax % step_divisor
-        fsize = fmax - fmin
-        fc = (fmax + (fsize / 2.))
-        fc -= fc % step_divisor
-        fc -= step_divisor
+        fcent = f[np.searchsorted(f, f.mean())]
+        fc = fmax + (fcent - fmin)
+        fc -= f[3] - f[0]
         return fc
     def build_sample_sets(self):
         freq,  end_freq = self.config.scan_range
@@ -216,7 +213,7 @@ class Scanner(ScannerBase):
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             is_center = f == center_freq
-            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=False,
+            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
                                 force_lower_freq=False, 
                                 is_center_frequency=is_center)
         self.on_progress(self.progress)
