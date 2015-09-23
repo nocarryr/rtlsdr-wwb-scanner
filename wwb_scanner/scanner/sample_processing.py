@@ -103,12 +103,6 @@ class SampleSet(JSONMixin):
         f += freq
         f /= 1e6
         powers = 10. * np.log10(powers)
-        if self.powers.shape[1] != powers.size:
-            self.powers.resize((self.powers.shape[0], powers.size))
-        if not np.array_equal(f, self.frequencies):
-            print 'freq not equal: %s, %s' % (self.frequencies.size, f.size)
-            self.frequencies = f
-        self.powers[sweep] = powers
         self.collection.on_sweep_processed(sample_set=self, 
                                            powers=powers, 
                                            frequencies=f)
@@ -119,7 +113,9 @@ class SampleSet(JSONMixin):
         f /= 1e6
         powers = 10. * np.log10(powers)
         self.powers = powers
-        self.frequencies = f
+        if not np.array_equal(f, self.frequencies):
+            print 'freq not equal: %s, %s' % (self.frequencies.size, f.size)
+            self.frequencies = f
         self.collection.on_sample_set_processed(self)
     def calc_expected_freqs(self):
         freq = self.center_frequency
