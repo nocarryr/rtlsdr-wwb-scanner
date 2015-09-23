@@ -20,6 +20,17 @@ def next_2_to_pow(val):
 def calc_num_samples(num_samples):
     return next_2_to_pow(int(num_samples))
 
+def sort_psd(f, Pxx, onesided=False):
+    f_index = np.argsort(f)
+    f = f[f_index]
+    Pxx = Pxx[f_index]
+    if onesided:
+        i = np.searchsorted(f, 0)
+        f = f[i:]
+        Pxx = Pxx[i:]
+        Pxx *= 2
+    return f, Pxx
+    
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 
                  '_frequencies', 'powers', 'collection', 'process_thread', 
@@ -103,6 +114,7 @@ class SampleSet(JSONMixin):
                                            frequencies=f)
     def process_samples(self):
         f, powers = welch(self.raw.flatten(), fs=self.scanner.sample_rate)
+        f, powers = sort_psd(f, powers)
         f += self.center_frequency
         f /= 1e6
         powers = 10. * np.log10(powers)
@@ -123,6 +135,7 @@ class SampleSet(JSONMixin):
         win = get_window('hanning', win_size)
         nfft = self.scanner.sampling_config.get('fft_size')
         f_expected, Pxx = welch(fake_samples, fs=sr)#, window=win, nfft=nfft)
+        f_expected, Pxx = sort_psd(f_expected, Pxx)
         f_expected += freq
         f_expected /= 1e6
         return f_expected

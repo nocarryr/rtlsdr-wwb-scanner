@@ -212,10 +212,9 @@ class Scanner(ScannerBase):
         powers = sample_set.powers
         freqs = sample_set.frequencies
         spectrum = self.spectrum
-        center_freq = freqs[freqs.size / 2]
+        center_freq = sample_set.center_frequency
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
-        f_indecies = np.argsort(freqs)
-        for f, p in zip(freqs[f_indecies], powers[f_indecies]):
+        for f, p in zip(freqs, powers):
             is_center = f == center_freq
             spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=False,
                                 force_lower_freq=False, 
