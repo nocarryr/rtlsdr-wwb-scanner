@@ -14,7 +14,6 @@
   <Eol index="-1"/>
   <Sources>
     <Source>wwb_scanner/__init__.py</Source>
-    <Source>__init__.py</Source>
     <Source>wwb_scanner/file_handlers/__init__.py</Source>
     <Source>wwb_scanner/scan_objects/__init__.py</Source>
     <Source>wwb_scanner/scan_objects/spectrum.py</Source>

@@ -16,6 +16,7 @@ from kivy.clock import Clock
 
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner import Scanner
+from wwb_scanner.scan_objects import Spectrum
 
 
 class ScanControls(BoxLayout, JSONMixin):
@@ -23,10 +24,13 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type_dropdown = ObjectProperty(None)
     start_btn = ObjectProperty(None)
     stop_btn = ObjectProperty(None)
+    panel_widget = ObjectProperty(None)
+    last_tab = ObjectProperty(None)
     scanning = BooleanProperty(False)
     scan_range = ListProperty([470., 900.])
     idle = BooleanProperty(True)
     gain = NumericProperty(30.)
+    sample_rate = NumericProperty(2e6)
     freq_correction = NumericProperty(0)
     samples_per_scan = NumericProperty()
     window_size = NumericProperty(allownone=True)
@@ -36,6 +40,8 @@ class ScanControls(BoxLayout, JSONMixin):
     is_remote = BooleanProperty(False)
     remote_hostname = StringProperty('127.0.0.1')
     remote_port = NumericProperty(1235)
+    current_freq = NumericProperty(500.)
+    live_spectrum_graph = ObjectProperty(None)
     def get_gain(self):
         return self.gain_txt.text
     def __init__(self, **kwargs):
@@ -47,8 +53,17 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress = ScanProgress()
     def on_parent(self, *args, **kwargs):
         self.scan_progress.root_widget = self.parent
+    def on_panel_widget(self, *args, **kwargs):
+        self.last_tab = self.panel_widget.current_tab
+        self.panel_widget.bind(current_tab=self.on_panel_widget_current_tab)
+    def on_panel_widget_current_tab(self, *args, **kwargs):
+        current_tab = self.panel_widget.current_tab
+        live_view = getattr(self, 'live_view', None)
+        if self.last_tab is None or current_tab != live_view:
+            self.last_tab = current_tab
     def get_scan_defaults(self):
         scanner = Scanner()
+        self.sample_rate = scanner.sampling_config.sample_rate
         self.scan_range = scanner.config.scan_range
         self.gain = scanner.device_config.gain
         freq_correction = scanner.device_config.freq_correction
@@ -70,7 +85,10 @@ class ScanControls(BoxLayout, JSONMixin):
         self.fft_size = int(instance.text)
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
+        if value:
+            self.panel_widget.switch_to(self.last_tab)
     def on_scan_button_release(self):
+        self.panel_widget.switch_to(self.live_view)
         self.scanning = True
         self.idle = False
         self.scan_progress.build_scanner()
@@ -145,6 +163,7 @@ class ScanProgress(EventDispatcher):
     status_bar = ObjectProperty(None)
     root_widget = ObjectProperty(None)
     plot = ObjectProperty(None, allownone=True)
+    current_spectrum = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(ScanProgress, self).__init__(**kwargs)
         self.scanner = None
@@ -182,6 +201,7 @@ class ScanProgress(EventDispatcher):
                 'remote_port',
             ],
             'sampling':[
+                'sample_rate',
                 'samples_per_scan',
                 'window_size',
                 'window_type',
@@ -208,10 +228,41 @@ class ScanProgress(EventDispatcher):
                     scan_config[conf_name][key] = val
         self.scanner = Scanner(config=scan_config)
         self.scanner.on_progress = self.on_scanner_progress
+        self.scanner.on_sweep_processed = self.on_sweep_processed
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()
     def on_scanner_progress(self, value):
         Clock.schedule_once(self.update_progress)
+    def on_sweep_processed(self, **kwargs):
+        freqs = kwargs.get('frequencies')
+        powers = kwargs.get('powers')
+        fc = kwargs.get('sample_set').center_frequency / 1e6
+        fc = float(fc)
+        spectrum = self.current_spectrum
+        new_spectrum = False
+        if spectrum is None or fc != self.scan_controls.current_freq:
+            spectrum = Spectrum()
+            new_spectrum = True
+        try:
+            self.scan_controls.current_freq = fc
+        except:
+            print type(fc), repr(fc)
+            self.cancel_scan()
+            raise
+        for f, val in zip(freqs, powers):
+            spectrum.add_sample(frequency=f, magnitude=val, force_magnitude=True)
+        if new_spectrum:
+            self.current_spectrum = spectrum
+        else:
+            sg = self.scan_controls.live_spectrum_graph
+            plot = sg.spectrum_plot_container.children[0]
+            plot.update_data()
+    def on_current_spectrum(self, *args):
+        if self.current_spectrum is None:
+            return
+        sg = self.scan_controls.live_spectrum_graph
+        sg.spectrum_plot_container.clear_widgets()
+        sg.add_plot(spectrum=self.current_spectrum)
     def update_progress(self, *args, **kwargs):
         if self.scanner is None:
             return

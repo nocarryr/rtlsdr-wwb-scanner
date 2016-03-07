@@ -2,12 +2,16 @@
     orientation: 'horizontal'
     start_btn: start_btn
     stop_btn: stop_btn
+    panel_widget: panel_widget
+    live_view: live_view
+    live_spectrum_graph: live_spectrum_graph
     canvas:
         Color:
             rgb: .8, .8, .8
         Line:
             rectangle: self.x+1, self.y+1,self.width-1, self.height-1
     TabbedPanel:
+        id: panel_widget
         do_default_tab: False
         canvas:
             Color:
@@ -48,6 +52,15 @@
                         input_filter: 'int'
                         text: str(root.freq_correction)
                         on_focus: if not self.focus: root.freq_correction = int(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Sample Rate'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(int(root.sample_rate / 1000))
+                        on_focus: if not self.focus: root.sample_rate = float(self.text) * 1000
         TabbedPanelItem:
             text: 'Advanced'
             BoxLayout:
@@ -114,6 +127,17 @@
                         input_filter: 'int'
                         text: str(root.remote_port)
                         on_focus: if not self.focus: root.remote_port = int(self.text)
+        TabbedPanelItem:
+            id: live_view
+            text: 'Live View'
+            BoxLayout:
+                orientation: 'vertical'
+                Label:
+                    size_hint_y: .1
+                    text: ''
+                SpectrumGraphSimple:
+                    id: live_spectrum_graph
+                    size_hint_y: .9
     BoxLayout:
         orientation: 'vertical'
         size_hint_x: .2
