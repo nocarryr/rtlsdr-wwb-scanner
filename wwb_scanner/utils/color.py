@@ -42,4 +42,3 @@ class Color(dict):
                 break
             i += 1
         return cls(d)
-        

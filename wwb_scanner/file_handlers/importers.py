@@ -33,7 +33,7 @@ class BaseImporter(object):
         return s
     def parse_file_data(self):
         raise NotImplementedError('Method must be implemented by subclasses')
-    
+
 class CSVImporter(BaseImporter):
     delimiter_char = ','
     _extension = 'csv'
@@ -45,11 +45,11 @@ class CSVImporter(BaseImporter):
                 continue
             f, v = line.split(',')
             spectrum.add_sample(frequency=float(f), magnitude=float(v))
-        
+
 class BaseWWBImporter(BaseImporter):
     def load_file(self):
         return ET.parse(self.filename)
-        
+
 class WWBImporter(BaseWWBImporter):
     _extension = 'sdb2'
     def parse_file_data(self):
@@ -75,4 +75,3 @@ class WWBImporter(BaseWWBImporter):
             f = float(ftag.text) / 1000
             v = float(vtag.text)
             spectrum.add_sample(frequency=f, magnitude=v)
-        

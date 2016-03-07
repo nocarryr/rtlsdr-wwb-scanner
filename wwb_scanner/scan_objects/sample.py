@@ -48,7 +48,7 @@ class Sample(JSONMixin):
         return str(self)
     def __str__(self):
         return '%s (%s dB)' % (self.formatted_frequency, self.magnitude)
-        
+
 class TimeBasedSample(Sample):
     __slots__ = ('timestamp')
     def __init__(self, **kwargs):
@@ -57,4 +57,3 @@ class TimeBasedSample(Sample):
             ts = time.time()
         self.timestamp = ts
         super(TimeBasedSample, self).__init__(**kwargs)
-        

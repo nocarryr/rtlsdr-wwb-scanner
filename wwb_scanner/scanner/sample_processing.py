@@ -21,7 +21,7 @@ def calc_num_samples(num_samples):
     return next_2_to_pow(int(num_samples))
 
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'raw', 
+    __slots__ = ('scanner', 'center_frequency', 'raw',
                  '_frequencies', 'powers', 'collection', 'process_thread')
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -107,7 +107,7 @@ class SampleSet(JSONMixin):
             val = getattr(self, key)
             d[key] = val
         return d
-        
+
 class ProcessPool(threading.Thread):
     MAX_ACTIVE_THREADS = 4
     def __init__(self):
@@ -264,7 +264,7 @@ class SampleCollection(JSONMixin):
         self.scanner.on_sample_set_processed(sample_set)
     def _serialize(self):
         return {'sample_sets':
-            {k: v._serialize() for k, v in self.sample_sets.items()}, 
+            {k: v._serialize() for k, v in self.sample_sets.items()},
         }
     def _deserialize(self, **kwargs):
         for key, val in kwargs.get('sample_sets', {}).items():

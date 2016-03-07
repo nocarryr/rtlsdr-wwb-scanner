@@ -6,7 +6,7 @@ from kivy.uix.popup import Popup
 from kivy.app import App
 from kivy.properties import (
     ObjectProperty,
-    NumericProperty, 
+    NumericProperty,
     StringProperty,
 )
 
@@ -36,7 +36,7 @@ class RootWidget(BoxLayout, JSONMixin):
     def show_message(self, **kwargs):
         self.close_message()
         content = MessageDialog(**kwargs)
-        self._message_popup = Popup(content=content, title=kwargs.get('title', ''), 
+        self._message_popup = Popup(content=content, title=kwargs.get('title', ''),
                                     size_hint=[.6, .6], auto_dismiss=False)
         self._message_popup.open()
     def close_message(self):
@@ -52,7 +52,7 @@ class RootWidget(BoxLayout, JSONMixin):
         for key, data in kwargs.items():
             obj = getattr(self, key)
             obj.instance_from_json(data)
-    
+
 
 
 class RTLSDRScannerApp(App):
@@ -61,7 +61,7 @@ class RTLSDRScannerApp(App):
     def on_action_button_release(self, btn):
         btn.parent.parent.dismiss()
         Action.trigger_by_name(btn.action, self)
-    
+
 class PlotContainer(FloatLayout, JSONMixin):
     spectrum_graph = ObjectProperty(None)
     def add_plot(self, **kwargs):
@@ -77,17 +77,17 @@ class PlotContainer(FloatLayout, JSONMixin):
     def _deserialize(self, **kwargs):
         data = kwargs.get('spectrum_graph')
         self.spectrum_graph.instance_from_json(data)
-    
+
 class MessageDialog(BoxLayout):
     message = StringProperty()
     close_text = StringProperty('Close')
-    
+
 class StatusBar(BoxLayout):
     message_box = ObjectProperty(None)
     progress_bar = ObjectProperty(None)
     message_text = StringProperty('')
     progress = NumericProperty(0.)
-    
+
 def run():
     RTLSDRScannerApp().run()
 

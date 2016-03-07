@@ -19,21 +19,21 @@ class ScanConfig(Config):
         elif key == 'sampling':
             cls = SamplingConfig
         return super(ScanConfig, self)._deserialize_child(key, val, cls)
-    
+
 class DeviceConfig(Config):
     DEFAULTS = dict(
-        gain=30., 
-        freq_correction=0, 
-        is_remote=False, 
-        remote_hostname='127.0.0.1', 
-        remote_port=1235, 
+        gain=30.,
+        freq_correction=0,
+        is_remote=False,
+        remote_hostname='127.0.0.1',
+        remote_port=1235,
     )
-    
+
 class SamplingConfig(Config):
     DEFAULTS = dict(
         sample_rate=2e6,
         sampling_period=.0125,
-        samples_per_scan=None, 
-        windows_size=None, 
-        window_type='boxcar', 
+        samples_per_scan=None,
+        windows_size=None,
+        window_type='boxcar',
     )

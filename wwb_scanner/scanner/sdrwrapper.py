@@ -70,7 +70,7 @@ class SdrWrapper(object):
         try:
             if RtlSdrTcpClient is None:
                 raise Exception('Tcp client not available')
-            sdr = RtlSdrTcpClient(hostname=self.scanner.device_config.remote_hostname, 
+            sdr = RtlSdrTcpClient(hostname=self.scanner.device_config.remote_hostname,
                                   port=self.scanner.device_config.remote_port)
             sdr.get_sample_rate()
         except:
@@ -87,4 +87,3 @@ class SdrWrapper(object):
         self.open_sdr()
     def __exit__(self, *args):
         self.close_sdr()
-    

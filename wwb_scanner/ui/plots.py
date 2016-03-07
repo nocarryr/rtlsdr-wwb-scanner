@@ -11,9 +11,9 @@ class BasePlot(object):
             self.spectrum = BaseImporter.import_file(self.filename)
         else:
             self.spectrum = kwargs.get('spectrum')
-        
+
         #self.figure.canvas.mpl_connect('idle_event', self.on_idle)
-        
+
     @property
     def x(self):
         return getattr(self, '_x', None)
@@ -63,7 +63,7 @@ class BasePlot(object):
         self.figure.canvas.draw_idle()
     def build_plot(self):
         pass
-    
+
 class SpectrumPlot(BasePlot):
     def build_plot(self):
         self.figure = plt.figure()
@@ -74,11 +74,11 @@ class SpectrumPlot(BasePlot):
         if len(center_frequencies):
             samples = [self.spectrum.samples.get(f) for f in center_frequencies]
             ymin = self.y.min()
-            plt.vlines(center_frequencies, 
-                       [ymin] * len(center_frequencies), 
+            plt.vlines(center_frequencies,
+                       [ymin] * len(center_frequencies),
                        [s.magnitude-5 if s.magnitude-5 > ymin else s.magnitude for s in samples])
         plt.show()
-    
+
 class DiffSpectrum(object):
     def __init__(self, **kwargs):
         self.spectra = []
@@ -93,7 +93,7 @@ class DiffSpectrum(object):
     def build_plots(self):
         dtype = np.dtype(float)
         if len(self.spectra) == 2:
-            diff_spec = compare_spectra(self.spectra[0]['spectrum'], 
+            diff_spec = compare_spectra(self.spectra[0]['spectrum'],
                                         self.spectra[1]['spectrum'])
             self.spectra.append({'name':'diff', 'spectrum':diff_spec})
         for i, spec_data in enumerate(self.spectra):
@@ -104,4 +104,3 @@ class DiffSpectrum(object):
             axes.plot(x, y)
             axes.set_title(spec_data['name'])
         plt.show()
-    

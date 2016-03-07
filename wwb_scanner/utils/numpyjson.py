@@ -22,7 +22,7 @@ def dumps(*args, **kwargs):
     return json.dumps(*args, **kwargs)
 
 def loads(*args, **kwargs):
-    kwargs.setdefault('object_hook', json_numpy_obj_hook)    
+    kwargs.setdefault('object_hook', json_numpy_obj_hook)
     return json.loads(*args, **kwargs)
 
 def dump(*args, **kwargs):

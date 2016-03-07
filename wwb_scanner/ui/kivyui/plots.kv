@@ -24,7 +24,7 @@
             text: '-'
             on_press: root.on_zoom_btn_press(self)
             on_release: root.on_zoom_btn_release(self)
-            
+
 <SpectrumGraph>:
     tick_container: tick_container
     graph_overlay: graph_overlay
@@ -43,7 +43,7 @@
         id: spectrum_plot_container
         pos_hint: {'x':0, 'y':0}
         size_hint:[1., 1.]
-    
+
 <GraphOverlay>:
     label_widget: label_widget
     crosshair_widget: crosshair_widget
@@ -56,7 +56,7 @@
         id: crosshair_widget
         pos: root.pos
         size: root.size
-        
+
 <SpectrumPlot>:
     pos_hint: {'x':0, 'y':0}
     size_hint: [1., 1.]
@@ -75,10 +75,10 @@
             pos: self.pos
             size: self.size
         StencilPop
-        
+
 <ColorButton@Button>:
     on_press: print("pressed")
-    
+
 <PlotToolPanel>:
     cols: 1
     rows: 8
@@ -90,7 +90,7 @@
             rgb: .8, .8, .8
         Line:
             rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-    
+
 <PlotTools>:
     orientation: 'vertical'
     label_widget: label_widget
@@ -127,7 +127,7 @@
                 Rectangle:
                     size: self.size
                     pos: self.pos
-        
+
 <PlotColorPicker>:
     orientation: 'vertical'
     spacing: 2
