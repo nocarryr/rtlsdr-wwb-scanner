@@ -2,6 +2,8 @@
     orientation: 'horizontal'
     start_btn: start_btn
     stop_btn: stop_btn
+    panel_widget: panel_widget
+    live_view: live_view
     live_spectrum_graph: live_spectrum_graph
     canvas:
         Color:
@@ -9,6 +11,7 @@
         Line:
             rectangle: self.x+1, self.y+1,self.width-1, self.height-1
     TabbedPanel:
+        id: panel_widget
         do_default_tab: False
         canvas:
             Color:
@@ -125,6 +128,7 @@
                         text: str(root.remote_port)
                         on_focus: if not self.focus: root.remote_port = int(self.text)
         TabbedPanelItem:
+            id: live_view
             text: 'Live View'
             BoxLayout:
                 orientation: 'vertical'
