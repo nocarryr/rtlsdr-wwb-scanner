@@ -244,8 +244,6 @@ class ScanProgress(EventDispatcher):
             sg = self.scan_controls.live_spectrum_graph
             plot = sg.spectrum_plot_container.children[0]
             plot.update_data()
-    #def on_current_spectrum(self, *args):
-    #    Clock.schedule_once(self.update_current_spectrum)
     def on_current_spectrum(self, *args):
         if self.current_spectrum is None:
             return
