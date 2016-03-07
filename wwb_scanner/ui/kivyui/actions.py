@@ -32,12 +32,12 @@ class Action(object):
         if cb is not None:
             return cb(action=self, app=app)
         return self.do_action(app)
-    
+
 class FileQuit(Action):
     name = 'file.quit'
     def do_action(self, app):
         app.stop()
-    
+
 class FileAction(object):
     @property
     def last_path(self):
@@ -64,7 +64,7 @@ class FileAction(object):
         browser = self.build_browser()
         browser.bind(on_success=self.on_browser_success)
         browser.bind(on_canceled=self.on_browser_canceled)
-        app.root.show_popup(title=title, content=browser, 
+        app.root.show_popup(title=title, content=browser,
                             size_hint=(.9, .9), auto_dismiss=False)
     def dismiss(self):
         self.app.root.close_popup()
@@ -72,7 +72,7 @@ class FileAction(object):
         self.dismiss()
     def on_browser_canceled(self, instance):
         self.dismiss()
-        
+
 class FileSaveAs(Action, FileAction):
     name = 'file.save_as'
     select_string = 'Save As'
@@ -96,7 +96,7 @@ class FileSaveAs(Action, FileAction):
             f.write(s)
         self.app.root.current_filename = filename
         self.app.root.show_message(title='Success', message='File saved as\n%s' % (filename))
-    
+
 class FileSave(Action):
     name = 'file.save'
     def do_action(self, app):
@@ -108,7 +108,7 @@ class FileSave(Action):
         with open(filename, 'w') as f:
             f.write(s)
         app.root.status_bar.message_text = 'File saved'
-    
+
 class FileOpen(Action, FileAction):
     name = 'file.open'
     select_string = 'Open'
@@ -121,13 +121,13 @@ class FileOpen(Action, FileAction):
         self.dismiss()
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
-    
+
 class ScrolledTree(ScrollView):
     tree = ObjectProperty(None)
 
 class ScrolledTreeNode(TreeViewLabel):
     pass
-    
+
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
     def do_action(self, app):
@@ -163,7 +163,7 @@ class PlotsLoadRecent(Action):
         spectrum = Spectrum.from_dbstore(eid=node.eid)
         self.app.root.plot_container.add_plot(spectrum=spectrum)
         self.on_cancel()
-    
+
 class PlotsImport(Action, FileAction):
     name = 'plots.import'
     select_string = 'Import'
@@ -178,7 +178,7 @@ class PlotsImport(Action, FileAction):
         self.dismiss()
         spectrum = BaseImporter.import_file(filename)
         self.app.root.plot_container.add_plot(spectrum=spectrum, filename=filename)
-        
+
 class PlotsExport(Action, FileAction):
     name = 'plots.export'
     select_string = 'Export'
@@ -205,6 +205,6 @@ class PlotsExport(Action, FileAction):
         self.dismiss()
         self.plot.spectrum.export_to_file(filename=filename)
         self.app.root.show_message(title='Success', message='File exported to\n%s' % (filename))
-        
-    
+
+
 Action.build_from_subclasses()

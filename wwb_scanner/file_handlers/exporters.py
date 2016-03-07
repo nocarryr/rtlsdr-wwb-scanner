@@ -36,7 +36,7 @@ class BaseExporter(object):
     @filename.setter
     def filename(self, value):
         if value is None:
-            return 
+            return
         self.set_filename(value)
     def set_filename(self, value):
         if value == self.filename:
@@ -48,7 +48,7 @@ class BaseExporter(object):
         s = self.build_data()
         with open(self.filename, 'w') as f:
             f.write(s)
-        
+
 class CSVExporter(BaseExporter):
     _extension = 'csv'
     newline_chars = '\r\n'
@@ -71,11 +71,11 @@ class CSVExporter(BaseExporter):
             else:
                 f = frequency_format % (sample.frequency)
             lines.append(delim.join([
-                f, 
+                f,
                 sample.formatted_magnitude
             ]))
         return newline_chars.join(lines)
-        
+
 class BaseWWBExporter(BaseExporter):
     def __init__(self, **kwargs):
         super(BaseWWBExporter, self).__init__(**kwargs)
@@ -90,31 +90,31 @@ class BaseWWBExporter(BaseExporter):
         spectrum = self.spectrum
         d = dict(
             scan_data_source=dict(
-                ver='0.0.0.1', 
-                id='{%s}' % (uuid.uuid4()), 
-                model='TODO', 
-                name=os.path.abspath(self.filename), 
-                date=dt.strftime('%a %b %d %Y'), 
-                time=dt.strftime('%H:%M:%S'), 
+                ver='0.0.0.1',
+                id='{%s}' % (uuid.uuid4()),
+                model='TODO',
+                name=os.path.abspath(self.filename),
+                date=dt.strftime('%a %b %d %Y'),
+                time=dt.strftime('%H:%M:%S'),
                 color='#00ff00',
-            ), 
+            ),
             data_sets=dict(
-                count='1', 
-                no_data_value='-140', 
-            ), 
+                count='1',
+                no_data_value='-140',
+            ),
         )
         d['data_set'] = dict(
-            index='0', 
-            freq_units='KHz', 
-            ampl_units='dBm', 
-            start_freq=str(min(spectrum.samples.keys()) * 1000), 
-            stop_freq=str(max(spectrum.samples.keys()) * 1000), 
-            step_freq=str(spectrum.step_size * 1000), 
-            res_bandwidth='TODO', 
-            scale_factor='1', 
-            date=d['scan_data_source']['date'], 
-            time=d['scan_data_source']['time'], 
-            date_time=str(int((dt - EPOCH).total_seconds())), 
+            index='0',
+            freq_units='KHz',
+            ampl_units='dBm',
+            start_freq=str(min(spectrum.samples.keys()) * 1000),
+            stop_freq=str(max(spectrum.samples.keys()) * 1000),
+            step_freq=str(spectrum.step_size * 1000),
+            res_bandwidth='TODO',
+            scale_factor='1',
+            date=d['scan_data_source']['date'],
+            time=d['scan_data_source']['time'],
+            date_time=str(int((dt - EPOCH).total_seconds())),
         )
         return d
     def build_data(self):
@@ -132,8 +132,8 @@ class BaseWWBExporter(BaseExporter):
         s = doc.toprettyxml(encoding='UTF-8')
         with open(self.filename, 'w') as f:
             f.write(s)
-        
-    
+
+
 class WWBLegacyExporter(BaseWWBExporter):
     _extension = 'sbd'
     def build_data(self):
@@ -147,7 +147,7 @@ class WWBLegacyExporter(BaseWWBExporter):
             v = ET.SubElement(data_set, 'v')
             v.text = sample.formatted_magnitude
         return tree
-        
+
 class WWBExporter(BaseWWBExporter):
     _extension = 'sdb2'
     def build_data(self):

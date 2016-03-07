@@ -14,7 +14,7 @@ try:
     from wwb_scanner.ui.plots import SpectrumPlot
 except ImportError:
     SpectrumPlot = None
-    
+
 EPOCH = datetime.datetime(1970, 1, 1)
 
 def get_file_handlers():
@@ -27,7 +27,7 @@ def get_importer():
     return get_file_handlers().BaseImporter
 def get_exporter():
     return get_file_handlers().BaseExporter
-    
+
 def get_spectrum_plot():
     global SpectrumPlot
     if SpectrumPlot is None:
@@ -188,13 +188,13 @@ class Spectrum(JSONMixin):
             eid = dbdata.eid
         return cls.from_json(dbdata, eid=eid)
     def _serialize(self):
-        attrs = ['name', 'color', 'timestamp_utc', 'step_size', 
+        attrs = ['name', 'color', 'timestamp_utc', 'step_size',
                  'center_frequencies', 'scan_config_eid']
         d = {attr: getattr(self, attr) for attr in attrs}
         samples = self.samples
         d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
         return d
-    
+
 class TimeBasedSpectrum(Spectrum):
     def _build_sample(self, **kwargs):
         sample = TimeBasedSample(**kwargs)

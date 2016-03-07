@@ -3,7 +3,7 @@
 
 <ActionButton>:
     on_release: app.on_action_button_release(self)
-    
+
 <RootWidget>:
     orientation: 'vertical'
     plot_container: plot_container
@@ -109,8 +109,8 @@
         id: progress_bar
         size_hint_x: .25
         value_normalized: self.parent.progress
-        
-        
+
+
 <MessageDialog>:
     orientation: 'vertical'
     Label:
@@ -135,10 +135,9 @@
         #width: root.width
         minimum_height: root.height
         size_hint_y: None
-        
+
 <ScrolledTreeNode>:
     height: 40
     size_hint_y: None
     size_hint_x: 1.
     #width: 1 if self.parent is None else self.parent.width
-    

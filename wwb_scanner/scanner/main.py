@@ -7,9 +7,9 @@ from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
 from wwb_scanner.scanner.config import ScanConfig
 from wwb_scanner.scanner.sample_processing import (
-    SampleCollection, 
-    calc_num_samples, 
-    WINDOW_TYPES, 
+    SampleCollection,
+    calc_num_samples,
+    WINDOW_TYPES,
 )
 from wwb_scanner.scan_objects import Spectrum
 
@@ -100,9 +100,9 @@ class ScannerBase(JSONMixin):
         self.spectrum.save_to_dbstore()
     def _serialize(self):
         d = dict(
-            config=self.config._serialize(), 
-            spectrum=self.spectrum._serialize(), 
-            sample_collection=self.sample_collection._serialize(), 
+            config=self.config._serialize(),
+            spectrum=self.spectrum._serialize(),
+            sample_collection=self.sample_collection._serialize(),
         )
         return d
     def _deserialize(self, **kwargs):

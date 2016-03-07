@@ -5,12 +5,12 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.dropdown import DropDown
 from kivy.uix.button import Button
 from kivy.properties import (
-    ObjectProperty, 
-    StringProperty, 
-    BooleanProperty, 
-    NumericProperty, 
-    ListProperty, 
-    OptionProperty, 
+    ObjectProperty,
+    StringProperty,
+    BooleanProperty,
+    NumericProperty,
+    ListProperty,
+    OptionProperty,
 )
 from kivy.clock import Clock
 
@@ -32,7 +32,7 @@ class ScanControls(BoxLayout, JSONMixin):
     freq_correction = NumericProperty(0)
     samples_per_scan = NumericProperty()
     window_size = NumericProperty(allownone=True)
-    window_type = OptionProperty('boxcar', 
+    window_type = OptionProperty('boxcar',
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
     is_remote = BooleanProperty(False)
@@ -83,11 +83,11 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.cancel_scan()
         self.idle = True
     def _serialize(self):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size',
                 'window_type', 'fft_size']
         return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size', 
+        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size',
                 'window_type', 'fft_size']
         for key in keys:
             if key not in kwargs:
@@ -130,7 +130,7 @@ class ScanGainDropDown(DropDown):
 
 class ScanGainDropDownBtn(Button):
     gain = NumericProperty()
-    
+
 class WindowTypeDropDown(DropDown):
     scan_controls = ObjectProperty(None)
     def on_scan_controls(self, *args):
@@ -178,22 +178,22 @@ class ScanProgress(EventDispatcher):
         self.status_bar.message_text = 'Scanning %s' % (self.name)
         keys = {
             'config':[
-                'scan_range', 
-            ], 
+                'scan_range',
+            ],
             'device':[
-                'gain', 
-                'freq_correction', 
-                'is_remote', 
-                'remote_hostname', 
-                'remote_port', 
-            ], 
+                'gain',
+                'freq_correction',
+                'is_remote',
+                'remote_hostname',
+                'remote_port',
+            ],
             'sampling':[
-                'sample_rate', 
-                'samples_per_scan', 
-                'window_size', 
-                'window_type', 
-                'fft_size', 
-            ], 
+                'sample_rate',
+                'samples_per_scan',
+                'window_size',
+                'window_type',
+                'fft_size',
+            ],
         }
         scan_config = {}
         for conf_name, conf_keys in keys.items():
@@ -290,8 +290,8 @@ class ScanProgress(EventDispatcher):
             self.plot = plot_container.add_plot(spectrum=spectrum, name=self.name)
         else:
             self.plot.update_data()
-        
-    
+
+
 class ScanThread(threading.Thread):
     def __init__(self, **kwargs):
         super(ScanThread, self).__init__()
@@ -300,4 +300,3 @@ class ScanThread(threading.Thread):
     def run(self):
         self.scanner.run_scan()
         self.callback()
-        

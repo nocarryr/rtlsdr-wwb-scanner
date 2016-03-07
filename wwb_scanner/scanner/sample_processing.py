@@ -30,10 +30,10 @@ def sort_psd(f, Pxx, onesided=False):
         Pxx = Pxx[i:]
         Pxx *= 2
     return f, Pxx
-    
+
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 
-                 '_frequencies', 'powers', 'collection', 'process_thread', 
+    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep',
+                 '_frequencies', 'powers', 'collection', 'process_thread',
                  'samples_per_second')
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -103,8 +103,8 @@ class SampleSet(JSONMixin):
         f += freq
         f /= 1e6
         powers = 10. * np.log10(powers)
-        self.collection.on_sweep_processed(sample_set=self, 
-                                           powers=powers, 
+        self.collection.on_sweep_processed(sample_set=self,
+                                           powers=powers,
                                            frequencies=f)
     def process_samples(self):
         f, powers = welch(self.raw.flatten(), fs=self.scanner.sample_rate)
@@ -143,7 +143,7 @@ class SampleSet(JSONMixin):
             val = getattr(self, key)
             d[key] = val
         return d
-        
+
 class ProcessPool(threading.Thread):
     MAX_ACTIVE_THREADS = 4
     def __init__(self):
@@ -303,7 +303,7 @@ class SampleCollection(JSONMixin):
         self.scanner.on_sample_set_processed(sample_set)
     def _serialize(self):
         return {'sample_sets':
-            {k: v._serialize() for k, v in self.sample_sets.items()}, 
+            {k: v._serialize() for k, v in self.sample_sets.items()},
         }
     def _deserialize(self, **kwargs):
         for key, val in kwargs.get('sample_sets', {}).items():

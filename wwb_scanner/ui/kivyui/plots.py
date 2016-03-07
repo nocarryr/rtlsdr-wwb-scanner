@@ -13,14 +13,14 @@ from kivy.uix.relativelayout import RelativeLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.widget import Widget
 from kivy.properties import (
-    ListProperty, 
-    ReferenceListProperty, 
-    DictProperty, 
-    NumericProperty, 
-    AliasProperty, 
-    BooleanProperty, 
-    StringProperty, 
-    ObjectProperty, 
+    ListProperty,
+    ReferenceListProperty,
+    DictProperty,
+    NumericProperty,
+    AliasProperty,
+    BooleanProperty,
+    StringProperty,
+    ObjectProperty,
 )
 
 from wwb_scanner.core import JSONMixin
@@ -46,7 +46,7 @@ class TickContainer(FloatLayout):
         xline = sg.x_tick_line
         yline = sg.y_tick_line
         for tick in chain(xline.ticks, yline.ticks):
-            tick.bind(on_display=self.on_tick_display, 
+            tick.bind(on_display=self.on_tick_display,
                       on_tick_draw=self.on_tick_draw)
     def on_tick_display(self, *args, **kwargs):
         tick = kwargs.get('tick')
@@ -80,7 +80,7 @@ class TickContainer(FloatLayout):
         for c in self.children:
             if isinstance(c, Tickline):
                 c.redraw()
-    
+
 class CustomLabelTick(Tick):
     spectrum_graph = ObjectProperty(None)
     tickline_parent = ObjectProperty(None)
@@ -95,7 +95,7 @@ class CustomLabelTick(Tick):
         pos = self.tickline_parent.index2pos(index)
         lbl_text = self._get_custom_label_text(pos)
         label = CoreLabel(
-            text=lbl_text, 
+            text=lbl_text,
             **kwargs)
         label.refresh()
         self.dispatch('on_tick_draw', tick=self, pos=pos)
@@ -104,18 +104,18 @@ class CustomLabelTick(Tick):
         pass
     def on_tick_draw(self, *args, **kwargs):
         pass
-        
+
 class FrequencyTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
         s = '%07.3f' % (self.spectrum_graph.x_to_freq(pos))
         if s.split('.')[1] == '000':
             s = s.split('.')[0]
         return s
-        
+
 class DbTick(CustomLabelTick):
     def _get_custom_label_text(self, pos):
         return '%5.1f' % (self.spectrum_graph.y_to_db(pos))
-        
+
 class GraphViewControls(BoxLayout):
     spectrum_graph = ObjectProperty(None)
     h_slider = ObjectProperty(None)
@@ -132,7 +132,7 @@ class GraphViewControls(BoxLayout):
         sg = self.spectrum_graph
         if sg is None:
             return
-        sg.bind(x_range=self.on_spectrum_graph_x_range, 
+        sg.bind(x_range=self.on_spectrum_graph_x_range,
                 x_center=self.on_spectrum_graph_x_center)
     def on_spectrum_graph_x_range(self, instance, value):
         pass
@@ -172,7 +172,7 @@ class GraphViewControls(BoxLayout):
         if sg is None:
             return
         sg.x_size += self.zoom_step
-        
+
 class SpectrumGraphBase(RelativeLayout, JSONMixin):
     spectrum_plot_container = ObjectProperty(None)
     plot_params = DictProperty()
@@ -270,7 +270,7 @@ class SpectrumGraphBase(RelativeLayout, JSONMixin):
     def y_to_db(self, y):
         return (y / self.height * self.y_size) + self.y_min
     def _serialize(self):
-        attrs = ['x_max', 'x_min', 'y_max', 'y_min', 
+        attrs = ['x_max', 'x_min', 'y_max', 'y_min',
                  'auto_scale_x', 'auto_scale_y']
         d = {attr:getattr(self, attr) for attr in attrs}
         d['plots'] = []
@@ -322,18 +322,18 @@ class SpectrumGraph(SpectrumGraphBase):
         def fake_collide_point(*args):
             return False
         x_ticks = [
-            FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'), 
-            LabellessTick(scale_factor=2., halign='line_right', valign='bottom'), 
+            FrequencyTick(spectrum_graph=self, halign='line_right', valign='bottom'),
+            LabellessTick(scale_factor=2., halign='line_right', valign='bottom'),
         ]
         y_ticks = [
-            DbTick(spectrum_graph=self, halign='left', valign='bottom'), 
-            LabellessTick(scale_factor=2., halign='left'), 
+            DbTick(spectrum_graph=self, halign='left', valign='bottom'),
+            LabellessTick(scale_factor=2., halign='left'),
         ]
         self.x_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='horizontal', zoomable=False, 
+                                    orientation='horizontal', zoomable=False,
                                     ticks=x_ticks)
         self.y_tick_line = Tickline(cover_background=False, background_color=(0.,0.,0.,0.), draw_line=False,
-                                    orientation='vertical', zoomable=False, 
+                                    orientation='vertical', zoomable=False,
                                     ticks=y_ticks)
         self.x_tick_line.collide_point = fake_collide_point
         self.y_tick_line.collide_point = fake_collide_point
@@ -372,12 +372,12 @@ class SpectrumGraph(SpectrumGraphBase):
         x = self.freq_to_x(freq)
         y = self.db_to_y(db)
         self.graph_overlay.plot_values.update({
-            'x':x, 'y':y, 'freq':freq, 'db':db, 
+            'x':x, 'y':y, 'freq':freq, 'db':db,
         })
 
 class SpectrumGraphSimple(SpectrumGraphBase):
     pass
-    
+
 class SpectrumPlot(Widget, JSONMixin):
     name = StringProperty('')
     points = ListProperty([])
@@ -490,7 +490,7 @@ class SpectrumPlot(Widget, JSONMixin):
 class PlotToolPanel(GridLayout):
     def add_plot(self, plot_widget):
         self.add_widget(PlotTools(plot=plot_widget))
-        
+
 class PlotTools(BoxLayout):
     label_widget = ObjectProperty(None)
     switch_widget = ObjectProperty(None)
@@ -508,10 +508,10 @@ class PlotTools(BoxLayout):
             self.parent.remove_widget(self)
     def on_color_btn_release(self, *args, **kwargs):
         self.color_picker = PlotColorPicker(color=self.plot.color)
-        self.color_picker.bind(on_select=self.on_color_picker_select, 
+        self.color_picker.bind(on_select=self.on_color_picker_select,
                                on_cancel=self.on_color_picker_cancel)
         root = self.root_widget
-        popup = root.show_popup(title='Choose Color', content=self.color_picker, 
+        popup = root.show_popup(title='Choose Color', content=self.color_picker,
                                 size_hint=(.9, .9), auto_dismiss=False)
         popup.bind(on_dismiss=self.on_popup_dismiss)
     def on_color_picker_select(self, *args):
@@ -521,7 +521,7 @@ class PlotTools(BoxLayout):
         self.root_widget.close_popup()
     def on_popup_dismiss(self, *args, **kwargs):
         self.color_picker = None
-        
+
 class PlotColorPicker(BoxLayout):
     color = ListProperty([.8, .8, .8, 1.])
     color_picker = ObjectProperty(None)
@@ -532,7 +532,7 @@ class PlotColorPicker(BoxLayout):
         pass
     def on_cancel(self, *args):
         pass
-        
+
 class GraphOverlay(Widget):
     spectrum_graph = ObjectProperty(None)
     label_widget = ObjectProperty(None)
@@ -546,7 +546,7 @@ class GraphOverlay(Widget):
             self.label_text = ''
         else:
             self.label_text = '%07.3f (MHz) - %04.1f (dBm)' % (freq, db)
-    
+
 class GraphCrosshair(Widget):
     def on_parent(self, *args, **kwargs):
         if self.parent is None:
