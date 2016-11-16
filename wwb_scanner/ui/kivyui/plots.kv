@@ -101,6 +101,7 @@
 <PlotTools>:
     orientation: 'vertical'
     label_widget: label_widget
+    rename_widget: rename_widget
     switch_widget: switch_widget
     color_btn: color_btn
     root_widget: app.root
@@ -109,10 +110,23 @@
             rgb: .8, .8, .8
         Line:
             rectangle: self.x+1, self.y+1,self.width-1, self.height-1
-    Label:
-        id: label_widget
-        text: self.parent.plot.name
+    RelativeLayout:
         size_hint_y: .5
+        Label:
+            id: label_widget
+            size_hint: (1, 1)
+            text: '[ref=rename]{}[/ref]'.format(root.plot.name)
+            markup: True
+            on_ref_press: root.rename_enable = True
+        TextInput:
+            id: rename_widget
+            size_hint: (1, 1)
+            text: root.plot.name
+            multiline: False
+            on_text_validate: root.on_rename_edited()
+            disabled: True
+            opacity: 1 if root.rename_enable else 0
+            on_focus: if not self.focus: root.rename_enable = False
     BoxLayout:
         orientation: 'horizontal'
         size_hint_y: .5

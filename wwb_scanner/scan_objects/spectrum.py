@@ -182,6 +182,14 @@ class Spectrum(JSONMixin):
             self.data_updated.set()
     def save_to_dbstore(self):
         db_store.add_scan(self)
+    def update_dbstore(self, *attrs):
+        if self.eid is None:
+            return
+        if not len(attrs):
+            attrs = ['name', 'color', 'timestamp_utc', 'step_size',
+                     'center_frequencies', 'scan_config_eid']
+        d = {attr:getattr(self, attr) for attr in attrs}
+        db_store.update_scan(self.eid, **d)
     @classmethod
     def from_dbstore(cls, dbdata=None, eid=None):
         if dbdata is None:

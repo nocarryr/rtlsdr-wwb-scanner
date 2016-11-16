@@ -408,12 +408,14 @@ class SpectrumPlot(Widget, JSONMixin):
         if self.spectrum.name == value:
             return
         self.spectrum.name = value
+        self.spectrum.update_dbstore('name')
     def on_color(self, instance, value):
         if self.spectrum is None:
             return
         if list(value) == self.spectrum.color.to_list():
             return
         self.spectrum.color.from_list(value)
+        self.spectrum.update_dbstore('color')
     def on_parent(self, *args, **kwargs):
         if self.parent is None:
             return
@@ -494,10 +496,12 @@ class PlotToolPanel(GridLayout):
 
 class PlotTools(BoxLayout):
     label_widget = ObjectProperty(None)
+    rename_widget = ObjectProperty(None)
     switch_widget = ObjectProperty(None)
     color_btn = ObjectProperty(None)
     plot = ObjectProperty(None)
     root_widget = ObjectProperty(None)
+    rename_enable = BooleanProperty(False)
     def on_plot(self, *args, **kwargs):
         if self.plot is None:
             return
@@ -507,6 +511,18 @@ class PlotTools(BoxLayout):
             return
         if self.plot.parent is None:
             self.parent.remove_widget(self)
+    def on_rename_enable(self, instance, value):
+        if self.rename_widget is None:
+            return
+        if value:
+            self.rename_widget.disabled = False
+            self.rename_widget.focus = True
+        else:
+            self.rename_widget.text = self.plot.name
+    def on_rename_edited(self, *args, **kwargs):
+        name = self.rename_widget.text
+        self.plot.name = name
+        self.rename_enable = False
     def on_color_btn_release(self, *args, **kwargs):
         self.color_picker = PlotColorPicker(color=self.plot.color)
         self.color_picker.bind(on_select=self.on_color_picker_select,

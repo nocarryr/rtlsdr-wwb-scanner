@@ -70,5 +70,8 @@ class DBStore(object):
     def get_scan(self, eid):
         table = self.db.table('scans_performed')
         return table.get(eid=eid)
+    def update_scan(self, eid, **kwargs):
+        table = self.db.table('scans_performed')
+        table.update(kwargs, eids=[eid])
 
 db_store = DBStore()
