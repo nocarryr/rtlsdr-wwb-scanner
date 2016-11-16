@@ -39,7 +39,7 @@ class ScannerBase(JSONMixin):
         if 'spectrum' in kwargs:
             self.spectrum = Spectrum.from_json(kwargs['spectrum'])
         else:
-            self.spectrum = Spectrum(step_size=self.config.step_size)
+            self.spectrum = Spectrum()
         self.spectrum.scan_config = self.config
         if not kwargs.get('__from_json__'):
             self.sample_collection = SampleCollection(scanner=self)
@@ -66,20 +66,12 @@ class ScannerBase(JSONMixin):
         self.on_progress(value)
     def on_progress(self, value):
         print '%s%%' % (int(value * 100))
-    def calc_next_center_freq(self, sample_set):
-        f = sample_set.frequencies
-        fmin = f.min()
-        fmax = f.max()
-        fcent = f[np.searchsorted(f, f.mean())]
-        fc = fmax + (fcent - fmin)
-        fc -= f[3] - f[0]
-        return fc
     def build_sample_sets(self):
         freq,  end_freq = self.config.scan_range
         sample_collection = self.sample_collection
         while freq <= end_freq:
             sample_set = sample_collection.build_sample_set(mhz_to_hz(freq))
-            freq = self.calc_next_center_freq(sample_set)
+            freq += self.step_size
     def run_scan(self):
         self.build_sample_sets()
         running = self._running
@@ -118,8 +110,6 @@ class Scanner(ScannerBase):
     def __init__(self, **kwargs):
         super(Scanner, self).__init__(**kwargs)
         self.sdr_wrapper = SdrWrapper(scanner=self)
-        c = self.sampling_config
-        c.setdefault('bandwidth', c.sample_rate / 2.)
         self.gain = self.gain
     @property
     def sdr(self):
@@ -149,13 +139,21 @@ class Scanner(ScannerBase):
     def samples_per_sweep(self, value):
         self.sampling_config.samples_per_sweep = value
     @property
+    def step_size(self):
+        step_size = getattr(self, '_step_size', None)
+        if step_size is not None:
+            return step_size
+        c = self.sampling_config
+        overlap = c.sweep_overlap_ratio
+        self.sdr.sample_rate = c.sample_rate
+        rs = self.sdr.sample_rate
+        self.sample_rate = rs
+        step_size = self._step_size = hz_to_mhz(rs / 2. * overlap)
+        return step_size
+    @property
     def window_size(self):
         c = self.config
-        v = c.sampling.get('window_size')
-        if v is None:
-            v = int(c.sampling.bandwidth / mhz_to_hz(c.step_size))
-            c.sampling.window_size = v
-        return v
+        return c.sampling.get('window_size')
     @window_size.setter
     def window_size(self, value):
         if value == self.sampling_config.get('window_size'):

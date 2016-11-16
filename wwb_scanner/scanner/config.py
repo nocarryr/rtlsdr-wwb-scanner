@@ -3,7 +3,6 @@ from wwb_scanner.utils.config import Config
 class ScanConfig(Config):
     DEFAULTS = dict(
         scan_range=[400., 900.],
-        step_size=.05,
         save_raw_values=False,
     )
     def __init__(self, initdict=None, **kwargs):
@@ -31,7 +30,8 @@ class DeviceConfig(Config):
 
 class SamplingConfig(Config):
     DEFAULTS = dict(
-        sample_rate=2e6,
+        sample_rate=2.048e6,
+        sweep_overlap_ratio=.5,
         sweeps_per_scan=20,
         samples_per_sweep=8192,
         window_size=None,

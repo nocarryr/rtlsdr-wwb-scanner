@@ -61,6 +61,15 @@
                         input_filter: 'int'
                         text: str(int(root.sample_rate / 1000))
                         on_focus: if not self.focus: root.sample_rate = float(self.text) * 1000
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Overlap Ratio (MHz)'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'float'
+                        text: str(root.sweep_overlap_ratio)
+                        on_focus: if not self.focus: root.sweep_overlap_ratio = float(self.text)
         TabbedPanelItem:
             text: 'Advanced'
             BoxLayout:
