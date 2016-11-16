@@ -42,6 +42,7 @@ class ScanControls(BoxLayout, JSONMixin):
     remote_port = NumericProperty(1235)
     current_freq = NumericProperty(500.)
     live_spectrum_graph = ObjectProperty(None)
+    live_view_visible = BooleanProperty(False)
     def get_gain(self):
         return self.gain_txt.text
     def __init__(self, **kwargs):
@@ -61,6 +62,8 @@ class ScanControls(BoxLayout, JSONMixin):
         live_view = getattr(self, 'live_view', None)
         if self.last_tab is None or current_tab != live_view:
             self.last_tab = current_tab
+        if live_view is not None:
+            self.live_view_visible = current_tab == live_view
     def get_scan_defaults(self):
         scanner = Scanner()
         self.sample_rate = scanner.sampling_config.sample_rate
@@ -85,10 +88,7 @@ class ScanControls(BoxLayout, JSONMixin):
         self.fft_size = int(instance.text)
     def on_idle(self, instance, value):
         self.stop_btn.disabled = value
-        if value:
-            self.panel_widget.switch_to(self.last_tab)
     def on_scan_button_release(self):
-        self.panel_widget.switch_to(self.live_view)
         self.scanning = True
         self.idle = False
         self.scan_progress.build_scanner()
@@ -253,7 +253,7 @@ class ScanProgress(EventDispatcher):
             spectrum.add_sample(frequency=f, dbFS=val, force_magnitude=True)
         if new_spectrum:
             self.current_spectrum = spectrum
-        else:
+        elif self.scan_controls.live_view_visible:
             sg = self.scan_controls.live_spectrum_graph
             plot = sg.spectrum_plot_container.children[0]
             plot.update_data()
