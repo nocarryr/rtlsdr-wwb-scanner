@@ -68,12 +68,21 @@
                 BoxLayout:
                     orientation: 'vertical'
                     Label:
-                        text: 'Samples per scan'
+                        text: 'Sweeps per scan'
                     TextInput:
                         multiline: False
                         input_filter: 'int'
-                        text: str(root.samples_per_scan)
-                        on_focus: if not self.focus: root.samples_per_scan = int(self.text)
+                        text: str(root.sweeps_per_scan)
+                        on_focus: if not self.focus: root.sweeps_per_scan = int(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        text: 'Samples per sweep'
+                    TextInput:
+                        multiline: False
+                        input_filter: 'int'
+                        text: str(root.samples_per_sweep)
+                        on_focus: if not self.focus: root.samples_per_sweep = int(self.text)
                 BoxLayout:
                     orientation: 'vertical'
                     Label:

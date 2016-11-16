@@ -51,21 +51,22 @@ class SampleSet(JSONMixin):
     @frequencies.setter
     def frequencies(self, value):
         self._frequencies = value
+    @property
+    def sweeps_per_scan(self):
+        return self.scanner.sweeps_per_scan
+    @property
+    def samples_per_sweep(self):
+        return self.scanner.samples_per_sweep
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
-        num_samples = scanner.samples_per_scan
-        sweeps_per_scan = scanner.sample_rate / num_samples
-        samples_per_second = self.samples_per_second
-        if samples_per_second is None:
-            samples_per_second = next_2_to_pow(int(num_samples / sweeps_per_scan))
-            self.samples_per_second = samples_per_second
-        win_size = scanner.window_size
+        sweeps_per_scan = scanner.sweeps_per_scan
+        samples_per_sweep = scanner.samples_per_sweep
         sdr = scanner.sdr
         sdr.set_center_freq(freq)
-        self.raw = np.zeros((int(sweeps_per_scan), samples_per_second), 'complex')
-        self.powers = np.zeros((int(sweeps_per_scan), samples_per_second), 'float64')
-        sdr.read_samples_async(self.samples_callback, num_samples=samples_per_second)
+        self.raw = np.zeros((sweeps_per_scan, samples_per_sweep), 'complex')
+        self.powers = np.zeros((sweeps_per_scan, samples_per_sweep), 'float64')
+        sdr.read_samples_async(self.samples_callback, num_samples=samples_per_sweep)
     def samples_callback(self, iq, context):
         current_sweep = getattr(self, 'current_sweep', None)
         if current_sweep is None:
@@ -114,18 +115,11 @@ class SampleSet(JSONMixin):
         self.collection.on_sample_set_processed(self)
     def calc_expected_freqs(self):
         freq = self.center_frequency
-        win_size = self.scanner.window_size
-        sr = self.scanner.sample_rate
-        num_samples = self.scanner.samples_per_scan
-        sweeps_per_scan = sr / num_samples
-        samples_per_second = self.samples_per_second
-        if samples_per_second is None:
-            samples_per_second = next_2_to_pow(int(num_samples / sweeps_per_scan))
-            self.samples_per_second = samples_per_second
-        fake_samples = np.zeros(samples_per_second, 'complex')
-        win = get_window('hanning', win_size)
-        nfft = self.scanner.sampling_config.get('fft_size')
-        f_expected, Pxx = welch(fake_samples, fs=sr)
+        scanner = self.scanner
+        rs = scanner.sample_rate
+        num_samples = scanner.samples_per_sweep * scanner.sweeps_per_scan
+        fake_samples = np.zeros(num_samples, 'complex')
+        f_expected, Pxx = welch(fake_samples, fs=rs)
         f_expected, Pxx = sort_psd(f_expected, Pxx)
         f_expected += freq
         f_expected /= 1e6

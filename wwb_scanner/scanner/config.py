@@ -32,8 +32,9 @@ class DeviceConfig(Config):
 class SamplingConfig(Config):
     DEFAULTS = dict(
         sample_rate=2e6,
-        sampling_period=.0125,
-        samples_per_scan=None,
-        windows_size=None,
+        sweeps_per_scan=20,
+        samples_per_sweep=8192,
+        window_size=None,
+        fft_size=1024,
         window_type='boxcar',
     )

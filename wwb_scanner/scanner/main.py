@@ -137,21 +137,17 @@ class Scanner(ScannerBase):
     def freq_correction(self, value):
         self.device_config.freq_correction = value
     @property
-    def samples_per_scan(self):
-        c = self.sampling_config
-        v = c.get('samples_per_scan')
-        if v is None:
-            v = c.sample_rate * c.sampling_period
-            v = calc_num_samples(v)
-            c.samples_per_scan = v
-        return v
-    @samples_per_scan.setter
-    def samples_per_scan(self, value):
-        if value == self.sampling_config.get('samples_per_scan'):
-            return
-        if value is not None:
-            value = calc_num_samples(value)
-        self.sampling_config.samples_per_scan = value
+    def sweeps_per_scan(self):
+        return self.sampling_config.sweeps_per_scan
+    @sweeps_per_scan.setter
+    def sweeps_per_scan(self, value):
+        self.sampling_config.sweeps_per_scan = value
+    @property
+    def samples_per_sweep(self):
+        return self.sampling_config.samples_per_sweep
+    @samples_per_sweep.setter
+    def samples_per_sweep(self, value):
+        self.sampling_config.samples_per_sweep = value
     @property
     def window_size(self):
         c = self.config

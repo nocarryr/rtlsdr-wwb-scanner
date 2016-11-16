@@ -32,7 +32,8 @@ class ScanControls(BoxLayout, JSONMixin):
     gain = NumericProperty(30.)
     sample_rate = NumericProperty(2e6)
     freq_correction = NumericProperty(0)
-    samples_per_scan = NumericProperty()
+    sweeps_per_scan = NumericProperty()
+    samples_per_sweep = NumericProperty()
     window_size = NumericProperty(allownone=True)
     window_type = OptionProperty('boxcar',
                                  options=Scanner.WINDOW_TYPES + ['None'])
@@ -73,7 +74,8 @@ class ScanControls(BoxLayout, JSONMixin):
         if freq_correction is None:
             freq_correction = 0
         self.freq_correction = freq_correction
-        self.samples_per_scan = scanner.samples_per_scan
+        self.sweeps_per_scan = scanner.sweeps_per_scan
+        self.samples_per_sweep = scanner.samples_per_sweep
         self.window_size = scanner.window_size
         self.window_type = scanner.sampling_config.window_type
         self.fft_size = scanner.sampling_config.get('fft_size')
@@ -96,12 +98,12 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scan_progress.cancel_scan()
         self.idle = True
     def _serialize(self):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size',
-                'window_type', 'fft_size']
+        keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
+                'window_size', 'window_type', 'fft_size']
         return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
-        keys = ['scan_range', 'gain', 'samples_per_scan', 'window_size',
-                'window_type', 'fft_size']
+        keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
+                'window_size', 'window_type', 'fft_size']
         for key in keys:
             if key not in kwargs:
                 continue
@@ -202,7 +204,8 @@ class ScanProgress(EventDispatcher):
             ],
             'sampling':[
                 'sample_rate',
-                'samples_per_scan',
+                'sweeps_per_scan',
+                'samples_per_sweep',
                 'window_size',
                 'window_type',
                 'fft_size',
