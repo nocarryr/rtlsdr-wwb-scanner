@@ -175,6 +175,7 @@ class GraphViewControls(BoxLayout):
 
 class SpectrumGraphBase(RelativeLayout, JSONMixin):
     spectrum_plot_container = ObjectProperty(None)
+    tool_panel = ObjectProperty(None)
     plot_params = DictProperty()
     x_min = NumericProperty(0.)
     x_max = NumericProperty(1.)
@@ -288,7 +289,7 @@ class SpectrumGraphBase(RelativeLayout, JSONMixin):
                 for pldata in val:
                     plot = SpectrumPlot.from_json(pldata)
                     self.add_plot(plot=plot)
-                    self.parent.tool_panel.add_plot(plot)
+                    self.tool_panel.add_plot(plot)
             else:
                 setattr(self, key, val)
 
