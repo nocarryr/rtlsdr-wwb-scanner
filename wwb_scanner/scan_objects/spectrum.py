@@ -126,7 +126,7 @@ class Spectrum(JSONMixin):
                 if isinstance(data, dict):
                     self.add_sample(**data)
                 else:
-                    self.add_sample(frequency=key, magnitude=data)
+                    self.add_sample(frequency=key, dbFS=data)
         else:
             for sample_kwargs in samples:
                 self.add_sample(**sample_kwargs)
@@ -150,7 +150,10 @@ class Spectrum(JSONMixin):
         if f in self.samples:
             sample = self.samples[f]
             if kwargs.get('force_magnitude'):
-                sample.magnitude = kwargs.get('magnitude')
+                for key in ['iq', 'magnitude', 'dbFS']:
+                    if key in kwargs:
+                        setattr(sample, key, kwargs[key])
+                        break
             return sample
         if len(self.samples) and f < max(self.samples.keys()):
             if not kwargs.get('force_lower_freq', True):

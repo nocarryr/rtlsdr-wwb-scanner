@@ -250,7 +250,7 @@ class ScanProgress(EventDispatcher):
             self.cancel_scan()
             raise
         for f, val in zip(freqs, powers):
-            spectrum.add_sample(frequency=f, magnitude=val, force_magnitude=True)
+            spectrum.add_sample(frequency=f, dbFS=val, force_magnitude=True)
         if new_spectrum:
             self.current_spectrum = spectrum
         else:

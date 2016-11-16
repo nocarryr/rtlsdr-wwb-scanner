@@ -213,8 +213,8 @@ class Scanner(ScannerBase):
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         for f, p in zip(freqs, powers):
             is_center = f == center_freq
-            spectrum.add_sample(frequency=f, magnitude=p, force_magnitude=True,
-                                force_lower_freq=False, 
+            spectrum.add_sample(frequency=f, iq=p, force_magnitude=True,
+                                force_lower_freq=False,
                                 is_center_frequency=is_center)
         self.on_progress(self.progress)
 

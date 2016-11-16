@@ -44,7 +44,7 @@ class CSVImporter(BaseImporter):
             if ',' not in line:
                 continue
             f, v = line.split(',')
-            spectrum.add_sample(frequency=float(f), magnitude=float(v))
+            spectrum.add_sample(frequency=float(f), dbFS=float(v))
 
 class BaseWWBImporter(BaseImporter):
     def load_file(self):
@@ -74,4 +74,4 @@ class WWBImporter(BaseWWBImporter):
         for ftag, vtag in itertools.izip(freq_set.iter('f'), data_set.iter('v')):
             f = float(ftag.text) / 1000
             v = float(vtag.text)
-            spectrum.add_sample(frequency=f, magnitude=v)
+            spectrum.add_sample(frequency=f, dbFS=v)

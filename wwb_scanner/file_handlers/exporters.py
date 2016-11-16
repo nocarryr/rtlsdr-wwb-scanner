@@ -72,7 +72,7 @@ class CSVExporter(BaseExporter):
                 f = frequency_format % (sample.frequency)
             lines.append(delim.join([
                 f,
-                sample.formatted_magnitude
+                sample.formatted_dbFS
             ]))
         return newline_chars.join(lines)
 
@@ -145,7 +145,7 @@ class WWBLegacyExporter(BaseWWBExporter):
         data_set = ET.SubElement(data_sets, 'data_set', attribs['data_set'])
         for sample in spectrum.iter_samples():
             v = ET.SubElement(data_set, 'v')
-            v.text = sample.formatted_magnitude
+            v.text = sample.formatted_dbFS
         return tree
 
 class WWBExporter(BaseWWBExporter):
@@ -161,5 +161,5 @@ class WWBExporter(BaseWWBExporter):
             f = ET.SubElement(freq_set, 'f')
             f.text = str(int(sample.frequency * 1000))
             v = ET.SubElement(data_set, 'v')
-            v.text = sample.formatted_magnitude
+            v.text = sample.formatted_dbFS
         return tree

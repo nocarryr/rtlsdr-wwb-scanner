@@ -450,7 +450,7 @@ class SpectrumPlot(Widget, JSONMixin):
         dtype = np.dtype(float)
         with spectrum.data_update_lock:
             x = np.fromiter(spectrum.iter_frequencies(), dtype)
-            y = np.fromiter((s.magnitude for s in spectrum.iter_samples()), dtype)
+            y = np.fromiter((s.dbFS for s in spectrum.iter_samples()), dtype)
             self.xy_data = {'x':x, 'y':y}
             spectrum.data_updated.clear()
     def calc_plot_scale(self):
@@ -470,7 +470,7 @@ class SpectrumPlot(Widget, JSONMixin):
         spectrum = self.spectrum
         sample = spectrum.samples.get(freq)
         if sample is not None:
-            return sample.frequency, sample.magnitude
+            return sample.frequency, sample.dbFS
         xy_data = self.xy_data
         if freq > xy_data['x'].max():
             return None, None

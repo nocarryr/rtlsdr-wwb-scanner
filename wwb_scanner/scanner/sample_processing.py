@@ -107,7 +107,6 @@ class SampleSet(JSONMixin):
         f, powers = sort_psd(f, powers)
         f += self.center_frequency
         f /= 1e6
-        powers = 10. * np.log10(powers)
         self.powers = powers
         if not np.array_equal(f, self.frequencies):
             print 'freq not equal: %s, %s' % (self.frequencies.size, f.size)
