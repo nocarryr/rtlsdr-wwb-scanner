@@ -33,8 +33,7 @@ def sort_psd(f, Pxx, onesided=False):
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep',
-                 '_frequencies', 'powers', 'collection', 'process_thread',
-                 'samples_per_second')
+                 '_frequencies', 'powers', 'collection', 'process_thread')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             if key == '_frequencies':
@@ -93,9 +92,6 @@ class SampleSet(JSONMixin):
     def process_sweep(self, sweep):
         scanner = self.scanner
         freq = self.center_frequency
-        win_size = scanner.window_size
-        nfft = scanner.sampling_config.get('fft_size')
-        win = get_window(scanner.sampling_config.window_type, win_size)
         f, powers = welch(self.raw[sweep], fs=scanner.sample_rate)
         f += freq
         f /= 1e6
@@ -103,10 +99,44 @@ class SampleSet(JSONMixin):
         self.collection.on_sweep_processed(sample_set=self,
                                            powers=powers,
                                            frequencies=f)
+    def translate_freq(self, samples, freq):
+        # Adapted from https://github.com/vsergeev/luaradio/blob/master/radio/blocks/signal/frequencytranslator.lua
+        rs = self.scanner.sample_rate
+        omega = 2 * np.pi * (freq / rs)
+        def iter_phase():
+            p = 0
+            i = 0
+            while i < samples.shape[-1]:
+                yield p
+                p += omega
+                p -= 2 * np.pi
+                i += 1
+        phase_rot = np.fromiter(iter_phase(), dtype=np.float)
+        phase_rot = np.unwrap(phase_rot)
+        xlator = np.zeros(phase_rot.size, dtype=samples.dtype)
+        xlator.real = np.cos(phase_rot)
+        xlator.imag = np.sin(phase_rot)
+        samples *= xlator
+        return samples
     def process_samples(self):
-        f, powers = welch(self.raw.flatten(), fs=self.scanner.sample_rate)
+        rs = self.scanner.sample_rate
+        fc = self.center_frequency
+        samples = self.raw.flatten()
+        samples = self.translate_freq(samples, fc * -1)
+        overlap_ratio = self.scanner.sampling_config.sweep_overlap_ratio
+        nperseg = 256
+        win = get_window('hann', nperseg)
+        f, powers = welch(samples, fs=rs,
+                          window=win, nperseg=nperseg, scaling='density')
+
+        iPxx = np.fft.ifft(powers)
+        iPxx = self.translate_freq(iPxx, fc)
+        powers = np.fft.fft(iPxx)
+
         f, powers = sort_psd(f, powers)
-        f += self.center_frequency
+        crop = int((f.size * overlap_ratio) / 2)
+        f, powers = f[crop:crop*-1], powers[crop:crop*-1]
+        f += fc
         f /= 1e6
         self.powers = powers
         if not np.array_equal(f, self.frequencies):
@@ -118,9 +148,12 @@ class SampleSet(JSONMixin):
         scanner = self.scanner
         rs = scanner.sample_rate
         num_samples = scanner.samples_per_sweep * scanner.sweeps_per_scan
+        overlap_ratio = scanner.sampling_config.sweep_overlap_ratio
         fake_samples = np.zeros(num_samples, 'complex')
-        f_expected, Pxx = welch(fake_samples, fs=rs)
+        f_expected, Pxx = welch(fake_samples, fs=rs, nperseg=256)
         f_expected, Pxx = sort_psd(f_expected, Pxx)
+        crop = int((f_expected.size * overlap_ratio) / 2)
+        f_expected, Pxx = f_expected[crop:crop*-1], Pxx[crop:crop*-1]
         f_expected += freq
         f_expected /= 1e6
         return f_expected

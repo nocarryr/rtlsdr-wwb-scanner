@@ -205,11 +205,15 @@ class Scanner(ScannerBase):
         spectrum = self.spectrum
         center_freq = sample_set.center_frequency
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
+        num_existing = 0
         for f, p in zip(freqs, powers):
+            if f in spectrum.samples:
+                num_existing += 1
             is_center = f == center_freq
             spectrum.add_sample(frequency=f, iq=p, force_magnitude=True,
                                 force_lower_freq=False,
                                 is_center_frequency=is_center)
+        print('num_existing={}'.format(num_existing))
         self.on_progress(self.progress)
 
 class ThreadedScanner(threading.Thread, Scanner):
