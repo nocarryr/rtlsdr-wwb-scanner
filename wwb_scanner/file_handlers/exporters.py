@@ -5,6 +5,8 @@ from StringIO import StringIO
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 
+import numpy as np
+
 EPOCH = datetime.datetime(1970, 1, 1)
 
 class BaseExporter(object):
@@ -65,15 +67,11 @@ class CSVExporter(BaseExporter):
         delim = self.delimiter_char
         frequency_format = self.frequency_format
         lines = []
-        for sample in self.spectrum.iter_samples():
-            if frequency_format is None:
-                f = sample.formatted_frequency
-            else:
-                f = frequency_format % (sample.frequency)
-            lines.append(delim.join([
-                f,
-                sample.formatted_dbFS
-            ]))
+        freqs = np.around(self.spectrum.sample_data['frequency'], decimals=3)
+        dB = 10 * np.log10(self.spectrum.sample_data['magnitude'])
+        dB = np.around(dB, decimals=1)
+        for f, v in zip(freqs, dB):
+            lines.append(delim.join([str(f), str(v)]))
         return newline_chars.join(lines)
 
 class BaseWWBExporter(BaseExporter):
