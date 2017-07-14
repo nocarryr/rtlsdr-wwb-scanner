@@ -7,7 +7,7 @@ from scipy import signal
 @pytest.fixture
 def random_samples():
     def gen(n=1024):
-        a = np.random.randint(0, 255, size=n) - 127.5
+        a = np.random.randint(1, 255, size=n) - 127.5
         a /= 127.5
         iq = signal.hilbert(a)
         return iq
