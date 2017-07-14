@@ -181,6 +181,44 @@ class Spectrum(JSONMixin):
             self.samples[f] = sample
         self.set_data_updated()
         return sample
+    def add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):
+        with self.data_update_lock:
+            self._add_sample_set(frequencies, iq, powers, **kwargs)
+        self.set_data_updated()
+    def _add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):
+        force_lower_freq = kwargs.get('force_lower_freq')
+        if iq is not None:
+            powers = np.abs(iq)
+        else:
+            iq = np.zeros(powers.size, dtype=np.complex128)
+
+        sdata = self.sample_data
+
+        if not force_lower_freq and sdata['frequency'].size:
+            r_ix = np.flatnonzero(np.greater_equal(frequencies, [sdata['frequency'].max()]))
+            frequencies = frequencies[r_ix]
+            iq = iq[r_ix]
+            powers = powers[r_ix]
+
+        nin_ix = np.flatnonzero(np.in1d(frequencies, sdata['frequency'], invert=True))
+
+        if nin_ix.size:
+            a = np.zeros(nin_ix.size, dtype=sdata.dtype)
+            a['frequency'] = frequencies[nin_ix]
+            sdata = np.append(sdata, a)
+            sdata = np.sort(sdata, order='frequency')
+        ix = np.searchsorted(sdata['frequency'], frequencies)
+        sdata['iq'][ix] = iq
+        sdata['magnitude'][ix] = powers
+        self.sample_data = sdata
+
+        kwargs = {'spectrum':self, 'init_complete':True}
+        for f in frequencies:
+            if f in self.samples:
+                continue
+            kwargs['frequency'] = f
+            sample = self._build_sample(**kwargs)
+            self.samples[f] = sample
     def _build_sample(self, **kwargs):
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample
