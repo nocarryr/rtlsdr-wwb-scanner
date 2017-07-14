@@ -452,8 +452,15 @@ class SpectrumPlot(Widget, JSONMixin):
         spectrum = self.spectrum
         dtype = np.dtype(float)
         with spectrum.data_update_lock:
-            x = np.fromiter(spectrum.iter_frequencies(), dtype)
-            y = np.fromiter((s.dbFS for s in spectrum.iter_samples()), dtype)
+            x = spectrum.sample_data['frequency']
+            y = spectrum.sample_data['magnitude']
+            if np.any(np.isnan(y)):
+                print('NaN in ydata')
+                if hasattr(self, 'xy_data'):
+                    return
+                y = np.array([-110])
+            else:
+                y = 10 * np.log10(spectrum.sample_data['magnitude'])
             self.xy_data = {'x':x, 'y':y}
             spectrum.data_updated.clear()
     def calc_plot_scale(self):
