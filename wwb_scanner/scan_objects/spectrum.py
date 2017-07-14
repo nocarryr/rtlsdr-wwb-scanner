@@ -2,6 +2,8 @@ import threading
 import datetime
 import time
 
+import numpy as np
+
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.utils.color import Color
@@ -58,6 +60,11 @@ class Spectrum(JSONMixin):
         self.data_updated = threading.Event()
         self.data_update_lock = threading.Lock()
         self.samples = {}
+        self.sample_data = np.empty([0], dtype=[
+            ('frequency', np.float64),
+            ('iq', np.complex128),
+            ('magnitude', np.float64)
+        ])
         self.center_frequencies = kwargs.get('center_frequencies', [])
     @property
     def datetime_utc(self):
@@ -158,8 +165,20 @@ class Spectrum(JSONMixin):
         if len(self.samples) and f < max(self.samples.keys()):
             if not kwargs.get('force_lower_freq', True):
                 return
-        kwargs.setdefault('spectrum', self)
-        sample = self._build_sample(**kwargs)
+        with self.data_update_lock:
+            if f not in self.sample_data['frequency']:
+                a = np.zeros(1, dtype=self.sample_data.dtype)
+                a['frequency'][0] = f
+                self.sample_data = np.append(self.sample_data, a)
+                self.sample_data.sort(order='frequency')
+                s_ix = np.argwhere(self.sample_data['frequency'] == f)
+                for key in ['iq', 'magnitude']:
+                    val = kwargs.get(key)
+                    if val is not None:
+                        self.sample_data[key][s_ix] = val
+            kwargs.setdefault('spectrum', self)
+            sample = self._build_sample(**kwargs)
+            self.samples[f] = sample
         self.set_data_updated()
         return sample
     def _build_sample(self, **kwargs):
