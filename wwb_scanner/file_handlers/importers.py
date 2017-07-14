@@ -3,6 +3,8 @@ import datetime
 import xml.etree.ElementTree as ET
 import itertools
 
+import numpy as np
+
 from wwb_scanner.scan_objects import Spectrum
 
 class BaseImporter(object):
@@ -39,12 +41,19 @@ class CSVImporter(BaseImporter):
     _extension = 'csv'
     def parse_file_data(self):
         spectrum = self.spectrum
-        for line in self.file_data.splitlines():
-            line = line.rstrip('\n').rstrip('\r')
-            if ',' not in line:
-                continue
-            f, v = line.split(',')
-            spectrum.add_sample(frequency=float(f), dbFS=float(v))
+        def iter_lines():
+            for line in self.file_data.splitlines():
+                line = line.rstrip('\n').rstrip('\r')
+                if ',' not in line:
+                    continue
+                f, v = line.split(',')
+                yield f
+                yield v
+        a = np.fromiter(iter_lines(), dtype=np.float64)
+        freqs = a[::2]
+        dB = a[1::2]
+        mag = 10 ** (dB / 10)
+        spectrum.add_sample_set(freqs, powers=mag)
 
 class BaseWWBImporter(BaseImporter):
     def load_file(self):
@@ -71,7 +80,7 @@ class WWBImporter(BaseWWBImporter):
             dt_fmt = '%a %b %d %Y %H:%M:%S'
             dt = datetime.datetime.strptime(dt_str, dt_fmt)
             spectrum.datetime_utc = dt
-        for ftag, vtag in itertools.izip(freq_set.iter('f'), data_set.iter('v')):
-            f = float(ftag.text) / 1000
-            v = float(vtag.text)
-            spectrum.add_sample(frequency=f, dbFS=v)
+        freqs = np.fromiter((float(t.text) / 1000. for t in freq_set), dtype=np.float)
+        dB = np.fromiter((float(t.text) for t in data_set), dtype=np.float)
+        mag = 10 ** (dB / 10)
+        spectrum.add_sample_set(freqs, powers=mag)
