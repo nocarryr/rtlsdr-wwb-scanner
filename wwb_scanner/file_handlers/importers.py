@@ -47,8 +47,8 @@ class CSVImporter(BaseImporter):
                 if ',' not in line:
                     continue
                 f, v = line.split(',')
-                yield f
-                yield v
+                yield float(f)
+                yield float(v)
         a = np.fromiter(iter_lines(), dtype=np.float64)
         freqs = a[::2]
         dB = a[1::2]
