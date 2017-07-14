@@ -174,11 +174,10 @@ class Spectrum(JSONMixin):
                 s_ix = np.argwhere(self.sample_data['frequency'] == f)
                 for key in ['iq', 'magnitude']:
                     val = kwargs.get(key)
-                    if val is not None:
-                        self.sample_data[key][s_ix] = val
-            kwargs.setdefault('spectrum', self)
-            sample = self._build_sample(**kwargs)
-            self.samples[f] = sample
+                    self.sample_data[key][s_ix] = np.NaN
+                kwargs.setdefault('spectrum', self)
+                sample = self._build_sample(**kwargs)
+                self.samples[f] = sample
         self.set_data_updated()
         return sample
     def add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):

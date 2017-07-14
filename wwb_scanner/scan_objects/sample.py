@@ -9,9 +9,9 @@ class Sample(JSONMixin):
         self.init_complete = kwargs.get('init_complete', False)
         self.spectrum = kwargs.get('spectrum')
         self.frequency = kwargs.get('frequency')
-        self.iq = kwargs.get('iq')
-        self.magnitude = kwargs.get('magnitude')
-        if 'iq' in kwargs and 'magnitude' not in kwargs:
+        self.iq = iq = kwargs.get('iq')
+        self.magnitude = m = kwargs.get('magnitude')
+        if m is None and iq is not None:
             m = self.magnitude
         self.power = kwargs.get('power')
         self.dbFS = kwargs.get('dbFS')
@@ -39,7 +39,7 @@ class Sample(JSONMixin):
         ix = self.spectrum_index
         if ix is None:
             return None
-        return self.spectrum.sample_data['iq'][ix][0][0]
+        return self.spectrum.sample_data['iq'][ix]
     @iq.setter
     def iq(self, value):
         if value is None:
@@ -61,7 +61,7 @@ class Sample(JSONMixin):
         ix = self.spectrum_index
         if ix is None:
             return None
-        m = self.spectrum.sample_data['magnitude'][ix][0][0]
+        m = self.spectrum.sample_data['magnitude'][ix]
         if np.isnan(m):
             iq = self.iq
             m = np.abs(iq)
