@@ -175,13 +175,13 @@ class Spectrum(JSONMixin):
                 self.samples[f] = sample
         self.set_data_updated()
         return sample
-    def add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):
+    def add_sample_set(self, frequencies, iq=None, magnitude=None, **kwargs):
         with self.data_update_lock:
-            self._add_sample_set(frequencies, iq, powers, **kwargs)
+            self._add_sample_set(frequencies, iq, magnitude, **kwargs)
         self.set_data_updated()
-    def _add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):
+    def _add_sample_set(self, frequencies, iq=None, magnitude=None, **kwargs):
         force_lower_freq = kwargs.get('force_lower_freq')
-        a = self._prepare_sample_data(frequencies, iq, powers)
+        a = self._prepare_sample_data(frequencies, iq, magnitude)
 
         sdata = self.sample_data
 

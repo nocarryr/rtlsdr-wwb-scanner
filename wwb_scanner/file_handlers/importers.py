@@ -53,7 +53,7 @@ class CSVImporter(BaseImporter):
         freqs = a[::2]
         dB = a[1::2]
         mag = 10 ** (dB / 10)
-        spectrum.add_sample_set(freqs, powers=mag)
+        spectrum.add_sample_set(freqs, magnitude=mag)
 
 class BaseWWBImporter(BaseImporter):
     def load_file(self):
@@ -83,4 +83,4 @@ class WWBImporter(BaseWWBImporter):
         freqs = np.fromiter((float(t.text) / 1000. for t in freq_set), dtype=np.float)
         dB = np.fromiter((float(t.text) for t in data_set), dtype=np.float)
         mag = 10 ** (dB / 10)
-        spectrum.add_sample_set(freqs, powers=mag)
+        spectrum.add_sample_set(freqs, magnitude=mag)
