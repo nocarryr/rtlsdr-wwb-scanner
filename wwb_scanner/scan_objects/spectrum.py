@@ -157,24 +157,19 @@ class Spectrum(JSONMixin):
         if f in self.samples:
             sample = self.samples[f]
             if kwargs.get('force_magnitude'):
-                for key in ['iq', 'magnitude', 'dbFS']:
-                    if key in kwargs:
-                        setattr(sample, key, kwargs[key])
-                        break
+                a = self._prepare_sample_data(**kwargs)
+                ix = np.searchsorted(self.sample_data['frequency'], a['frequency'])
+                self.sample_data['iq'][ix] = a['iq']
+                self.sample_data['magnitude'][ix] = a['magnitude']
             return sample
         if len(self.samples) and f < max(self.samples.keys()):
             if not kwargs.get('force_lower_freq', True):
                 return
         with self.data_update_lock:
             if f not in self.sample_data['frequency']:
-                a = np.zeros(1, dtype=self.sample_data.dtype)
-                a['frequency'][0] = f
+                a = self._prepare_sample_data(**kwargs)
                 self.sample_data = np.append(self.sample_data, a)
                 self.sample_data.sort(order='frequency')
-                s_ix = np.argwhere(self.sample_data['frequency'] == f)
-                for key in ['iq', 'magnitude']:
-                    val = kwargs.get(key)
-                    self.sample_data[key][s_ix] = np.NaN
                 kwargs.setdefault('spectrum', self)
                 sample = self._build_sample(**kwargs)
                 self.samples[f] = sample
@@ -186,29 +181,22 @@ class Spectrum(JSONMixin):
         self.set_data_updated()
     def _add_sample_set(self, frequencies, iq=None, powers=None, **kwargs):
         force_lower_freq = kwargs.get('force_lower_freq')
-        if iq is not None:
-            powers = np.abs(iq)
-        else:
-            iq = np.zeros(powers.size, dtype=np.complex128)
+        a = self._prepare_sample_data(frequencies, iq, powers)
 
         sdata = self.sample_data
 
         if not force_lower_freq and sdata['frequency'].size:
-            r_ix = np.flatnonzero(np.greater_equal(frequencies, [sdata['frequency'].max()]))
-            frequencies = frequencies[r_ix]
-            iq = iq[r_ix]
-            powers = powers[r_ix]
+            r_ix = np.flatnonzero(np.greater_equal(a['frequency'], [sdata['frequency'].max()]))
+            a = a[r_ix]
 
-        nin_ix = np.flatnonzero(np.in1d(frequencies, sdata['frequency'], invert=True))
+        nin_ix = np.flatnonzero(np.in1d(a['frequency'], sdata['frequency'], invert=True))
 
         if nin_ix.size:
-            a = np.zeros(nin_ix.size, dtype=sdata.dtype)
-            a['frequency'] = frequencies[nin_ix]
-            sdata = np.append(sdata, a)
-            sdata = np.sort(sdata, order='frequency')
-        ix = np.searchsorted(sdata['frequency'], frequencies)
-        sdata['iq'][ix] = iq
-        sdata['magnitude'][ix] = powers
+            sdata = np.append(sdata, a[nin_ix])
+            sdata.sort(order='frequency')
+        ix = np.searchsorted(sdata['frequency'], a['frequency'])
+        sdata['iq'][ix] = a['iq']
+        sdata['magnitude'][ix] = a['magnitude']
         self.sample_data = sdata
 
         kwargs = {'spectrum':self, 'init_complete':True}
@@ -218,6 +206,22 @@ class Spectrum(JSONMixin):
             kwargs['frequency'] = f
             sample = self._build_sample(**kwargs)
             self.samples[f] = sample
+    def _prepare_sample_data(self, frequency, iq=None, magnitude=None):
+        if not isinstance(frequency, np.ndarray):
+            frequency = np.array([frequency])
+        a = np.zeros(frequency.size, dtype=self.sample_data.dtype)
+        a['frequency'] = frequency
+        if iq is not None:
+            if not isinstance(iq, np.ndarray):
+                iq = np.array([iq])
+            magnitude = np.abs(iq)
+        elif magnitude is not None:
+            if not isinstance(magnitude, np.ndarray):
+                magnitude = np.array(magnitude)
+            iq = np.zeros(magnitude.size, dtype=np.complex128)
+        a['iq'] = iq
+        a['magnitude'] = magnitude
+        return a
     def _build_sample(self, **kwargs):
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample

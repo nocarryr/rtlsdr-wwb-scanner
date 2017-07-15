@@ -11,8 +11,6 @@ class Sample(JSONMixin):
         self.frequency = kwargs.get('frequency')
         self.iq = iq = kwargs.get('iq')
         self.magnitude = m = kwargs.get('magnitude')
-        if m is None and iq is not None:
-            m = self.magnitude
         self.power = kwargs.get('power')
         self.dbFS = kwargs.get('dbFS')
         self.init_complete = True
@@ -21,7 +19,7 @@ class Sample(JSONMixin):
         f = self.spectrum.sample_data['frequency']
         if self.frequency not in f:
             return None
-        return np.argwhere(f == self.frequency)
+        return np.argwhere(f == self.frequency)[0][0]
     @property
     def frequency(self):
         return getattr(self, '_frequency', None)
