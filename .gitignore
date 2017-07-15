@@ -59,3 +59,5 @@ target/
 *.csv
 *.sdb
 *.sdb2
+
+venv*
