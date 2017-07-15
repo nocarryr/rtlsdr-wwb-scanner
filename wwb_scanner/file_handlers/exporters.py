@@ -68,8 +68,7 @@ class CSVExporter(BaseExporter):
         frequency_format = self.frequency_format
         lines = []
         freqs = np.around(self.spectrum.sample_data['frequency'], decimals=3)
-        dB = 10 * np.log10(self.spectrum.sample_data['magnitude'])
-        dB = np.around(dB, decimals=1)
+        dB = np.around(self.spectrum.sample_data['dbFS'], decimals=1)
         for f, v in zip(freqs, dB):
             lines.append(delim.join([str(f), str(v)]))
         return newline_chars.join(lines)
@@ -146,9 +145,11 @@ class WWBLegacyExporter(BaseWWBExporter):
         attribs = self.attribs
         data_sets = root.find('data_sets')
         data_set = ET.SubElement(data_sets, 'data_set', attribs['data_set'])
-        for sample in spectrum.iter_samples():
+        freqs = np.around(self.spectrum.sample_data['frequency'], decimals=3)
+        dB = np.around(self.spectrum.sample_data['dbFS'], decimals=1)
+        for val in dB:
             v = ET.SubElement(data_set, 'v')
-            v.text = sample.formatted_dbFS
+            v.text = str(val)
         return tree
 
 class WWBExporter(BaseWWBExporter):
@@ -160,9 +161,11 @@ class WWBExporter(BaseWWBExporter):
         data_sets = root.find('data_sets')
         freq_set = ET.SubElement(data_sets, 'freq_set')
         data_set = ET.SubElement(data_sets, 'data_set', self.attribs['data_set'])
-        for sample in spectrum.iter_samples():
+        freqs = self.spectrum.sample_data['frequency'] * 1000
+        dB = np.around(self.spectrum.sample_data['dbFS'], decimals=1)
+        for freq, val in zip(freqs, dB):
             f = ET.SubElement(freq_set, 'f')
-            f.text = str(int(sample.frequency * 1000))
+            f.text = str(int(freq))
             v = ET.SubElement(data_set, 'v')
-            v.text = sample.formatted_dbFS
+            v.text = str(val)
         return tree
