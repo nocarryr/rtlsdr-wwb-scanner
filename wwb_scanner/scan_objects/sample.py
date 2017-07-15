@@ -84,10 +84,10 @@ class Sample(JSONMixin):
         self.spectrum.on_sample_change(sample=self, magnitude=value, old=old)
     @property
     def dbFS(self):
-        m = self.magnitude
-        if m is not None:
-            db = 10. * np.log10(m)
-        return db
+        ix = self.spectrum_index
+        if ix is None:
+            return None
+        return self.spectrum.sample_data['dbFS'][ix]
     @dbFS.setter
     def dbFS(self, value):
         if value is None:
@@ -100,7 +100,8 @@ class Sample(JSONMixin):
             return
         m = 10 ** (value / 10.)
         ix = self.spectrum_index
-        self.spectrum.sample_data['magnitude'][ix] = value
+        self.spectrum.sample_data['dbFS'][ix] = value
+        self.spectrum.sample_data['magnitude'][ix] = m
         if not self.init_complete:
             return
         self.spectrum.on_sample_change(sample=self, dbFS=value, old=old)

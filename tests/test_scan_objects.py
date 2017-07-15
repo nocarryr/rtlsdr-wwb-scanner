@@ -15,6 +15,7 @@ def test_spectrum(random_samples):
     assert np.array_equal(spectrum.sample_data['frequency'], freqs)
     assert np.array_equal(spectrum.sample_data['iq'], ff)
     assert np.array_equal(spectrum.sample_data['magnitude'], np.abs(ff))
+    assert np.array_equal(spectrum.sample_data['dbFS'], 10 * np.log10(np.abs(ff)))
 
 def test_add_sample_set(random_samples):
     from wwb_scanner.scan_objects import Spectrum
@@ -36,6 +37,7 @@ def test_add_sample_set(random_samples):
     assert np.array_equal(spectrum.sample_data['frequency'], freqs)
     assert np.array_equal(spectrum.sample_data['iq'], ff)
     assert np.array_equal(spectrum.sample_data['magnitude'], np.abs(ff))
+    assert np.array_equal(spectrum.sample_data['dbFS'], 10 * np.log10(np.abs(ff)))
 
     fc += 1e6
 
@@ -55,8 +57,10 @@ def test_add_sample_set(random_samples):
         ix = sample.spectrum_index
         iq = spectrum.sample_data['iq'][ix]
         m = spectrum.sample_data['magnitude'][ix]
+        dB = spectrum.sample_data['dbFS'][ix]
         assert iq == val == sample.iq
         assert m == np.abs(val) == sample.magnitude
+        assert dB == 10 * np.log10(np.abs(val)) == sample.dbFS
 
 
     fc = 800e6
@@ -75,5 +79,7 @@ def test_add_sample_set(random_samples):
         ix = sample.spectrum_index
         iq = spectrum.sample_data['iq'][ix]
         m = spectrum.sample_data['magnitude'][ix]
+        dB = spectrum.sample_data['dbFS'][ix]
         assert iq == val == sample.iq
         assert m == np.abs(val) == sample.magnitude
+        assert dB == 10 * np.log10(np.abs(val)) == sample.dbFS

@@ -19,6 +19,8 @@ def test_importers(data_files):
             freqs = spectrum.sample_data['frequency']
             assert freqs.min() <= start_freq
             assert freqs.max() >= end_freq
+            assert not np.any(np.isnan(spectrum.sample_data['magnitude']))
+            assert not np.any(np.isnan(spectrum.sample_data['dbFS']))
 
 def test_exporters(data_files, tmpdir):
     from wwb_scanner.scan_objects import Spectrum
@@ -27,6 +29,8 @@ def test_exporters(data_files, tmpdir):
         p = tmpdir.mkdir('-'.join((str(f) for f in fkey)))
         for skey, fn in d.items():
             src_spectrum = Spectrum.import_from_file(fn)
+            assert not np.any(np.isnan(src_spectrum.sample_data['magnitude']))
+            assert not np.any(np.isnan(src_spectrum.sample_data['dbFS']))
             for ext in ['csv', 'sdb2']:
                 exp_fn = p.join('{}_src.{}'.format(skey, ext))
                 src_spectrum.export_to_file(filename=str(exp_fn))
@@ -61,7 +65,7 @@ def test_io(tmpdir, random_samples):
             break
         fc += step_size
 
-    dB = np.around(10 * np.log10(spectrum.sample_data['magnitude']), decimals=1)
+    dB = np.around(spectrum.sample_data['dbFS'], decimals=1)
 
     p = tmpdir.mkdir('test_io')
     for ext in ['csv', 'sdb2']:
@@ -70,5 +74,5 @@ def test_io(tmpdir, random_samples):
         imp_spectrum = Spectrum.import_from_file(str(fn))
 
         assert np.allclose(spectrum.sample_data['frequency'], imp_spectrum.sample_data['frequency'])
-        imp_dB = 10 * np.log10(imp_spectrum.sample_data['magnitude'])
+        imp_dB = np.around(imp_spectrum.sample_data['dbFS'], decimals=1)
         assert np.allclose(dB, imp_dB)
