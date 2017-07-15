@@ -67,11 +67,12 @@ def test_add_sample_set(random_samples):
     assert np.unique(spectrum.sample_data['frequency']).size == spectrum.sample_data['frequency'].size
 
     for freq, val in zip(freqs2, ff2):
-        ix = np.argwhere(spectrum.sample_data['frequency']==freq)
-        iq = spectrum.sample_data['iq'][ix][0][0]
-        m = spectrum.sample_data['magnitude'][ix][0][0]
-        assert iq == val
-        assert m == np.abs(val)
+        sample = spectrum.samples[freq]
+        ix = sample.spectrum_index
+        iq = spectrum.sample_data['iq'][ix]
+        m = spectrum.sample_data['magnitude'][ix]
+        assert iq == val == sample.iq
+        assert m == np.abs(val) == sample.magnitude
 
 
     fc = 800e6
@@ -86,8 +87,9 @@ def test_add_sample_set(random_samples):
     assert spectrum.sample_data['frequency'].size == spectrum.sample_data['magnitude'].size
 
     for freq, val in zip(freqs3, ff3):
-        ix = np.argwhere(spectrum.sample_data['frequency']==freq)
-        iq = spectrum.sample_data['iq'][ix][0][0]
-        m = spectrum.sample_data['magnitude'][ix][0][0]
-        assert iq == val
-        assert m == np.abs(val)
+        sample = spectrum.samples[freq]
+        ix = sample.spectrum_index
+        iq = spectrum.sample_data['iq'][ix]
+        m = spectrum.sample_data['magnitude'][ix]
+        assert iq == val == sample.iq
+        assert m == np.abs(val) == sample.magnitude
