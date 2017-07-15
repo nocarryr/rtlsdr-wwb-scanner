@@ -6,11 +6,22 @@ from scipy import signal
 
 @pytest.fixture
 def random_samples():
-    def gen(n=1024):
-        a = np.random.randint(1, 255, size=n) - 127.5
-        a /= 127.5
-        iq = signal.hilbert(a)
-        return iq
+    def gen(n=1024, rs=2.048e6, fc=800e6):
+        a = np.random.randint(low=-128, high=128, size=n)
+        sig = signal.hilbert(a / 256.)
+        freqs, Pxx = signal.welch(sig, fs=rs, return_onesided=False)
+        if np.count_nonzero(Pxx) != Pxx.size:
+            ix = np.argwhere(Pxx==0)
+            Pxx[ix] += 1. / 1e8
+        s_ix = np.argsort(freqs)
+        freqs = freqs[s_ix]
+        Pxx = Pxx[s_ix]
+
+        freqs += fc
+        Pxx *= fc
+        freqs /= 1e6
+
+        return freqs, sig, Pxx
     return gen
 
 @pytest.fixture

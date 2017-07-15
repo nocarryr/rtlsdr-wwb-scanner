@@ -45,17 +45,9 @@ def test_io(tmpdir, random_samples):
     freq_range = [572e6, 636e6]
 
     def build_data(fc):
-        samples = random_samples(nsamp)
+        freqs, sig, Pxx = random_samples(n=nsamp, rs=rs, fc=fc)
 
-        freqs = np.fft.fftfreq(samples.size, 1/rs)
-        freqs = np.fft.fftshift(freqs)
-        freqs += fc
-        freqs /= 1e6
-
-        ff = np.fft.fft(samples)
-        ff = np.fft.fftshift(ff)
-
-        return freqs, ff
+        return freqs, Pxx
 
     spectrum = Spectrum(step_size=step_size)
     spectrum.color['r'] = 1.

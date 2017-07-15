@@ -7,15 +7,7 @@ def test_spectrum(random_samples):
     fc = 600e6
 
     spectrum = Spectrum()
-    samples = random_samples()
-
-    freqs = np.fft.fftfreq(samples.size, 1/rs)
-    freqs = np.fft.fftshift(freqs)
-    freqs += fc
-    freqs /= 1e6
-
-    ff = np.fft.fft(samples)
-    ff = np.fft.fftshift(ff)
+    freqs, sig, ff = random_samples(rs=rs, fc=fc)
 
     for freq, val in zip(freqs, ff):
         spectrum.add_sample(frequency=freq, iq=val)
@@ -30,17 +22,9 @@ def test_add_sample_set(random_samples):
     rs = 2.048e6
 
     def build_data(fc):
-        samples = random_samples(256)
+        freqs, sig, Pxx = random_samples(n=256, rs=rs, fc=fc)
 
-        freqs = np.fft.fftfreq(samples.size, 1/rs)
-        freqs = np.fft.fftshift(freqs)
-        freqs += fc
-        freqs /= 1e6
-
-        ff = np.fft.fft(samples)
-        ff = np.fft.fftshift(ff)
-
-        return freqs, ff
+        return freqs, Pxx
 
     fc = 600e6
 
