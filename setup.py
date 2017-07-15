@@ -43,6 +43,7 @@ setup(
         'pyrtlsdr',
         'tinydb',
         'ujson',
+        'Cython',
         'kivy',
     ],
     setup_requires=['pypandoc'],
