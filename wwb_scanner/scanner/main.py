@@ -206,7 +206,7 @@ class Scanner(ScannerBase):
         center_freq = sample_set.center_frequency
         print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
         spectrum.add_sample_set(
-            frequencies=freqs,
+            frequency=freqs,
             iq=powers,
             center_frequency=center_freq,
             force_lower_freq=False,

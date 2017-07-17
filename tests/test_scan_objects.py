@@ -1,5 +1,40 @@
 import numpy as np
 
+def test_sample_array(random_samples):
+    from wwb_scanner.scan_objects import SampleArray
+
+    rs = 2.048e6
+    fc = 600e6
+
+    a = SampleArray()
+
+    freqs, sig, ff = random_samples(rs=rs, fc=fc)
+
+    b = SampleArray.create(frequency=freqs, iq=ff)
+    a.insert_sorted(b)
+
+    assert np.array_equal(a.data, b.data)
+
+    assert np.array_equal(a.frequency, freqs)
+    assert np.array_equal(a.iq, ff)
+    assert np.array_equal(a.magnitude, np.abs(ff))
+    assert np.array_equal(a.dbFS, 10 * np.log10(np.abs(ff)))
+
+    assert np.array_equal(a.frequency, a['frequency'])
+    assert np.array_equal(a.iq, a['iq'])
+    assert np.array_equal(a.magnitude, a['magnitude'])
+    assert np.array_equal(a.dbFS, a['dbFS'])
+
+    fc = 900e6
+
+    freqs, sig, ff = random_samples(rs=rs, fc=fc)
+
+    a.set_fields(frequency=freqs, iq=ff)
+    c = SampleArray.create(frequency=freqs, iq=ff)
+
+    ix = np.flatnonzero(np.in1d(a.frequency, c.frequency))
+    assert np.array_equal(a.data[ix], c.data)
+
 def test_spectrum(random_samples):
     from wwb_scanner.scan_objects import Spectrum
 
@@ -32,7 +67,7 @@ def test_add_sample_set(random_samples):
     spectrum = Spectrum()
 
     freqs, ff = build_data(fc)
-    spectrum.add_sample_set(freqs, iq=ff, center_frequency=fc, force_lower_freq=True)
+    spectrum.add_sample_set(frequency=freqs, iq=ff, center_frequency=fc, force_lower_freq=True)
 
     assert np.array_equal(spectrum.sample_data['frequency'], freqs)
     assert np.array_equal(spectrum.sample_data['iq'], ff)
@@ -47,7 +82,7 @@ def test_add_sample_set(random_samples):
     print('in1d: ', np.nonzero(np.in1d(spectrum.sample_data['frequency'], freqs2)))
     print('spectrum size: ', spectrum.sample_data['frequency'].size)
 
-    spectrum.add_sample_set(freqs2, iq=ff2, center_frequency=fc, force_lower_freq=True)
+    spectrum.add_sample_set(frequency=freqs2, iq=ff2, center_frequency=fc, force_lower_freq=True)
     print('spectrum size: ', spectrum.sample_data['frequency'].size)
 
     assert np.unique(spectrum.sample_data['frequency']).size == spectrum.sample_data['frequency'].size
@@ -67,7 +102,7 @@ def test_add_sample_set(random_samples):
     freqs3, ff3 = build_data(fc)
     assert not np.any(np.in1d(spectrum.sample_data['frequency'], freqs3))
 
-    spectrum.add_sample_set(freqs3, iq=ff3, center_frequency=fc, force_lower_freq=True)
+    spectrum.add_sample_set(frequency=freqs3, iq=ff3, center_frequency=fc, force_lower_freq=True)
     print('spectrum size: ', spectrum.sample_data['frequency'].size)
 
     assert np.unique(spectrum.sample_data['frequency']).size == spectrum.sample_data['frequency'].size

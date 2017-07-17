@@ -255,7 +255,7 @@ class ScanProgress(EventDispatcher):
             print type(fc), repr(fc)
             self.cancel_scan()
             raise
-        spectrum.add_sample_set(freqs, iq=powers, center_frequency=fc)
+        spectrum.add_sample_set(frequency=freqs, iq=powers, center_frequency=fc)
         if new_spectrum:
             self.current_spectrum = spectrum
         elif self.scan_controls.live_view_visible:

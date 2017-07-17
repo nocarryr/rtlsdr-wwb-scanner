@@ -3,11 +3,12 @@ import datetime
 import time
 
 import numpy as np
+from scipy import signal
 
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.utils.color import Color
-from wwb_scanner.scan_objects import Sample, TimeBasedSample
+from wwb_scanner.scan_objects import SampleArray, Sample, TimeBasedSample
 try:
     from wwb_scanner import file_handlers
 except ImportError:
@@ -60,12 +61,7 @@ class Spectrum(JSONMixin):
         self.data_updated = threading.Event()
         self.data_update_lock = threading.Lock()
         self.samples = {}
-        self.sample_data = np.empty([0], dtype=[
-            ('frequency', np.float64),
-            ('iq', np.complex128),
-            ('magnitude', np.float64),
-            ('dbFS', np.float64)
-        ])
+        self.sample_data = SampleArray()
         self.center_frequencies = kwargs.get('center_frequencies', [])
     @property
     def datetime_utc(self):
@@ -158,81 +154,41 @@ class Spectrum(JSONMixin):
         if f in self.samples:
             sample = self.samples[f]
             if kwargs.get('force_magnitude'):
-                a = self._prepare_sample_data(**kwargs)
-                ix = np.searchsorted(self.sample_data['frequency'], a['frequency'])
-                self.sample_data['iq'][ix] = a['iq']
-                self.sample_data['magnitude'][ix] = a['magnitude']
-                self.sample_data['dbFS'][ix] = a['dbFS']
+                self.sample_data.set_fields(**kwargs)
             return sample
         if len(self.samples) and f < max(self.samples.keys()):
             if not kwargs.get('force_lower_freq', True):
                 return
         with self.data_update_lock:
             if f not in self.sample_data['frequency']:
-                a = self._prepare_sample_data(**kwargs)
-                self.sample_data = np.append(self.sample_data, a)
-                self.sample_data = np.sort(self.sample_data, order='frequency')
-                kwargs.setdefault('spectrum', self)
-                sample = self._build_sample(**kwargs)
+                self.sample_data.set_fields(**kwargs)
+                skwargs = {'spectrum':self, 'init_complete':True, 'frequency':f}
+                sample = self._build_sample(**skwargs)
                 self.samples[f] = sample
         self.set_data_updated()
         return sample
-    def add_sample_set(self, frequencies, iq=None, magnitude=None, dbFS=None, **kwargs):
+    def add_sample_set(self, **kwargs):
         with self.data_update_lock:
-            self._add_sample_set(frequencies, iq, magnitude, dbFS, **kwargs)
+            self._add_sample_set(**kwargs)
         self.set_data_updated()
-    def _add_sample_set(self, frequencies, iq=None, magnitude=None, dbFS=None, **kwargs):
+    def _add_sample_set(self, **kwargs):
         force_lower_freq = kwargs.get('force_lower_freq')
-        a = self._prepare_sample_data(frequencies, iq, magnitude, dbFS)
+        a = SampleArray.create(**kwargs)
 
         sdata = self.sample_data
 
         if not force_lower_freq and sdata['frequency'].size:
             r_ix = np.flatnonzero(np.greater_equal(a['frequency'], [sdata['frequency'].max()]))
             a = a[r_ix]
+        self.sample_data.insert_sorted(a)
 
-        nin_ix = np.flatnonzero(np.in1d(a['frequency'], sdata['frequency'], invert=True))
-
-        if nin_ix.size:
-            sdata = np.append(sdata, a[nin_ix])
-            sdata = np.sort(sdata, order='frequency')
-        ix = np.searchsorted(sdata['frequency'], a['frequency'])
-        sdata['iq'][ix] = a['iq']
-        sdata['magnitude'][ix] = a['magnitude']
-        sdata['dbFS'][ix] = a['dbFS']
-        self.sample_data = sdata
-
-        kwargs = {'spectrum':self, 'init_complete':True}
-        for f in frequencies:
+        skwargs = {'spectrum':self, 'init_complete':True}
+        for f in a['frequency']:
             if f in self.samples:
                 continue
-            kwargs['frequency'] = f
-            sample = self._build_sample(**kwargs)
+            skwargs['frequency'] = f
+            sample = self._build_sample(**skwargs)
             self.samples[f] = sample
-    def _prepare_sample_data(self, frequency, iq=None, magnitude=None, dbFS=None):
-        if not isinstance(frequency, np.ndarray):
-            frequency = np.array([frequency])
-        a = np.zeros(frequency.size, dtype=self.sample_data.dtype)
-        a['frequency'] = frequency
-        if iq is not None:
-            if not isinstance(iq, np.ndarray):
-                iq = np.array([iq])
-            magnitude = np.abs(iq)
-            dbFS = 10 * np.log10(magnitude)
-        elif magnitude is not None:
-            if not isinstance(magnitude, np.ndarray):
-                magnitude = np.array([magnitude])
-            iq = np.zeros(magnitude.size, dtype=np.complex128)
-            dbFS = 10 * np.log10(magnitude)
-        elif dbFS is not None:
-            if not isinstance(dbFS, np.ndarray):
-                dbFS = np.array([dbFS])
-            iq = np.zeros(dbFS.size, dtype=np.complex128)
-            magnitude = 10 ** (dbFS / 10)
-        a['iq'] = iq
-        a['magnitude'] = magnitude
-        a['dbFS'] = dbFS
-        return a
     def _build_sample(self, **kwargs):
         sample = Sample(**kwargs)
         self.samples[sample.frequency] = sample

@@ -52,7 +52,7 @@ class CSVImporter(BaseImporter):
         a = np.fromiter(iter_lines(), dtype=np.float64)
         freqs = a[::2]
         dB = a[1::2]
-        spectrum.add_sample_set(freqs, dbFS=dB)
+        spectrum.add_sample_set(frequency=freqs, dbFS=dB)
 
 class BaseWWBImporter(BaseImporter):
     def load_file(self):
@@ -81,4 +81,4 @@ class WWBImporter(BaseWWBImporter):
             spectrum.datetime_utc = dt
         freqs = np.fromiter((float(t.text) / 1000. for t in freq_set), dtype=np.float)
         dB = np.fromiter((float(t.text) for t in data_set), dtype=np.float64)
-        spectrum.add_sample_set(freqs, dbFS=dB)
+        spectrum.add_sample_set(frequency=freqs, dbFS=dB)
