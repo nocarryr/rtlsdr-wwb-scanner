@@ -35,11 +35,11 @@ class BasePlot(object):
         #self.timer = figure.canvas.new_timer(interval=100)
         #self.timer.add_callback(self.on_timer)
     def on_timer(self):
-        print 'timer'
+        print('timer')
         spectrum = self.spectrum
         with spectrum.data_update_lock:
             if spectrum.data_updated.is_set():
-                print 'update plot'
+                print('update plot')
                 self.update_plot()
                 spectrum.data_updated.clear()
     def build_data(self):

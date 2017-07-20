@@ -1,7 +1,7 @@
 import os
+import io
 import datetime
 import uuid
-from StringIO import StringIO
 import xml.etree.ElementTree as ET
 import xml.dom.minidom as minidom
 
@@ -127,11 +127,13 @@ class BaseWWBExporter(BaseExporter):
         return tree
     def write_file(self):
         tree = self.build_data()
-        fd = StringIO()
+        fd = io.BytesIO()
         tree.write(fd, encoding='UTF-8', xml_declaration=True)
         doc = minidom.parseString(fd.getvalue())
         fd.close()
         s = doc.toprettyxml(encoding='UTF-8')
+        if isinstance(s, bytes):
+            s = s.decode('UTF-8')
         with open(self.filename, 'w') as f:
             f.write(s)
 

@@ -18,6 +18,11 @@ from wwb_scanner.core import JSONMixin
 from wwb_scanner.scanner import Scanner
 from wwb_scanner.scan_objects import Spectrum
 
+try:
+    basestring = basestring
+except NameError:
+    basestring = str
+
 
 class ScanControls(BoxLayout, JSONMixin):
     gain_dropdown = ObjectProperty(None)
@@ -252,7 +257,7 @@ class ScanProgress(EventDispatcher):
         try:
             self.scan_controls.current_freq = fc
         except:
-            print type(fc), repr(fc)
+            print(type(fc), repr(fc))
             self.cancel_scan()
             raise
         spectrum.add_sample_set(frequency=freqs, iq=powers, center_frequency=fc)

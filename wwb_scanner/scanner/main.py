@@ -54,7 +54,7 @@ class ScannerBase(JSONMixin):
             self.progress = (value - f_min) / (f_max - f_min)
         self.on_current_freq(value)
     def on_current_freq(self, value):
-        print 'scanning %s' % (value)
+        print('scanning %s' % (value))
     @property
     def progress(self):
         return self._progress
@@ -65,7 +65,7 @@ class ScannerBase(JSONMixin):
         self._progress = value
         self.on_progress(value)
     def on_progress(self, value):
-        print '%s%%' % (int(value * 100))
+        print('%s%%' % (int(value * 100)))
     def build_sample_sets(self):
         freq,  end_freq = self.config.scan_range
         sample_collection = self.sample_collection
@@ -204,7 +204,7 @@ class Scanner(ScannerBase):
         freqs = sample_set.frequencies
         spectrum = self.spectrum
         center_freq = sample_set.center_frequency
-        print 'adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs))
+        print('adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs)))
         spectrum.add_sample_set(
             frequency=freqs,
             iq=powers,
