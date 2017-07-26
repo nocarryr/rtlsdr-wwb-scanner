@@ -39,6 +39,10 @@ def get_spectrum_plot():
     return SpectrumPlot
 
 class Spectrum(JSONMixin):
+    _serialize_attrs = [
+        'name', 'color', 'timestamp_utc', 'step_size',
+        'center_frequencies', 'scan_config_eid',
+    ]
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')
         self.eid = kwargs.get('eid')
@@ -124,16 +128,26 @@ class Spectrum(JSONMixin):
             if config.get('eid') is None:
                 config.eid = value
     def _deserialize(self, **kwargs):
-        samples = kwargs.get('samples', {})
-        if isinstance(samples, dict):
-            for key, data in samples.items():
-                if isinstance(data, dict):
-                    self.add_sample(**data)
-                else:
-                    self.add_sample(frequency=key, dbFS=data)
-        else:
-            for sample_kwargs in samples:
-                self.add_sample(**sample_kwargs)
+        sample_data = kwargs.get('sample_data')
+        samples = kwargs.get('samples')
+        if sample_data is not None:
+            self.sample_data = sample_data
+            self.samples.clear()
+            skwargs = dict(spectrum=self, init_complete=True)
+            for f in sample_data.frequency:
+                skwargs['frequency'] = f
+                sample = self._build_sample(**skwargs)
+                self.samples[f] = sample
+        elif samples is not None:
+            if isinstance(samples, dict):
+                for key, data in samples.items():
+                    if isinstance(data, dict):
+                        self.add_sample(**data)
+                    else:
+                        self.add_sample(frequency=key, dbFS=data)
+            else:
+                for sample_kwargs in samples:
+                    self.add_sample(**sample_kwargs)
     @classmethod
     def import_from_file(cls, filename):
         importer = get_importer()
@@ -147,8 +161,46 @@ class Spectrum(JSONMixin):
         plot = plot_cls(spectrum=self)
         plot.build_plot()
         return plot
+    def smooth(self, N):
+        with self.data_update_lock:
+            f = self.sample_data['frequency']
+            x = np.linspace(f.min(), f.max(), N)
+            xp = self.sample_data['frequency']
+            fp = self.sample_data['magnitude']
+            y = np.interp(x, xp, fp)
+            sdata = np.zeros(y.size, dtype=self.sample_data.dtype)
+            sdata['frequency'] = x
+            sdata['magnitude'] = y
+            sdata['dbFS'] = 10 * np.log10(y)
+            self.sample_data = sdata
+            self.samples.clear()
+            kwargs = {'spectrum':self, 'init_complete':True}
+            for freq in x:
+                kwargs['frequency'] = freq
+                sample = self._build_sample(**kwargs)
+                self.samples[freq] = sample
+        self.set_data_updated()
+        #print(peak_idx.size, peak_idx)
+    def scale(self, min_dB, max_dB):
+        with self.data_update_lock:
+            y = self.sample_data['dbFS']
+            ymin = y.min()
+            ymax = y.max()
+            y -= ymin
+            out_scale = max_dB - min_dB
+
+            y /= y.max()
+            y *= out_scale
+            y += min_dB
+            self.sample_data['magnitude'] = 10 ** (y / 10)
+            self.sample_data['dbFS'] = y
+        self.set_data_updated()
     def add_sample(self, **kwargs):
         f = kwargs.get('frequency')
+        iq = kwargs.get('iq')
+        if iq is not None and isinstance(iq, list):
+            iq = complex(*(float(v) for v in iq))
+            kwargs['iq'] = iq
         if kwargs.get('is_center_frequency') and f not in self.center_frequencies:
             self.center_frequencies.append(f)
         if f in self.samples:
@@ -213,8 +265,7 @@ class Spectrum(JSONMixin):
         if self.eid is None:
             return
         if not len(attrs):
-            attrs = ['name', 'color', 'timestamp_utc', 'step_size',
-                     'center_frequencies', 'scan_config_eid']
+            attrs = self._serialize_attrs
         d = {attr:getattr(self, attr) for attr in attrs}
         db_store.update_scan(self.eid, **d)
     @classmethod
@@ -226,11 +277,8 @@ class Spectrum(JSONMixin):
             eid = dbdata.eid
         return cls.from_json(dbdata, eid=eid)
     def _serialize(self):
-        attrs = ['name', 'color', 'timestamp_utc', 'step_size',
-                 'center_frequencies', 'scan_config_eid']
-        d = {attr: getattr(self, attr) for attr in attrs}
-        samples = self.samples
-        d['samples'] = {k: samples[k]._serialize() for k in samples.keys()}
+        d = {attr: getattr(self, attr) for attr in self._serialize_attrs}
+        d['sample_data'] = self.sample_data
         return d
 
 class TimeBasedSpectrum(Spectrum):

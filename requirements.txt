@@ -2,5 +2,5 @@ numpy
 scipy
 pyrtlsdr
 tinydb
-ujson
+json-object-factory
 kivy

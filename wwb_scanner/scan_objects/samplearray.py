@@ -1,7 +1,9 @@
 import numpy as np
+import jsonfactory
 
+from wwb_scanner.core import JSONMixin
 
-class SampleArray(object):
+class SampleArray(JSONMixin):
     dtype = np.dtype([
         ('frequency', np.float64),
         ('iq', np.complex128),
@@ -101,7 +103,22 @@ class SampleArray(object):
         self.iq[ix] = data['iq']
         self.magnitude[ix] = data['magnitude']
         self.dbFS[ix] = data['dbFS']
+    def _serialize(self):
+        return {'data':self.data, 'keep_sorted':self.keep_sorted}
     def __repr__(self):
         return '<{self.__class__.__name__}: {self}>'.format(self=self)
     def __str__(self):
         return str(self.data)
+
+@jsonfactory.register
+class JSONEncoder(object):
+    def encode(self, o):
+        if isinstance(o, SampleArray):
+            d = o._serialize()
+            d['__class__'] = o.__class__.__name__
+            return d
+        return None
+    def decode(self, d):
+        if d.get('__class__') == 'SampleArray':
+            return SampleArray(d['data'], d['keep_sorted'])
+        return d

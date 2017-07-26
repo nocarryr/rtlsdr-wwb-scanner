@@ -1,3 +1,7 @@
+import datetime
+
+import jsonfactory
+
 from wwb_scanner.utils import numpyjson as json
 
 try:
@@ -27,3 +31,15 @@ class JSONMixin(object):
         raise NotImplementedError('method must be implemented by subclasses')
     def _deserialize(self, **kwargs):
         pass
+
+@jsonfactory.register
+class JSONEncoder(object):
+    _dt_fmt = '%Y-%m-%dT%H:%M:%S.%f %z'
+    def encode(self, o):
+        if isinstance(o, datetime.datetime):
+            return {'__datetime.datetime__':o.strftime(self._dt_fmt)}
+        return None
+    def decode(self, d):
+        if '__datetime.datetime__' in d:
+            return datetime.datetime.strptime(d['__datetime.datetime__'], self._dt_fmt)
+        return d

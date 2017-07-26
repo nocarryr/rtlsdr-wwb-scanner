@@ -59,12 +59,7 @@ class Sample(JSONMixin):
         ix = self.spectrum_index
         if ix is None:
             return None
-        m = self.spectrum.sample_data['magnitude'][ix]
-        if np.isnan(m):
-            iq = self.iq
-            m = np.abs(iq)
-            self.spectrum.sample_data['magnitude'][ix] = m
-        return m
+        return self.spectrum.sample_data['magnitude'][ix]
     @magnitude.setter
     def magnitude(self, value):
         if value is None:

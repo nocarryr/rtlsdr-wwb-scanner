@@ -5,6 +5,15 @@ import numpy as np
 from scipy import signal
 
 @pytest.fixture
+def tmp_db_store(tmpdir, monkeypatch):
+    db_root = tmpdir.mkdir('db_root')
+    db_path = db_root.join('db.json')
+    scan_db_path = db_root.join('scan_db.json')
+    monkeypatch.setattr('wwb_scanner.utils.dbstore.DBStore.DB_PATH', str(db_path))
+    monkeypatch.setattr('wwb_scanner.utils.dbstore.DBStore.SCAN_DB_PATH', str(scan_db_path))
+    return {'db_path':db_path, 'scan_db_path':scan_db_path}
+
+@pytest.fixture
 def random_samples():
     def gen(n=1024, rs=2.048e6, fc=800e6):
         a = np.random.randint(low=-128, high=128, size=n)

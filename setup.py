@@ -42,7 +42,7 @@ setup(
         'scipy',
         'pyrtlsdr',
         'tinydb',
-        'ujson',
+        'json-object-factory',
         'Cython',
         'kivy',
     ],
