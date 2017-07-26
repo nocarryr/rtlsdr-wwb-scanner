@@ -1,5 +1,10 @@
 from wwb_scanner.utils import numpyjson as json
 
+try:
+    basestring = basestring
+except NameError:
+    basestring = str
+
 class JSONMixin(object):
     @classmethod
     def from_json(cls, data, **kwargs):
