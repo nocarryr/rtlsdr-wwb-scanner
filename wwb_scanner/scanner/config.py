@@ -37,4 +37,7 @@ class SamplingConfig(Config):
         window_size=None,
         fft_size=1024,
         window_type='boxcar',
+        rtl_bin_size=0.025,
+        rtl_crop=50,
+        rtl_fir_size=4,
     )

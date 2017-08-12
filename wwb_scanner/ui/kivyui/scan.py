@@ -10,12 +10,13 @@ from kivy.properties import (
     BooleanProperty,
     NumericProperty,
     ListProperty,
+    DictProperty,
     OptionProperty,
 )
 from kivy.clock import Clock
 
 from wwb_scanner.core import JSONMixin
-from wwb_scanner.scanner import Scanner
+from wwb_scanner.scanner import Scanner, RtlPowerScanner
 from wwb_scanner.scan_objects import Spectrum
 
 try:
@@ -30,7 +31,9 @@ class ScanControls(BoxLayout, JSONMixin):
     start_btn = ObjectProperty(None)
     stop_btn = ObjectProperty(None)
     panel_widget = ObjectProperty(None)
+    advanced_panel_item = ObjectProperty(None)
     last_tab = ObjectProperty(None)
+    scanner_backend = StringProperty('builtin')
     scanning = BooleanProperty(False)
     scan_range = ListProperty([470., 900.])
     idle = BooleanProperty(True)
@@ -44,6 +47,9 @@ class ScanControls(BoxLayout, JSONMixin):
     window_type = OptionProperty('boxcar',
                                  options=Scanner.WINDOW_TYPES + ['None'])
     fft_size = NumericProperty(None, allownone=True)
+    rtl_bin_size = NumericProperty(0.025)
+    rtl_crop = NumericProperty(50)
+    rtl_fir_size = NumericProperty(4)
     is_remote = BooleanProperty(False)
     remote_hostname = StringProperty('127.0.0.1')
     remote_port = NumericProperty(1235)
@@ -64,6 +70,26 @@ class ScanControls(BoxLayout, JSONMixin):
     def on_panel_widget(self, *args, **kwargs):
         self.last_tab = self.panel_widget.current_tab
         self.panel_widget.bind(current_tab=self.on_panel_widget_current_tab)
+    def on_advanced_panel_item(self, *args):
+        panel_item = self.advanced_panel_item
+        if panel_item is None:
+            return
+        if panel_item.content is not None:
+            return
+        self.on_scanner_backend()
+    def on_scanner_backend(self, *args):
+        panel_item = self.advanced_panel_item
+        if panel_item is None:
+            return
+        if panel_item.content is not None:
+            panel_item.remove_widget(panel_item.content)
+        if self.scanner_backend == 'builtin':
+            cls = AdvancedOptions
+        else:
+            cls = RtlPowerAdvancedOptions
+        widget = cls()
+        panel_item.add_widget(widget)
+        widget.scan_controls = self
     def on_panel_widget_current_tab(self, *args, **kwargs):
         current_tab = self.panel_widget.current_tab
         live_view = getattr(self, 'live_view', None)
@@ -86,6 +112,9 @@ class ScanControls(BoxLayout, JSONMixin):
         self.window_size = scanner.window_size
         self.window_type = scanner.sampling_config.window_type
         self.fft_size = scanner.sampling_config.get('fft_size')
+        self.rtl_bin_size = scanner.sampling_config['rtl_bin_size']
+        self.rtl_crop = scanner.sampling_config['rtl_crop']
+        self.rtl_fir_size = scanner.sampling_config['rtl_fir_size']
         self.is_remote = scanner.device_config.is_remote
         self.remote_hostname = scanner.device_config.remote_hostname
         self.remote_port = scanner.device_config.remote_port
@@ -106,20 +135,70 @@ class ScanControls(BoxLayout, JSONMixin):
         self.idle = True
     def _serialize(self):
         keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
-                'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size']
+                'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size',
+                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size']
         return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
         keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
-                'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size']
+                'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size',
+                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size']
         for key in keys:
             if key not in kwargs:
                 continue
             setattr(self, key, kwargs.get(key))
 
+class AdvancedOptionsBase(BoxLayout):
+    scan_controls = ObjectProperty(None)
+    option_widgets = DictProperty()
+    unbound_option_widgets = ListProperty()
+    window_type = StringProperty(allownone=True)
+    window_type_dropdown_trigger = ObjectProperty(None, allownone=True)
+    def on_scan_controls(self, *args):
+        if self.scan_controls is None:
+            return
+        self.window_type = self.scan_controls.window_type
+        self.scan_controls.bind(window_type=self.setter('window_type'))
+        for widget in self.unbound_option_widgets[:]:
+            self.bind_option_widget(widget)
+    def add_widget(self, widget, index=0):
+        super(AdvancedOptionsBase, self).add_widget(widget, index)
+        if isinstance(widget, BaseOption):
+            self.bind_option_widget(widget)
+    def bind_option_widget(self, widget):
+        prop_name = getattr(widget, 'prop_name', None)
+        if not prop_name:
+            self.unbound_option_widgets.append(widget)
+            widget.bind(prop_name=self.on_widget_prop_name)
+        elif self.scan_controls is None:
+            if widget not in self.unbound_option_widgets:
+                self.unbound_option_widgets.append(widget)
+        elif prop_name not in self.option_widgets:
+            widget.value = getattr(self.scan_controls, prop_name)
+            widget.bind(value=self.scan_controls.setter(prop_name))
+            self.scan_controls.bind(**{prop_name:widget.setter('value')})
+            self.option_widgets[prop_name] = widget
+            if widget in self.unbound_option_widgets:
+                self.unbound_option_widgets.remove(widget)
+    def on_widget_prop_name(self, widget, prop_name):
+        if not prop_name:
+            return
+        self.bind_option_widget(widget)
+        widget.unbind(prop_name=self.on_widget_prop_name)
+    def on_window_type_dropdown_trigger(self, instance, value):
+        if not value:
+            return
+        self.scan_controls.window_type_dropdown.open(value)
+
+class AdvancedOptions(AdvancedOptionsBase):
+    pass
+
+class RtlPowerAdvancedOptions(AdvancedOptionsBase):
+    pass
 
 class BaseOption(BoxLayout):
     label_text = StringProperty()
     allownone = BooleanProperty(False)
+    prop_name = StringProperty()
 
 class NumericOption(BaseOption):
     value = NumericProperty(allownone=True)
@@ -232,6 +311,9 @@ class ScanProgress(EventDispatcher):
                 'window_size',
                 'window_type',
                 'fft_size',
+                'rtl_bin_size',
+                'rtl_crop',
+                'rtl_fir_size',
             ],
         }
         scan_config = {}
@@ -252,7 +334,11 @@ class ScanProgress(EventDispatcher):
                     if conf_name not in scan_config:
                         scan_config[conf_name] = {}
                     scan_config[conf_name][key] = val
-        self.scanner = Scanner(config=scan_config)
+        if self.scan_controls.scanner_backend == 'builtin':
+            cls = Scanner
+        else:
+            cls = RtlPowerScanner
+        self.scanner = cls(config=scan_config)
         self.scanner.on_progress = self.on_scanner_progress
         self.scanner.on_sweep_processed = self.on_sweep_processed
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)

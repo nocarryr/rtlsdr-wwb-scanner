@@ -3,6 +3,7 @@
     start_btn: start_btn
     stop_btn: stop_btn
     panel_widget: panel_widget
+    advanced_panel_item: advanced_panel_item
     live_view: live_view
     live_spectrum_graph: live_spectrum_graph
     canvas:
@@ -57,35 +58,27 @@
                     is_float: True
                     value: root.sweep_overlap_ratio
                     on_value: root.sweep_overlap_ratio = self.value
-        TabbedPanelItem:
-            text: 'Advanced'
-            BoxLayout:
-                orientation: 'horizontal'
-                NumericOption:
-                    label_text: 'Sweeps per scan'
-                    value: root.sweeps_per_scan
-                    on_value: root.sweeps_per_scan = self.value
-                NumericOption:
-                    label_text: 'Samples per sweep'
-                    is_float: False
-                    value: root.samples_per_sweep
-                    on_value: root.samples_per_sweep = self.value
-                NumericOption:
-                    label_text: 'Window Size'
-                    allownone: True
-                    value: root.window_size
-                    on_value: root.window_size = self.value
                 BoxLayout:
                     orientation: 'vertical'
-                    Label:
-                        text: 'Window Type'
-                    Button:
-                        text: root.window_type
-                        on_release: root.window_type_dropdown.open(self)
-                NumericOption:
-                    label_text: 'FFT Size'
-                    value: root.fft_size
-                    on_value: root.fft_size = self.value
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        CheckBox:
+                            group: 'scanner_backend_cb'
+                            active: root.scanner_backend == 'Builtin'
+                            on_active: if self.active: root.scanner_backend = 'builtin'
+                        Label:
+                            text: 'Builtin'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        CheckBox:
+                            group: 'scanner_backend_cb'
+                            active: root.scanner_backend == 'rtl_power'
+                            on_active: if self.active: root.scanner_backend = 'rtl_power'
+                        Label:
+                            text: 'rtl_power'
+        TabbedPanelItem:
+            text: 'Advanced'
+            id: advanced_panel_item
         TabbedPanelItem:
             text: 'Device'
             BoxLayout:
@@ -144,6 +137,51 @@
     height: 44
     on_release: self.parent.parent.select(self.text)
 
+<AdvancedOptions>:
+    orientation: 'horizontal'
+    on_window_type: self.window_type_dropdown_trigger = None
+    NumericOption:
+        label_text: 'Sweeps per scan'
+        prop_name: 'sweeps_per_scan'
+    NumericOption:
+        label_text: 'Samples per sweep'
+        is_float: False
+        prop_name: 'samples_per_sweep'
+    NumericOption:
+        label_text: 'Window Size'
+        allownone: True
+        prop_name: 'window_size'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Window Type'
+        Button:
+            text: root.window_type
+            on_release: root.window_type_dropdown_trigger = self
+    NumericOption:
+        label_text: 'FFT Size'
+        prop_name: 'fft_size'
+
+<RtlPowerAdvancedOptions>:
+    orientation: 'horizontal'
+    on_window_type: self.window_type_dropdown_trigger = None
+    NumericOption:
+        label_text: 'Bin Size (mHz)'
+        prop_name: 'rtl_bin_size'
+        is_float: True
+    NumericOption:
+        label_text: 'Crop Percent'
+        prop_name: 'rtl_crop'
+    NumericOption:
+        label_text: 'FIR Size'
+        prop_name: 'rtl_fir_size'
+    BoxLayout:
+        orientation: 'vertical'
+        Label:
+            text: 'Window Type'
+        Button:
+            text: root.window_type
+            on_release: root.window_type_dropdown_trigger = self
 
 <NumericOption>:
     orientation: 'vertical'

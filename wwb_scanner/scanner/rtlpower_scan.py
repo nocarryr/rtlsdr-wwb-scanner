@@ -1,26 +1,45 @@
 import subprocess
+import shlex
 
-from wwb_scanner.scanner.main import ScannerBase, hz_to_mhz
+import numpy as np
+
+from wwb_scanner.scanner.main import ScannerBase, hz_to_mhz, mhz_to_hz
 
 class RtlPowerScanner(ScannerBase):
     def run_scan(self):
-        fir_size = 4
-        crop_size = 50
-        cmd_str = 'rtl_power -f %fM:%fM:%fM -c %s%% -g %s -F %s -1 -'
-        cmd_str = cmd_str % (
-            self.scan_range[0],
-            self.scan_range[1],
-            self.step_size / 2.,
-            crop_size,
-            self.gain,
-            fir_size,
+        self.rtl_bin_size_hz = mhz_to_hz(self.sampling_config.rtl_bin_size)
+        self.rtl_gain = self.device_config.gain# / 10.
+        cmd_str = [
+            'rtl_power -i 1',
+            '-f {self.config.scan_range[0]}M:{self.config.scan_range[1]}M:{self.rtl_bin_size_hz}',
+            '-g {self.rtl_gain} -w {self.sampling_config.window_type}',# -i {self.integration_interval}',
+            '-c {self.sampling_config.rtl_crop}% -F {self.sampling_config.rtl_fir_size}',
+            '-1 -',
+        ]
+        cmd_str = ' '.join(cmd_str).format(self=self)
+        print(cmd_str)
+        proc = self.proc = subprocess.Popen(
+            shlex.split(cmd_str),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
         )
-        self.result = subprocess.check_output(cmd_str, shell=True)
         spectrum = self.spectrum
-        for line in self.result.splitlines():
+        while True:
+            line = proc.stdout.readline().strip()
+            if not line and proc.poll() is not None:
+                break
             values = line.split(',')
-            f = hz_to_mhz(float(values[2]))
+            if len(values) < 6:
+                print(line)
+                continue
+            f_lo = hz_to_mhz(float(values[2]))
+            f_hi = hz_to_mhz(float(values[3]))
             step = hz_to_mhz(float(values[4]))
-            for p in values[6:]:
-                spectrum.add_sample(frequency=f, magnitude=float(p))
-                f += step
+
+            dbvals = np.array([float(v) for v in values[6:]])
+            freqs = np.linspace(f_lo, f_hi, dbvals.size)
+            spectrum.add_sample_set(frequency=freqs, dbFS=dbvals)
+        self._running.clear()
+        self._stopped.set()
+        self.progress = 1.
