@@ -116,6 +116,21 @@ class ScanControls(BoxLayout, JSONMixin):
                 continue
             setattr(self, key, kwargs.get(key))
 
+
+class BaseOption(BoxLayout):
+    label_text = StringProperty()
+    allownone = BooleanProperty(False)
+
+class NumericOption(BaseOption):
+    value = NumericProperty(allownone=True)
+    is_float = BooleanProperty(False)
+
+class TextOption(BaseOption):
+    value = StringProperty(allownone=True)
+
+class BoolOption(BaseOption):
+    value = BooleanProperty(False)
+
 class ScanGainDropDown(DropDown):
     scan_controls = ObjectProperty(None)
     gains = ListProperty()

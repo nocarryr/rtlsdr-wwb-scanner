@@ -43,64 +43,38 @@
                     Button:
                         text: str(root.gain)
                         on_release: root.gain_dropdown.open(self)
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Freq Correction'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.freq_correction)
-                        on_focus: if not self.focus: root.freq_correction = int(self.text)
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Sample Rate'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(int(root.sample_rate / 1000))
-                        on_focus: if not self.focus: root.sample_rate = float(self.text) * 1000
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Overlap Ratio (MHz)'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'float'
-                        text: str(root.sweep_overlap_ratio)
-                        on_focus: if not self.focus: root.sweep_overlap_ratio = float(self.text)
+                NumericOption:
+                    label_text: 'Freq Correction'
+                    value: root.freq_correction
+                    on_value: root.freq_correction = self.value
+                NumericOption:
+                    label_text: 'Sample Rate'
+                    is_float: True
+                    value: root.sample_rate / 1000.
+                    on_value: root.sample_rate = self.value * 1000.
+                NumericOption:
+                    label_text: 'Overlap Ratio (MHz)'
+                    is_float: True
+                    value: root.sweep_overlap_ratio
+                    on_value: root.sweep_overlap_ratio = self.value
         TabbedPanelItem:
             text: 'Advanced'
             BoxLayout:
                 orientation: 'horizontal'
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Sweeps per scan'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.sweeps_per_scan)
-                        on_focus: if not self.focus: root.sweeps_per_scan = int(self.text)
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Samples per sweep'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.samples_per_sweep)
-                        on_focus: if not self.focus: root.samples_per_sweep = int(self.text)
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Window Size'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.window_size)
-                        on_focus: if not self.focus: root.window_size = int(self.text)
+                NumericOption:
+                    label_text: 'Sweeps per scan'
+                    value: root.sweeps_per_scan
+                    on_value: root.sweeps_per_scan = self.value
+                NumericOption:
+                    label_text: 'Samples per sweep'
+                    is_float: False
+                    value: root.samples_per_sweep
+                    on_value: root.samples_per_sweep = self.value
+                NumericOption:
+                    label_text: 'Window Size'
+                    allownone: True
+                    value: root.window_size
+                    on_value: root.window_size = self.value
                 BoxLayout:
                     orientation: 'vertical'
                     Label:
@@ -108,43 +82,26 @@
                     Button:
                         text: root.window_type
                         on_release: root.window_type_dropdown.open(self)
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'FFT Size'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.fft_size)
-                        on_focus: root.on_fft_size_input_focus(self)
+                NumericOption:
+                    label_text: 'FFT Size'
+                    value: root.fft_size
+                    on_value: root.fft_size = self.value
         TabbedPanelItem:
             text: 'Device'
             BoxLayout:
                 orientation: 'horizontal'
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Remote Host'
-                    CheckBox:
-                        active: root.is_remote
-                        on_active: root.is_remote = self.active
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Host address'
-                    TextInput:
-                        multiline: False
-                        text: root.remote_hostname
-                        on_focus: if not self.focus: root.remote_hostname = self.text
-                BoxLayout:
-                    orientation: 'vertical'
-                    Label:
-                        text: 'Host Port'
-                    TextInput:
-                        multiline: False
-                        input_filter: 'int'
-                        text: str(root.remote_port)
-                        on_focus: if not self.focus: root.remote_port = int(self.text)
+                BoolOption:
+                    label_text: 'Remote Host'
+                    value: root.is_remote
+                    on_value: root.is_remote = self.value
+                TextOption:
+                    label_text: 'Host address'
+                    value: root.remote_hostname
+                    on_value: root.remote_hostname = self.value
+                NumericOption:
+                    label_text: 'Host Port'
+                    value: root.remote_port
+                    on_value: root.remote_port = self.value
         TabbedPanelItem:
             id: live_view
             text: 'Live View'
@@ -186,3 +143,35 @@
     size_hint_y: None
     height: 44
     on_release: self.parent.parent.select(self.text)
+
+
+<NumericOption>:
+    orientation: 'vertical'
+    Label:
+        text: root.label_text
+    TextInput:
+        multiline: False
+        input_filter: None if root.allownone else {True:'float', False:'int'}.get(root.is_float)
+        text: str(root.value)
+        on_focus:
+            if not self.focus and root.allownone and not self.text.isdigit():\
+            root.value = None
+            elif not self.focus and root.is_float: root.value = float(self.text)
+            elif not self.focus: root.value = int(self.text)
+
+<TextOption>:
+    orientation: 'vertical'
+    Label:
+        text: root.label_text
+    TextInput:
+        multiline: False
+        text: root.value
+        on_focus: if not self.focus: root.value = self.text
+
+<BoolOption>:
+    orientation: 'horizontal'
+    Label:
+        text: root.label_text
+    CheckBox:
+        active: root.value
+        on_active: root.value = self.active
