@@ -56,6 +56,11 @@ class ScanControls(BoxLayout, JSONMixin):
     current_freq = NumericProperty(500.)
     live_spectrum_graph = ObjectProperty(None)
     live_view_visible = BooleanProperty(False)
+    smoothing_enabled = BooleanProperty(False)
+    smoothing_factor = NumericProperty(80.)
+    scaling_enabled = BooleanProperty(False)
+    scaling_min_db = NumericProperty(-140.)
+    scaling_max_db = NumericProperty(-50.)
     def get_gain(self):
         return self.gain_txt.text
     def __init__(self, **kwargs):
@@ -115,6 +120,11 @@ class ScanControls(BoxLayout, JSONMixin):
         self.rtl_bin_size = scanner.sampling_config['rtl_bin_size']
         self.rtl_crop = scanner.sampling_config['rtl_crop']
         self.rtl_fir_size = scanner.sampling_config['rtl_fir_size']
+        self.smoothing_enabled = scanner.config.processing.smoothing_enabled
+        self.smoothing_factor = scanner.config.processing.smoothing_factor
+        self.scaling_enabled = scanner.config.processing.scaling_enabled
+        self.scaling_min_db = scanner.config.processing.scaling_min_db
+        self.scaling_max_db = scanner.config.processing.scaling_max_db
         self.is_remote = scanner.device_config.is_remote
         self.remote_hostname = scanner.device_config.remote_hostname
         self.remote_port = scanner.device_config.remote_port
@@ -136,12 +146,16 @@ class ScanControls(BoxLayout, JSONMixin):
     def _serialize(self):
         keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
                 'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size',
-                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size']
+                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size',
+                'smoothing_enabled', 'smoothing_factor',
+                'scaling_enabled', 'scaling_min_db', 'scaling_max_db']
         return {key: getattr(self, key) for key in keys}
     def _deserialize(self, **kwargs):
         keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
                 'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size',
-                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size']
+                'rtl_bin_size', 'rtl_crop', 'rtl_fir_size',
+                'smoothing_enabled', 'smoothing_factor',
+                'scaling_enabled', 'scaling_min_db', 'scaling_max_db']
         for key in keys:
             if key not in kwargs:
                 continue
@@ -315,6 +329,13 @@ class ScanProgress(EventDispatcher):
                 'rtl_crop',
                 'rtl_fir_size',
             ],
+            'processing':[
+                'smoothing_enabled',
+                'smoothing_factor',
+                'scaling_enabled',
+                'scaling_min_db',
+                'scaling_max_db',
+            ],
         }
         scan_config = {}
         for conf_name, conf_keys in keys.items():
@@ -343,6 +364,13 @@ class ScanProgress(EventDispatcher):
         self.scanner.on_sweep_processed = self.on_sweep_processed
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()
+    def smooth_scan(self, *args):
+        spectrum = self.scanner.spectrum
+        N = int(spectrum.sample_data.size * self.scan_controls.smoothing_factor / 100.)
+        spectrum.smooth(N)
+    def scale_scan(self, *args):
+        spectrum = self.scanner.spectrum
+        spectrum.scale(self.scan_controls.scaling_min_db, self.scan_controls.scaling_max_db)
     def on_scanner_progress(self, value):
         Clock.schedule_once(self.update_progress)
     def on_sweep_processed(self, **kwargs):
@@ -389,6 +417,10 @@ class ScanProgress(EventDispatcher):
         def do_update(*args, **kwargs):
             self.show_scan()
             self.cleanup()
+        if self.scan_controls.smoothing_enabled:
+            self.smooth_scan()
+        if self.scan_controls.scaling_enabled:
+            self.scale_scan()
         Clock.schedule_once(do_update)
     def cancel_scan(self, *args, **kwargs):
         if self.scanner._running.is_set():

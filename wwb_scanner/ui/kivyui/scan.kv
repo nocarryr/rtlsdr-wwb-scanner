@@ -79,6 +79,59 @@
         TabbedPanelItem:
             text: 'Advanced'
             id: advanced_panel_item
+
+        TabbedPanelItem:
+            text: 'Processing'
+            BoxLayout:
+                orientation: 'horizontal'
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        markup: True
+                        text: '[size=12sp]Smoothing (Percent)[/size]'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        CheckBox:
+                            active: root.smoothing_enabled
+                            on_active: root.smoothing_enabled = self.active
+                        TextInput:
+                            multiline: False
+                            input_filter: 'float'
+                            font_size: '11sp'
+                            text: str(root.smoothing_factor)
+                            on_focus: root.smoothing_factor = float(self.text)
+                BoxLayout:
+                    orientation: 'vertical'
+                    Label:
+                        markup: True
+                        text: '[size=12sp]Scaling[/size]'
+                    BoxLayout:
+                        orientation: 'horizontal'
+                        CheckBox:
+                            active: root.scaling_enabled
+                            on_active: root.scaling_enabled = self.active
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            Label:
+                                markup: True
+                                text: '[size=11sp]Min dB[/size]'
+                            TextInput:
+                                multiline: False
+                                input_filter: 'float'
+                                font_size: '11sp'
+                                text: str(root.scaling_min_db)
+                                on_focus: root.scaling_min_db = float(self.text)
+                        BoxLayout:
+                            orientation: 'horizontal'
+                            Label:
+                                markup: True
+                                text: '[size=11sp]Max dB[/size]'
+                            TextInput:
+                                multiline: False
+                                input_filter: 'float'
+                                font_size: '11sp'
+                                text: str(root.scaling_max_db)
+                                on_focus: root.scaling_max_db = float(self.text)
         TabbedPanelItem:
             text: 'Device'
             BoxLayout:
