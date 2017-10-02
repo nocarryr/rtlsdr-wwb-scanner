@@ -40,7 +40,7 @@ setup(
     install_requires=[
         'numpy',
         'scipy',
-        'pyrtlsdr',
+        'pyrtlsdr>=0.2.6',
         'tinydb',
         'json-object-factory',
         'Cython',

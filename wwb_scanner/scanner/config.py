@@ -25,6 +25,7 @@ class ScanConfig(Config):
 
 class DeviceConfig(Config):
     DEFAULTS = dict(
+        serial_number=None,
         gain=30.,
         freq_correction=0,
         is_remote=False,

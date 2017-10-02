@@ -61,8 +61,9 @@ class SdrWrapper(object):
                     self.device_open.set()
         return self.sdr
     def _open_sdr_local(self):
+        serial_number = self.scanner.device_config.serial_number
         try:
-            sdr = RtlSdr()
+            sdr = RtlSdr(serial_number=serial_number)
         except IOError:
             sdr = None
         return sdr

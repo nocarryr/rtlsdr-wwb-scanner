@@ -136,6 +136,10 @@
             text: 'Device'
             BoxLayout:
                 orientation: 'horizontal'
+                TextOption:
+                    label_text: 'Serial Number'
+                    value: root.serial_number
+                    on_value: root.serial_number = self.value
                 BoolOption:
                     label_text: 'Remote Host'
                     value: root.is_remote

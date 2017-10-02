@@ -50,6 +50,7 @@ class ScanControls(BoxLayout, JSONMixin):
     rtl_bin_size = NumericProperty(0.025)
     rtl_crop = NumericProperty(50)
     rtl_fir_size = NumericProperty(4)
+    serial_number = StringProperty('')
     is_remote = BooleanProperty(False)
     remote_hostname = StringProperty('127.0.0.1')
     remote_port = NumericProperty(1235)
@@ -125,6 +126,10 @@ class ScanControls(BoxLayout, JSONMixin):
         self.scaling_enabled = scanner.config.processing.scaling_enabled
         self.scaling_min_db = scanner.config.processing.scaling_min_db
         self.scaling_max_db = scanner.config.processing.scaling_max_db
+        if scanner.device_config.serial_number is None:
+            self.serial_number = ''
+        else:
+            self.serial_number = scanner.device_config.serial_number
         self.is_remote = scanner.device_config.is_remote
         self.remote_hostname = scanner.device_config.remote_hostname
         self.remote_port = scanner.device_config.remote_port
@@ -149,17 +154,25 @@ class ScanControls(BoxLayout, JSONMixin):
                 'rtl_bin_size', 'rtl_crop', 'rtl_fir_size',
                 'smoothing_enabled', 'smoothing_factor',
                 'scaling_enabled', 'scaling_min_db', 'scaling_max_db']
-        return {key: getattr(self, key) for key in keys}
+        d = {key: getattr(self, key) for key in keys}
+        if len(self.serial_number):
+            d['serial_number'] = self.serial_number
+        else:
+            d['serial_number'] = None
+        return d
     def _deserialize(self, **kwargs):
         keys = ['scan_range', 'gain', 'sweeps_per_scan', 'samples_per_sweep',
                 'sweep_overlap_ratio', 'window_size', 'window_type', 'fft_size',
                 'rtl_bin_size', 'rtl_crop', 'rtl_fir_size',
-                'smoothing_enabled', 'smoothing_factor',
+                'smoothing_enabled', 'smoothing_factor', 'serial_number',
                 'scaling_enabled', 'scaling_min_db', 'scaling_max_db']
         for key in keys:
             if key not in kwargs:
                 continue
-            setattr(self, key, kwargs.get(key))
+            val = kwargs.get(key)
+            if key == 'serial_number' and val is None:
+                val = ''
+            setattr(self, key, val)
 
 class AdvancedOptionsBase(BoxLayout):
     scan_controls = ObjectProperty(None)
@@ -311,6 +324,7 @@ class ScanProgress(EventDispatcher):
                 'scan_range',
             ],
             'device':[
+                'serial_number',
                 'gain',
                 'freq_correction',
                 'is_remote',
@@ -346,6 +360,8 @@ class ScanProgress(EventDispatcher):
                 elif key == 'window_size' and not val:
                     val = None
                 elif key == 'fft_size' and not val:
+                    val = None
+                elif key == 'serial_number' and not len(val):
                     val = None
                 if isinstance(val, basestring):
                     val = str(val)
