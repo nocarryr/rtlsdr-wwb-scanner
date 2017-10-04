@@ -47,11 +47,11 @@ class SampleArray(JSONMixin):
         dbFS = kwargs.get('dbFS')
 
         if iq is not None and mag is None:
-            mag = data['magnitude'] = np.abs(data['iq'])
+            mag = data['magnitude'] = np.abs(iq)
         if dbFS is not None and mag is None:
-            mag = data['magnitude'] = 10 ** (data['dbFS'] / 10)
+            mag = data['magnitude'] = 10 ** (dbFS / 10)
         if mag is not None and dbFS is None:
-            data['dbFS'] = 10 * np.log10(data['magnitude'])
+            data['dbFS'] = 10 * np.log10(mag)
 
         self.append(data)
     def __getattr__(self, attr):
