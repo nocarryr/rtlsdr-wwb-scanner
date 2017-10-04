@@ -29,12 +29,13 @@ def sort_psd(f, Pxx, onesided=False):
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep',
-                 '_frequencies', 'powers', 'collection', 'process_thread')
+                 '_frequencies', 'powers', 'collection', 'process_thread', 'samples_discarded')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             if key == '_frequencies':
                 key = 'frequencies'
             setattr(self, key, kwargs.get(key))
+        self.samples_discarded = False
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
     @property
@@ -63,6 +64,10 @@ class SampleSet(JSONMixin):
         self.powers = np.zeros((sweeps_per_scan, samples_per_sweep), 'float64')
         sdr.read_samples_async(self.samples_callback, num_samples=samples_per_sweep)
     def samples_callback(self, iq, context):
+        samples_per_sweep = self.scanner.samples_per_sweep
+        if not self.samples_discarded:
+            self.samples_discarded = True
+            return
         current_sweep = getattr(self, 'current_sweep', None)
         if current_sweep is None:
             current_sweep = self.current_sweep = 0
