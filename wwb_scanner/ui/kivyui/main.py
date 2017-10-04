@@ -65,7 +65,7 @@ class RTLSDRScannerApp(App):
 class PlotContainer(FloatLayout, JSONMixin):
     spectrum_graph = ObjectProperty(None)
     def add_plot(self, **kwargs):
-        fn = kwargs.get('filename')
+        fn = kwargs.pop('filename', None)
         if fn is not None:
             kwargs.setdefault('name', os.path.basename(fn))
         plot = self.spectrum_graph.add_plot(**kwargs)
