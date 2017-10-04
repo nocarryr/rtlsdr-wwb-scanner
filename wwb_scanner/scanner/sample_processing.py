@@ -28,13 +28,14 @@ def sort_psd(f, Pxx, onesided=False):
     return a['f'], a['Pxx']
 
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep',
+    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 'complete',
                  '_frequencies', 'powers', 'collection', 'process_thread', 'samples_discarded')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             if key == '_frequencies':
                 key = 'frequencies'
             setattr(self, key, kwargs.get(key))
+        self.complete = threading.Event()
         self.samples_discarded = False
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
@@ -145,6 +146,7 @@ class SampleSet(JSONMixin):
             print('freq not equal: %s, %s' % (self.frequencies.size, f.size))
             self.frequencies = f
         self.collection.on_sample_set_processed(self)
+        self.complete.set()
     def calc_expected_freqs(self):
         freq = self.center_frequency
         scanner = self.scanner
@@ -162,7 +164,7 @@ class SampleSet(JSONMixin):
     def _serialize(self):
         d = {}
         for key in self.__slots__:
-            if key in ['scanner', 'collection']:
+            if key in ['scanner', 'collection', 'complete']:
                 continue
             val = getattr(self, key)
             d[key] = val
@@ -190,11 +192,22 @@ class SampleCollection(JSONMixin):
         return sample_set
     def scan_all_freqs(self):
         self.scanning.set()
+        complete_events = set()
         for key in sorted(self.sample_sets.keys()):
             if not self.scanning.is_set():
                 break
             sample_set = self.sample_sets[key]
             sample_set.read_samples()
+            if not sample_set.complete.is_set():
+                complete_events.add(sample_set.complete)
+        if self.scanning.is_set():
+            print('waiting for {} sample sets'.format(len(complete_events)))
+            for e in complete_events.copy():
+                if e.is_set():
+                    complete_events.discard(e)
+                else:
+                    e.wait()
+            print('wait complete ({} events)'.format(len(complete_events)))
         self.scanning.clear()
         self.stopped.set()
     def stop(self):
