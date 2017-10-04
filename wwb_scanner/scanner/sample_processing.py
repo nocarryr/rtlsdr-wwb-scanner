@@ -2,7 +2,7 @@ import time
 import threading
 import numpy as np
 from scipy.signal.windows import __all__ as WINDOW_TYPES
-from scipy.signal import welch, get_window
+from scipy.signal import welch, get_window, hilbert
 
 from wwb_scanner.core import JSONMixin
 
@@ -97,7 +97,8 @@ class SampleSet(JSONMixin):
                                            frequencies=f)
     def translate_freq(self, samples, freq):
         # Adapted from https://github.com/vsergeev/luaradio/blob/master/radio/blocks/signal/frequencytranslator.lua
-        rs = self.scanner.sample_rate
+        if not np.iscomplexobj(samples):
+            samples = hilbert(samples)
         omega = 2 * np.pi * (freq / rs)
         def iter_phase():
             p = 0
