@@ -21,15 +21,11 @@ def calc_num_samples(num_samples):
     return next_2_to_pow(int(num_samples))
 
 def sort_psd(f, Pxx, onesided=False):
-    f_index = np.argsort(f)
-    f = f[f_index]
-    Pxx = Pxx[f_index]
-    if onesided:
-        i = np.searchsorted(f, 0)
-        f = f[i:]
-        Pxx = Pxx[i:]
-        Pxx *= 2
-    return f, Pxx
+    a = np.zeros(f.size, dtype=[('f', f.dtype), ('Pxx', Pxx.dtype)])
+    a['f'] = f[:]
+    a['Pxx'] = Pxx[:]
+    a = np.sort(a, order='f')
+    return a['f'], a['Pxx']
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep',
