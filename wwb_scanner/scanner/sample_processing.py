@@ -97,7 +97,6 @@ class SampleSet(JSONMixin):
         f, powers = welch(self.raw[sweep], fs=scanner.sample_rate)
         f += freq
         f /= 1e6
-        powers = 10. * np.log10(powers)
         self.collection.on_sweep_processed(sample_set=self,
                                            powers=powers,
                                            frequencies=f)
