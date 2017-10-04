@@ -41,5 +41,10 @@ class JSONEncoder(object):
         return None
     def decode(self, d):
         if '__datetime.datetime__' in d:
-            return datetime.datetime.strptime(d['__datetime.datetime__'], self._dt_fmt)
+            s = d['__datetime.datetime__']
+            fmt = self._dt_fmt
+            if s.endswith(' '):
+                s = s.strip(' ')
+                fmt = fmt.split(' ')[0]
+            return datetime.datetime.strptime(s, fmt)
         return d
