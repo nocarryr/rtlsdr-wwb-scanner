@@ -163,19 +163,14 @@ class Spectrum(JSONMixin):
         return plot
     def smooth(self, N):
         with self.data_update_lock:
-            f = self.sample_data['frequency']
-            x = np.linspace(f.min(), f.max(), N)
-            xp = self.sample_data['frequency']
-            fp = self.sample_data['magnitude']
-            y = np.interp(x, xp, fp)
-            sdata = np.zeros(y.size, dtype=self.sample_data.dtype)
-            sdata['frequency'] = x
-            sdata['magnitude'] = y
-            sdata['dbFS'] = 10 * np.log10(y)
-            self.sample_data = sdata
+            if N % 2 != 0:
+                N += 1
+            self.sample_data.smooth(N)
+
+            self.sample_data.interpolate()
             self.samples.clear()
             kwargs = {'spectrum':self, 'init_complete':True}
-            for freq in x:
+            for freq in self.sample_data.frequency:
                 kwargs['frequency'] = freq
                 sample = self._build_sample(**kwargs)
                 self.samples[freq] = sample

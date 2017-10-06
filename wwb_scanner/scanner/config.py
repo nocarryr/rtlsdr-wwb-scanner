@@ -50,7 +50,7 @@ class SamplingConfig(Config):
 class ProcessingConfig(Config):
     DEFAULTS = dict(
         smoothing_enabled=False,
-        smoothing_factor=80.,
+        smoothing_factor=1.,
         scaling_enabled=True,
         scaling_min_db=-140.,
         scaling_max_db=-50.,

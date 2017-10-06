@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.interpolate import CubicSpline
 import jsonfactory
 
 from wwb_scanner.core import JSONMixin
@@ -103,6 +104,36 @@ class SampleArray(JSONMixin):
         self.iq[ix] = data['iq']
         self.magnitude[ix] = data['magnitude']
         self.dbFS[ix] = data['dbFS']
+    def smooth(self, window_size):
+        x = self.magnitude
+        w = np.hanning(window_size)
+
+        s = np.r_[x[window_size-1:0:-1], x, x[-2:-window_size-1:-1]]
+
+        y = np.convolve(w/w.sum(), s, mode='valid')
+        m = y[(window_size/2-1):-(window_size/2)]
+
+        if m.size != x.size:
+            raise Exception('Smooth result size {} != data size {}'.format(m.size, x.size))
+
+        self.data['magnitude'] = m
+        self.data['dbFS'] = 10 * np.log10(m)
+    def interpolate(self, spacing=0.05):
+        fmin = np.rint(self.frequency.min())
+        fmax = np.rint(self.frequency.max())
+
+        x = self.frequency
+        y = self.magnitude
+        cs = CubicSpline(x, y)
+        xs = np.arange(fmin, fmax+spacing, spacing)
+
+        ys = cs(xs)
+        data = np.zeros(xs.size, dtype=self.dtype)
+        data['frequency'] = xs
+        data['magnitude'] = ys
+        data['dbFS'] = 10 * np.log10(ys)
+        self.data = data
+
     def _serialize(self):
         return {'data':self.data, 'keep_sorted':self.keep_sorted}
     def __repr__(self):
