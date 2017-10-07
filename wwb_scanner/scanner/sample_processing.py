@@ -1,5 +1,10 @@
 import time
 import threading
+try:
+    import queue
+except ImportError:
+    import Queue as queue
+
 import numpy as np
 from scipy.signal.windows import __all__ as WINDOW_TYPES
 from scipy.signal import welch, get_window, hilbert
@@ -30,7 +35,7 @@ def sort_psd(f, Pxx, onesided=False):
     return a['f'], a['Pxx']
 
 class SampleSet(JSONMixin):
-    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 'complete',
+    __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 'complete', 'read_complete'
                  '_frequencies', 'powers', 'collection', 'process_thread', 'samples_discarded')
     def __init__(self, **kwargs):
         for key in self.__slots__:
@@ -38,6 +43,7 @@ class SampleSet(JSONMixin):
                 key = 'frequencies'
             setattr(self, key, kwargs.get(key))
         self.complete = threading.Event()
+        self.read_complete = threading.Event()
         self.samples_discarded = False
         if self.scanner is None and self.collection is not None:
             self.scanner = self.collection.scanner
@@ -90,9 +96,8 @@ class SampleSet(JSONMixin):
         sdr = self.scanner.sdr
         if not sdr.read_async_canceling:
             sdr.cancel_read_async()
-        self.process_samples()
-    def launch_process_thread(self):
-        self.process_thread = ProcessThread(self)
+        self.collection.on_sample_set_read_complete(self)
+        self.read_complete.set()
     def process_sweep(self, sweep):
         scanner = self.scanner
         freq = self.center_frequency
@@ -187,7 +192,12 @@ class SampleCollection(JSONMixin):
         self.scanner = kwargs.get('scanner')
         self.scanning = threading.Event()
         self.stopped = threading.Event()
+        self._process_lock = threading.Lock()
+        self._scan_queue = queue.Queue()
+        self._scan_queue_lock = threading.Lock()
+        self._process_queue = queue.Queue()
         self.sample_sets = {}
+        self.process_thread = None
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
     def build_sample_set(self, freq):
@@ -203,31 +213,78 @@ class SampleCollection(JSONMixin):
         return sample_set
     def scan_all_freqs(self):
         self.scanning.set()
+        t = self.process_thread = ProcessThread(self)
+        t.start()
         complete_events = set()
-        for key in sorted(self.sample_sets.keys()):
-            if not self.scanning.is_set():
-                break
-            sample_set = self.sample_sets[key]
-            sample_set.read_samples()
-            if not sample_set.complete.is_set():
+        with self._scan_queue_lock:
+            for key in sorted(self.sample_sets.keys()):
+                if not self.scanning.is_set():
+                    break
+                sample_set = self.sample_sets[key]
                 complete_events.add(sample_set.complete)
+                self._scan_queue.put(sample_set)
+
+        while self.scanning.is_set():
+            r = self.scan_next_sample_set()
+            if r is False:
+                break
+
         if self.scanning.is_set():
-            print('waiting for {} sample sets'.format(len(complete_events)))
-            for e in complete_events.copy():
-                if e.is_set():
-                    complete_events.discard(e)
-                else:
-                    e.wait()
-            print('wait complete ({} events)'.format(len(complete_events)))
+            self._scan_queue.join()
+            self._process_queue.join()
+
+        self.process_thread.stop()
+        self.process_thread = None
         self.scanning.clear()
         self.stopped.set()
+    def on_sample_set_read_complete(self, sample_set):
+        if self.scanning.is_set():
+            with self._process_lock:
+                self._process_queue.put(sample_set)
+    def scan_next_sample_set(self):
+        with self._scan_queue_lock:
+            try:
+                sample_set = self._scan_queue.get_nowait()
+            except queue.Empty:
+                return False
+            if sample_set is None:
+                self._scan_queue.task_done()
+                return False
+            sample_set.read_samples()
+            sample_set.read_complete.wait()
+            self._scan_queue.task_done()
+        return True
+    def process_next_item(self):
+        with self._process_lock:
+            try:
+                item = self._process_queue.get(timeout=.1)
+            except queue.Empty:
+                return True
+            if item is None:
+                self._process_queue.task_done()
+                return False
+            item.process_samples()
+            self._process_queue.task_done()
+        return True
     def stop(self):
         if self.scanning.is_set():
             self.scanning.clear()
+            with self._scan_queue_lock:
+                while not self._scan_queue.empty():
+                    self._scan_queue.task_done()
+                self._scan_queue.put(None)
+            for sample_set in self.sample_sets.items():
+                sample_set.complete.set()
             self.stopped.wait()
     def cancel(self):
         if self.scanning.is_set():
             self.scanning.clear()
+            with self._scan_queue_lock:
+                while not self._scan_queue.empty():
+                    self._scan_queue.task_done()
+                self._scan_queue.put(None)
+            for sample_set in self.sample_sets.items():
+                sample_set.complete.set()
             self.stopped.wait()
     def on_sweep_processed(self, **kwargs):
         self.scanner.on_sweep_processed(**kwargs)
@@ -241,3 +298,24 @@ class SampleCollection(JSONMixin):
         for key, val in kwargs.get('sample_sets', {}).items():
             sample_set = SampleSet.from_json(val, collection=self)
             self.sample_sets[key] = sample_set
+
+class ProcessThread(threading.Thread):
+    def __init__(self, sample_collection):
+        super(ProcessThread, self).__init__()
+        self.sample_collection = sample_collection
+        self._running = threading.Event()
+        self._stopped = threading.Event()
+    def run(self):
+        self._running.set()
+        while self._running.is_set():
+            r = self.sample_collection.process_next_item()
+            if r is False:
+                break
+        self._stopped.set()
+    def stop(self):
+        self._running.clear()
+        with self.sample_collection._process_lock:
+            while not self.sample_collection._process_queue.empty():
+                self.sample_collection._process_queue.task_done()
+            self.sample_collection._process_queue.put(None)
+        self._stopped.wait()
