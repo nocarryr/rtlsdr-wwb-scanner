@@ -143,7 +143,7 @@ class SampleSet(JSONMixin):
 
         iPxx = np.fft.irfft(Pxx)
         iPxx = self.translate_freq(iPxx, fc, rs)
-        Pxx = np.abs(np.fft.rfft(iPxx))
+        Pxx = np.abs(np.fft.rfft(iPxx.real))
 
         freqs, Pxx = sort_psd(freqs, Pxx)
         f_ix = np.append(np.nonzero(freqs<-0.25e6), np.nonzero(freqs>0.25e6))
