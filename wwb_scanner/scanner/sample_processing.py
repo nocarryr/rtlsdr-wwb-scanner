@@ -289,7 +289,7 @@ class SampleCollection(JSONMixin):
                     except ValueError:
                         break
                 self._scan_queue.put(None)
-            for sample_set in self.sample_sets.items():
+            for sample_set in self.sample_sets.values():
                 sample_set.complete.set()
             self.stopped.wait()
     def on_sweep_processed(self, **kwargs):
