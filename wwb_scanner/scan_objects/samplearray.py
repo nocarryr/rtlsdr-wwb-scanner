@@ -119,13 +119,15 @@ class SampleArray(JSONMixin):
         self.data['magnitude'] = m
         self.data['dbFS'] = 10 * np.log10(m)
     def interpolate(self, spacing=0.05):
-        fmin = np.rint(self.frequency.min())
-        fmax = np.rint(self.frequency.max())
+        fmin = np.ceil(self.frequency.min())
+        fmax = np.floor(self.frequency.max())
 
         x = self.frequency
         y = self.magnitude
         cs = CubicSpline(x, y)
         xs = np.arange(fmin, fmax+spacing, spacing)
+        n_dec = len(str(spacing).split('.')[1])
+        xs = np.around(xs, n_dec)
 
         ys = cs(xs)
         data = np.zeros(xs.size, dtype=self.dtype)
