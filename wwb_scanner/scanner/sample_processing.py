@@ -250,8 +250,9 @@ class SampleCollection(JSONMixin):
             if sample_set is None:
                 self._scan_queue.task_done()
                 return False
-            sample_set.read_samples()
-            sample_set.read_complete.wait()
+        sample_set.read_samples()
+        sample_set.read_complete.wait()
+        if self.scanning.is_set():
             self._scan_queue.task_done()
         return True
     def process_next_item(self):
@@ -263,7 +264,8 @@ class SampleCollection(JSONMixin):
             if item is None:
                 self._process_queue.task_done()
                 return False
-            item.process_samples()
+        item.process_samples()
+        if self.scanning.is_set():
             self._process_queue.task_done()
         return True
     def stop(self):
