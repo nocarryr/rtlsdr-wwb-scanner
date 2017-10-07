@@ -118,7 +118,7 @@ class SampleArray(JSONMixin):
 
         self.data['magnitude'] = m
         self.data['dbFS'] = 10 * np.log10(m)
-    def interpolate(self, spacing=0.05):
+    def interpolate(self, spacing=0.025):
         fmin = np.ceil(self.frequency.min())
         fmax = np.floor(self.frequency.max())
 

@@ -166,16 +166,18 @@ class Spectrum(JSONMixin):
             if N % 2 != 0:
                 N += 1
             self.sample_data.smooth(N)
-
-            self.sample_data.interpolate()
+        self.set_data_updated()
+    def interpolate(self, spacing=0.025):
+        with self.data_update_lock:
+            self.sample_data.interpolate(spacing)
             self.samples.clear()
             kwargs = {'spectrum':self, 'init_complete':True}
             for freq in self.sample_data.frequency:
                 kwargs['frequency'] = freq
                 sample = self._build_sample(**kwargs)
                 self.samples[freq] = sample
+            self.step_size = spacing
         self.set_data_updated()
-        #print(peak_idx.size, peak_idx)
     def scale(self, min_dB, max_dB):
         with self.data_update_lock:
             y = self.sample_data['dbFS']
