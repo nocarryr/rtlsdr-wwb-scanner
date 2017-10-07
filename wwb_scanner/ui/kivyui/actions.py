@@ -198,7 +198,7 @@ class PlotsExport(Action, FileAction):
         _fn, ext = os.path.splitext(filename)
         if not len(ext):
             filename = os.path.extsep.join([_fn, 'csv'])
-        elif '*.%s' % (ext) not in self.filters:
+        elif '*.%s' % (ext.lstrip('.')) not in filters:
             self.app.root.show_message(message='Only "csv" files are currently supported')
             return
         filename = os.path.join(instance.path, filename)
