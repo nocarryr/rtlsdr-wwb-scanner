@@ -100,18 +100,16 @@ class BaseWWBExporter(BaseExporter):
                 no_data_value='-140',
             ),
         )
-        step_size = spectrum.step_size
-        if step_size is None:
-            step_size = ''
-        else:
-            step_size = str(spectrum.step_size * 1000)
+        if spectrum.step_size is None:
+            spectrum.smooth(11)
+            spectrum.interpolate()
         d['data_set'] = dict(
             index='0',
             freq_units='KHz',
             ampl_units='dBm',
             start_freq=str(min(spectrum.samples.keys()) * 1000),
             stop_freq=str(max(spectrum.samples.keys()) * 1000),
-            step_freq=step_size,
+            step_freq=str(spectrum.step_size * 1000),
             res_bandwidth='TODO',
             scale_factor='1',
             date=d['scan_data_source']['date'],
