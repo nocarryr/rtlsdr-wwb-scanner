@@ -271,7 +271,10 @@ class SampleCollection(JSONMixin):
             self.scanning.clear()
             with self._scan_queue_lock:
                 while not self._scan_queue.empty():
-                    self._scan_queue.task_done()
+                    try:
+                        self._scan_queue.task_done()
+                    except ValueError:
+                        break
                 self._scan_queue.put(None)
             for sample_set in self.sample_sets.items():
                 sample_set.complete.set()
@@ -281,7 +284,10 @@ class SampleCollection(JSONMixin):
             self.scanning.clear()
             with self._scan_queue_lock:
                 while not self._scan_queue.empty():
-                    self._scan_queue.task_done()
+                    try:
+                        self._scan_queue.task_done()
+                    except ValueError:
+                        break
                 self._scan_queue.put(None)
             for sample_set in self.sample_sets.items():
                 sample_set.complete.set()
