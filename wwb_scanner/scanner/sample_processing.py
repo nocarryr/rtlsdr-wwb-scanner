@@ -198,6 +198,29 @@ class SampleCollection(JSONMixin):
         self._process_queue = queue.Queue()
         self.sample_sets = {}
         self.process_thread = None
+        self._progress = 0.
+    @property
+    def progress(self):
+        return self._progress
+    @progress.setter
+    def progress(self, value):
+        if value == self._progress:
+            return
+        self._progress = value
+        self.scanner.progress = value
+    def _calc_progress(self):
+        n_total = len(self.sample_sets)
+        n = self._scan_queue.qsize()
+        n += self._process_queue.qsize()
+        if n == 0:
+            p = 1.
+        elif n < 0:
+            p = 0.
+        else:
+            p = (n_total - n) / float(n_total)
+            if p > 1:
+                p = 1.
+        self.progress = p
     def add_sample_set(self, sample_set):
         self.sample_sets[sample_set.center_frequency] = sample_set
     def build_sample_set(self, freq):
@@ -254,6 +277,7 @@ class SampleCollection(JSONMixin):
         sample_set.read_complete.wait()
         if self.scanning.is_set():
             self._scan_queue.task_done()
+            self._calc_progress()
         return True
     def process_next_item(self):
         with self._process_lock:
@@ -267,6 +291,7 @@ class SampleCollection(JSONMixin):
         item.process_samples()
         if self.scanning.is_set():
             self._process_queue.task_done()
+            self._calc_progress()
         return True
     def stop(self):
         if self.scanning.is_set():
