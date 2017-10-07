@@ -93,7 +93,7 @@ class BaseWWBExporter(BaseExporter):
                 name=os.path.abspath(self.filename),
                 date=dt.strftime('%a %b %d %Y'),
                 time=dt.strftime('%H:%M:%S'),
-                color='#00ff00',
+                color=spectrum.color.to_hex(),
             ),
             data_sets=dict(
                 count='1',
