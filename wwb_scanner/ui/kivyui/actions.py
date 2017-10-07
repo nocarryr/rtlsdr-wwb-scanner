@@ -183,7 +183,11 @@ class PlotsExport(Action, FileAction):
     name = 'plots.export'
     select_string = 'Export'
     title = 'Export Selected Plot'
-    filters = ['*.csv', '*.CSV']
+    def get_filters(self):
+        exts = ['csv', 'sdb2']
+        filters = ['.'.join(['*', ext]) for ext in exts]
+        filters.extend(['.'.join(['*', ext.upper()]) for ext in exts])
+        return filters
     def do_action(self, app):
         self.plot = app.root.plot_container.spectrum_graph.selected
         if self.plot is None:
@@ -191,6 +195,7 @@ class PlotsExport(Action, FileAction):
             return
         super(PlotsExport, self).do_action(app)
     def on_browser_success(self, instance):
+        filters = self.get_filters()
         filename = instance.filename
         if not len(filename):
             self.app.root.show_message(message='Please enter a filename')
@@ -199,7 +204,9 @@ class PlotsExport(Action, FileAction):
         if not len(ext):
             filename = os.path.extsep.join([_fn, 'csv'])
         elif '*.%s' % (ext.lstrip('.')) not in filters:
-            self.app.root.show_message(message='Only "csv" files are currently supported')
+            self.app.root.show_message(
+                message='Only "csv" and "sdb2" files are currently supported',
+            )
             return
         filename = os.path.join(instance.path, filename)
         self.dismiss()
