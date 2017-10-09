@@ -2,8 +2,6 @@ import os
 import datetime
 
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.garden.filebrowser import FileBrowser
 from kivy.properties import ObjectProperty
@@ -122,8 +120,31 @@ class FileOpen(Action, FileAction):
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
 
-class ScrolledTree(ScrollView):
+class ScrolledTree(BoxLayout):
+    app = ObjectProperty(None)
     tree = ObjectProperty(None)
+    __events__ = ['on_cancel', 'on_load']
+    def on_cancel(self, *args):
+        self.app.root.close_popup()
+    def on_load(self, *args):
+        node = self.tree.selected_node
+        if node is None:
+            return
+        spectrum = Spectrum.from_dbstore(eid=node.eid)
+        self.app.root.plot_container.add_plot(spectrum=spectrum)
+        self.app.root.close_popup()
+
+class ScrolledTreeView(TreeView):
+    def __init__(self, **kwargs):
+        super(ScrolledTreeView, self).__init__(**kwargs)
+        self.bind(minimum_height=self.setter('height'))
+        scan_data = db_store.get_all_scans()
+        for eid, scan in scan_data.items():
+            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
+            name = str(scan.get('name'))
+            txt = ' - '.join([name, str(dt)])
+            scan_node = self.add_node(ScrolledTreeNode(text=txt))
+            scan_node.eid = eid
 
 class ScrolledTreeNode(TreeViewLabel):
     pass
@@ -132,37 +153,8 @@ class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
     def do_action(self, app):
         self.app = app
-        scan_data = db_store.get_all_scans()
         scroll_view = ScrolledTree()
-        tree_view = scroll_view.tree
-        self.tree_view = tree_view
-        for eid, scan in scan_data.items():
-            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
-            name = str(scan.get('name'))
-            txt = ' - '.join([name, str(dt)])
-            scan_node = tree_view.add_node(ScrolledTreeNode(text=txt))
-            scan_node.eid = eid
-        load_btn = Button(text='Load')
-        cancel_btn = Button(text='Cancel')
-        hbox = BoxLayout(orientation='horizontal', size_hint_y=.1)
-        hbox.add_widget(load_btn)
-        hbox.add_widget(cancel_btn)
-        vbox = BoxLayout(orientation='vertical')
-        vbox.add_widget(scroll_view)
-        vbox.add_widget(hbox)
-        cancel_btn.bind(on_release=self.on_cancel)
-        load_btn.bind(on_release=self.on_load)
-        app.root.show_popup(title='Load Scan', content=vbox, size_hint=(.9, .9))
-    def on_cancel(self, *args):
-        self.app.root.close_popup()
-        self.tree_view = None
-    def on_load(self, *args):
-        node = self.tree_view.selected_node
-        if node is None:
-            return
-        spectrum = Spectrum.from_dbstore(eid=node.eid)
-        self.app.root.plot_container.add_plot(spectrum=spectrum)
-        self.on_cancel()
+        app.root.show_popup(title='Load Scan', content=scroll_view, size_hint=(.9, .9))
 
 class PlotsImport(Action, FileAction):
     name = 'plots.import'

@@ -125,17 +125,32 @@
         on_release: app.root.close_message()
 
 <ScrolledTree>:
+    app: app
     tree: tree
-    size_hint_x: 1.
-    size_hint_y: .9
-    scroll_type: ['bars', 'content']
-    TreeView:
-        id: tree
-        root_options:{'text':'root'}
-        hide_root: True
-        #width: root.width
-        minimum_height: root.height
-        size_hint_y: None
+    orientation: 'vertical'
+    FloatLayout:
+        id: tree_view_parent
+        size_hint_y: .9
+        ScrollView:
+            id: scroll_view
+            size_hint: 1, None
+            pos: tree_view_parent.pos
+            size: tree_view_parent.size
+            scroll_type: ['bars', 'content']
+            ScrolledTreeView:
+                id: tree
+                root_options:{'text':'root'}
+                hide_root: True
+                size_hint_y: None
+    BoxLayout:
+        orientation: 'horizontal'
+        size_hint_y: .1
+        Button:
+            text: 'Cancel'
+            on_release: root.dispatch('on_cancel')
+        Button:
+            text: 'Load'
+            on_release: root.dispatch('on_load')
 
 <ScrolledTreeNode>:
     height: 40
