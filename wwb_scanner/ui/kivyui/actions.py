@@ -1,11 +1,26 @@
 import os
 import datetime
 
+from kivy.clock import Clock
+from kivy.uix.widget import Widget
+from kivy.uix.label import Label
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.treeview import TreeView, TreeViewLabel
+from kivy.uix.treeview import TreeView, TreeViewNode
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.garden.filebrowser import FileBrowser
-from kivy.properties import ObjectProperty
+from kivy.properties import (
+    ObjectProperty,
+    DictProperty,
+    NumericProperty,
+    StringProperty,
+    ColorProperty,
+    ListProperty,
+    BooleanProperty,
+    AliasProperty,
+    OptionProperty,
+)
 
+from wwb_scanner.utils.color import Color
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.file_handlers import BaseImporter
 from wwb_scanner.scan_objects import Spectrum
@@ -123,6 +138,7 @@ class FileOpen(Action, FileAction):
 class ScrolledTree(BoxLayout):
     app = ObjectProperty(None)
     tree = ObjectProperty(None)
+    sort_header = ObjectProperty(None)
     __events__ = ['on_cancel', 'on_load']
     def on_cancel(self, *args):
         self.app.root.close_popup()
@@ -133,21 +149,232 @@ class ScrolledTree(BoxLayout):
         spectrum = Spectrum.from_dbstore(eid=node.eid)
         self.app.root.plot_container.add_plot(spectrum=spectrum)
         self.app.root.close_popup()
+    def on_sort_header(self, *args):
+        self.sort_header.bind(active_cell=self.on_sort_cell, descending=self.on_sort_descending)
+    def on_sort_cell(self, instance, cell):
+        if cell is None:
+            self.tree.root.sort_property_name = '__index__'
+        else:
+            self.tree.root.sort_property_name = cell.sort_property
+    def on_sort_descending(self, instance, value):
+        self.tree.root.descending = value
 
-class ScrolledTreeView(TreeView):
+class SortableNode(TreeViewNode):
+    tree_view = ObjectProperty(None, allownone=True)
+    sort_property_name = StringProperty('__index__')
+    sort_property_uids = DictProperty()
+    descending = BooleanProperty(False)
     def __init__(self, **kwargs):
+        self._trigger_sort = None
+        super(SortableNode, self).__init__(**kwargs)
+        trigger = Clock.create_trigger(self._sort_children, 0)
+        trigger()
+        self._trigger_sort = trigger
+    def on_nodes(self, *args):
+        need_sort = False
+        keys = set()
+        for node in self.nodes:
+            key = hash(node)
+            keys.add(key)
+            if key not in self.sort_property_uids:
+                need_sort = True
+                self._bind_child_prop(node)
+        to_remove = keys - set(self.sort_property_uids.keys())
+        for key in to_remove:
+            uid, prop, node = self.sort_property_uids[key]
+            self._unbind_child_prop(node)
+        if need_sort and self._trigger_sort is not None:
+            self._trigger_sort()
+    def on_sort_property_name(self, instance, prop):
+        if self._trigger_sort is None:
+            return
+        for node in self.nodes:
+            self._unbind_child_prop(node)
+            self._bind_child_prop(node)
+        self._trigger_sort()
+    def on_descending(self, instance, value):
+        if self._trigger_sort is None:
+            return
+        self._trigger_sort()
+    def _bind_child_prop(self, node):
+        prop = self.sort_property_name
+        if prop == '__index__':
+            return
+        key = hash(node)
+        if key in self.sort_property_uids:
+            return
+        uid = node.fbind(prop, self.on_child_sort_property_value, property_name=prop)
+        self.sort_property_uids[key] = (uid, prop, node)
+    def _unbind_child_prop(self, node):
+        key = hash(node)
+        val = self.sort_property_uids.get(key)
+        if val is None:
+            return
+        del self.sort_property_uids[key]
+        uid, prop, node = val
+        node.unbind_uid(prop, uid)
+    def on_child_sort_property_value(self, instance, value, **kwargs):
+        prop = kwargs.get('property_name')
+        if prop != self.sort_property_name:
+            return
+        self._trigger_sort()
+    def _sort_children(self, *args, **kwargs):
+        tv = self.tree_view
+        if tv is None:
+            return
+        prop = self.sort_property_name
+        if prop == '__index__':
+            return
+        def iter_vals():
+            vals = {getattr(n, prop) for n in self.nodes}
+            if self.descending:
+                it = reversed(sorted(vals))
+            else:
+                it = sorted(vals)
+            for v in it:
+                yield v
+        def iter_nodes():
+            yielded = set()
+            nodes = set(self.nodes)
+            for v in iter_vals():
+                for n in nodes.copy():
+                    if getattr(n, prop) != v:
+                        continue
+                    yield n
+                    nodes.discard(n)
+
+        nodes = [n for n in iter_nodes()]
+        self.nodes = nodes
+        tv._trigger_layout()
+
+class SortableTreeViewLabel(Label, SortableNode):
+    pass
+
+class SortableTreeView(TreeView):
+    def add_node(self, node, parent=None):
+        if getattr(self, '_root', None) is None:
+            node = SortableTreeViewLabel(text='Root', is_open=True, level=0)
+            for key, value in self.root_options.items():
+                setattr(node, key, value)
+        node.tree_view = self
+        super(SortableTreeView, self).add_node(node, parent)
+        parent = node.parent_node
+        if parent is not None:
+            parent._bind_child_prop(node)
+            parent._trigger_sort()
+        return node
+    def remove_node(self, node):
+        node.tree_view = None
+        super(SortableTreeView, self).remove_node(node)
+
+class ScrolledTreeView(SortableTreeView):
+    def __init__(self, **kwargs):
+        kwargs['root_options'] = {'sort_property_name':'datetime'}
         super(ScrolledTreeView, self).__init__(**kwargs)
         self.bind(minimum_height=self.setter('height'))
         scan_data = db_store.get_all_scans()
         for eid, scan in scan_data.items():
-            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
-            name = str(scan.get('name'))
-            txt = ' - '.join([name, str(dt)])
-            scan_node = self.add_node(ScrolledTreeNode(text=txt))
-            scan_node.eid = eid
+            scan_node = self.add_node(ScrolledTreeNode(eid=eid, scan_data=scan))
 
-class ScrolledTreeNode(TreeViewLabel):
-    pass
+class SortHeader(BoxLayout):
+    cells = ListProperty()
+    active_cell = ObjectProperty(None, allownone=True)
+    descending = BooleanProperty(False)
+    def add_widget(self, widget, index=0):
+        super(SortHeader, self).add_widget(widget, index)
+        if isinstance(widget, SortHeaderCell):
+            self.cells.append(widget)
+            widget.bind(
+                selected=self.on_cell_selected,
+                descending=self.on_cell_descending,
+            )
+    def on_active_cell(self, instance, cell):
+        for w in self.cells:
+            if w is cell:
+                continue
+            w.selected = False
+        self.descending = cell.descending
+    def on_cell_selected(self, instance, value):
+        if not value:
+            return
+        self.active_cell = instance
+    def on_cell_descending(self, instance, value):
+        if not instance.selected:
+            return
+        self.descending = value
+
+class SortHeaderCell(ButtonBehavior, BoxLayout):
+    text = StringProperty()
+    sort_property = StringProperty()
+    selected = BooleanProperty(False)
+    descending = BooleanProperty(False)
+    icon_name = StringProperty('fa-sort')
+    _inactive_icon_name = 'fa-sort'
+    _active_icon_names = {True: 'fa-sort-desc', False: 'fa-sort-asc'}
+    #_inactive_icon_name = u'\u21c5'
+    #_active_icon_names = {True:u'\u25b2', False:u'\u25bc'}
+    direction = OptionProperty('None', options=['up', 'down', 'None'])
+    def on_release(self, *args):
+        if self.selected:
+            self.descending = not self.descending
+        else:
+            self.selected = True
+    def on_selected(self, instance, value):
+        if not value:
+            self.descending = False
+            self.direction = 'None'
+            self.icon_name = self._inactive_icon_name
+        else:
+            if self.descending:
+                self.direction = 'down'
+            else:
+                self.direction = 'up'
+            self.icon_name = self._active_icon_names.get(self.descending)
+    def on_descending(self, instance, value):
+        if self.selected:
+            if value:
+                self.direction = 'down'
+            else:
+                self.direction = 'up'
+            self.icon_name = self._active_icon_names.get(value)
+
+
+class ScrolledTreeNode(BoxLayout, SortableNode):
+    eid = NumericProperty()
+    name = StringProperty()
+    datetime = ObjectProperty()
+    scan_color = ColorProperty([0,0,0,0])
+    scan_data = DictProperty()
+    def __init__(self, **kwargs):
+        super(ScrolledTreeNode, self).__init__(**kwargs)
+        self.name = str(self.scan_data.get('name'))
+        self.datetime = datetime.datetime.fromtimestamp(self.scan_data['timestamp_utc'])
+        c = Color(**self.scan_data['color'])
+        self.scan_color = c.to_list()
+
+class SquareTexture(Widget):
+    def get_rect_size(self):
+        w, h = self.size
+        if h < w:
+            size = [h, h]
+        else:
+            size = [w, w]
+        return size
+    def set_rect_size(self, value):
+        pass
+    rect_size = AliasProperty(get_rect_size, set_rect_size, bind=['size'])
+    def get_rect_pos(self):
+        w, h = self.rect_size
+        x = self.center_x - w/2.
+        y = self.center_y - h/2.
+        return [x, y]
+    def set_rect_pos(self, value):
+        pass
+    rect_pos = AliasProperty(get_rect_pos, set_rect_pos, bind=['pos', 'rect_size'])
+
+class ColorBox(SquareTexture):
+    scan_color = ColorProperty([0,0,0,0])
+
 
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'

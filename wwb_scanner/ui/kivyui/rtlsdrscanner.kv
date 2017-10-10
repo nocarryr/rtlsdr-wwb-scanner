@@ -1,3 +1,4 @@
+#: import icon kivy.garden.iconfonts.icon
 #:include wwb_scanner/ui/kivyui/plots.kv
 #:include wwb_scanner/ui/kivyui/scan.kv
 
@@ -127,10 +128,21 @@
 <ScrolledTree>:
     app: app
     tree: tree
+    sort_header: sort_header
     orientation: 'vertical'
+    SortHeader:
+        id: sort_header
+        orientation: 'horizontal'
+        size_hint_y: .1
+        SortHeaderCell:
+            text: 'Name'
+            sort_property: 'name'
+        SortHeaderCell:
+            text: 'Date'
+            sort_property: 'datetime'
     FloatLayout:
         id: tree_view_parent
-        size_hint_y: .9
+        size_hint_y: .8
         ScrollView:
             id: scroll_view
             size_hint: 1, None
@@ -152,8 +164,40 @@
             text: 'Load'
             on_release: root.dispatch('on_load')
 
+<SortHeader>:
+    orientation: 'horizontal'
+
+<SortHeaderCell>:
+    text: ''
+    sort_property: ''
+    orientation: 'horizontal'
+    Label:
+        text: root.text
+        size_hint_x: .9
+    Label:
+        markup: True
+        text: '%s'%(icon(root.icon_name))
+        size_hint_x: .1
+
 <ScrolledTreeNode>:
     height: 40
     size_hint_y: None
     size_hint_x: 1.
-    #width: 1 if self.parent is None else self.parent.width
+    orientation: 'horizontal'
+    Label:
+        text: root.name
+        size_hint_x: .4
+    Label:
+        text: str(root.datetime)
+        size_hint_x: .4
+    ColorBox:
+        size_hint_x: .2
+        scan_color: root.scan_color
+
+<ColorBox>:
+    canvas:
+        Color:
+            rgba: self.scan_color
+        Rectangle:
+            pos: self.rect_pos
+            size: self.rect_size
