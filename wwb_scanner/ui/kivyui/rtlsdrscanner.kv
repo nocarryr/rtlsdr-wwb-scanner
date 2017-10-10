@@ -1,4 +1,4 @@
-#: import icon kivy.garden.iconfonts.icon
+#:include wwb_scanner/ui/kivyui/treeutils.kv
 #:include wwb_scanner/ui/kivyui/plots.kv
 #:include wwb_scanner/ui/kivyui/scan.kv
 
@@ -164,20 +164,6 @@
             text: 'Load'
             on_release: root.dispatch('on_load')
 
-<SortHeader>:
-    orientation: 'horizontal'
-
-<SortHeaderCell>:
-    text: ''
-    sort_property: ''
-    orientation: 'horizontal'
-    Label:
-        text: root.text
-        size_hint_x: .9
-    Label:
-        markup: True
-        text: '%s'%(icon(root.icon_name))
-        size_hint_x: .1
 
 <ScrolledTreeNode>:
     height: 40
