@@ -296,7 +296,6 @@ class ScanProgress(EventDispatcher):
     current_spectrum = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(ScanProgress, self).__init__(**kwargs)
-        self.cancelled = False
         self.scanner = None
         self.scan_thread = None
     def on_root_widget(self, *args, **kwargs):
@@ -378,7 +377,6 @@ class ScanProgress(EventDispatcher):
             cls = RtlPowerScanner
         self.scanner = cls(config=scan_config)
         self.scanner.on_progress = self.on_scanner_progress
-        self.scanner.on_sweep_processed = self.on_sweep_processed
         self.scan_thread = ScanThread(scanner=self.scanner, callback=self.on_scanner_finished)
         self.run_scan()
     def smooth_scan(self, *args):
@@ -391,29 +389,6 @@ class ScanProgress(EventDispatcher):
         spectrum.scale(self.scan_controls.scaling_min_db, self.scan_controls.scaling_max_db)
     def on_scanner_progress(self, value):
         Clock.schedule_once(self.update_progress)
-    def on_sweep_processed(self, **kwargs):
-        freqs = kwargs.get('frequencies')
-        powers = kwargs.get('powers')
-        fc = kwargs.get('sample_set').center_frequency / 1e6
-        fc = float(fc)
-        spectrum = self.current_spectrum
-        new_spectrum = False
-        if spectrum is None or fc != self.scan_controls.current_freq:
-            spectrum = Spectrum()
-            new_spectrum = True
-        try:
-            self.scan_controls.current_freq = fc
-        except:
-            print(type(fc), repr(fc))
-            self.cancel_scan()
-            raise
-        spectrum.add_sample_set(frequency=freqs, iq=powers, center_frequency=fc)
-        if new_spectrum:
-            self.current_spectrum = spectrum
-        elif self.scan_controls.live_view_visible:
-            sg = self.scan_controls.live_spectrum_graph
-            plot = sg.spectrum_plot_container.children[0]
-            plot.update_data()
     def on_current_spectrum(self, *args):
         if self.current_spectrum is None:
             return
@@ -435,14 +410,12 @@ class ScanProgress(EventDispatcher):
         def do_update(*args, **kwargs):
             self.show_scan()
             self.cleanup()
-        if not self.cancelled:
-            if self.scan_controls.smoothing_enabled:
-                self.smooth_scan()
-            if self.scan_controls.scaling_enabled:
-                self.scale_scan()
+        if self.scan_controls.smoothing_enabled:
+            self.smooth_scan()
+        if self.scan_controls.scaling_enabled:
+            self.scale_scan()
         Clock.schedule_once(do_update)
     def cancel_scan(self, *args, **kwargs):
-        self.cancelled = True
         if self.scanner._running.is_set():
             self.scanner.stop_scan()
     def cleanup(self):
