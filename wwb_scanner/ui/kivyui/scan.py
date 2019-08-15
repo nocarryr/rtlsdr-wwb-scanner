@@ -382,8 +382,9 @@ class ScanProgress(EventDispatcher):
     def smooth_scan(self, *args):
         spectrum = self.scanner.spectrum
         N = int(spectrum.sample_data.size * self.scan_controls.smoothing_factor / 100.)
+        print('smoothing {} points by N={}'.format(spectrum.sample_data.size, N))
+        # N = int(self.scan_controls.smoothing_factor)
         spectrum.smooth(N)
-        spectrum.interpolate()
     def scale_scan(self, *args):
         spectrum = self.scanner.spectrum
         spectrum.scale(self.scan_controls.scaling_min_db, self.scan_controls.scaling_max_db)

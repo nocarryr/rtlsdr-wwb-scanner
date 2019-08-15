@@ -6,7 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.garden.filebrowser import FileBrowser
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, OptionProperty, ListProperty, BooleanProperty
 
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.file_handlers import BaseImporter
@@ -122,26 +122,33 @@ class FileOpen(Action, FileAction):
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
 
-class ScrolledTree(ScrollView):
+class ScrolledTree(BoxLayout):
     tree = ObjectProperty(None)
+    def __init__(self, **kwargs):
+        super(ScrolledTree, self).__init__(**kwargs)
+        self.bind(minimum_height=self.setter('height'))
 
 class ScrolledTreeNode(TreeViewLabel):
     pass
 
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
+    sort_field = OptionProperty('Date', options=('id', 'Name', 'Date'))
+    sort_ascending = BooleanProperty(True)
+    scan_nodes = ListProperty([])
     def do_action(self, app):
         self.app = app
         scan_data = db_store.get_all_scans()
         scroll_view = ScrolledTree()
         tree_view = scroll_view.tree
         self.tree_view = tree_view
-        for eid, scan in scan_data.items():
-            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
-            name = str(scan.get('name'))
-            txt = ' - '.join([name, str(dt)])
-            scan_node = tree_view.add_node(ScrolledTreeNode(text=txt))
-            scan_node.eid = eid
+        # for eid, scan in scan_data.items():
+        #     dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
+        #     name = str(scan.get('name'))
+        #     txt = ' - '.join([name, str(dt)])
+        #     scan_node = tree_view.add_node(ScrolledTreeNode(text=txt))
+        #     scan_node.eid = eid
+        self.populate_nodes()
         load_btn = Button(text='Load')
         cancel_btn = Button(text='Cancel')
         hbox = BoxLayout(orientation='horizontal', size_hint_y=.1)
@@ -153,6 +160,41 @@ class PlotsLoadRecent(Action):
         cancel_btn.bind(on_release=self.on_cancel)
         load_btn.bind(on_release=self.on_load)
         app.root.show_popup(title='Load Scan', content=vbox, size_hint=(.9, .9))
+    def populate_nodes(self):
+        for node in self.scan_nodes:
+            self.tree_view.remove_node(node)
+        self.scan_nodes.clear()
+        scan_data = db_store.get_all_scans()
+        if self.sort_field == 'id':
+            eids = sorted(scan_data.keys())
+            if not self.sort_ascending:
+                eids = reversed(eids)
+            eids = list(eids)
+            scans = [scan for scan in eids]
+        else:
+            d = {}
+            for eid, scan in scan_data.items():
+                if self.sort_field == 'Name':
+                    key = scan.get('name')
+                elif self.sort_field == 'Date':
+                    key = datetime.datetime.fromtimestamp(scan.get('timestamp_utc'))
+                d[key] = (eid, scan)
+            keys = sorted(d.keys())
+            if not self.sort_ascending:
+                keys = reversed(keys)
+            eids = []
+            scans = []
+            for key in keys:
+                eid, scan = d[key]
+                eids.append(eid)
+                scans.append(scan)
+        for eid, scan in zip(eids, scans):
+            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
+            name = str(scan.get('name'))
+            txt = ' - '.join([name, str(dt)])
+            scan_node = self.tree_view.add_node(ScrolledTreeNode(text=txt))
+            scan_node.eid = eid
+            self.scan_nodes.append(scan_node)
     def on_cancel(self, *args):
         self.app.root.close_popup()
         self.tree_view = None

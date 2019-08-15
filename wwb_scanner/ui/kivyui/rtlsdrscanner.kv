@@ -125,17 +125,22 @@
         on_release: app.root.close_message()
 
 <ScrolledTree>:
+    orientation: 'vertical'
     tree: tree
     size_hint_x: 1.
     size_hint_y: .9
-    scroll_type: ['bars', 'content']
-    TreeView:
-        id: tree
-        root_options:{'text':'root'}
-        hide_root: True
-        #width: root.width
-        minimum_height: root.height
+    ScrollView:
+        size_hint_x: 1.
         size_hint_y: None
+        height: root.height
+        scroll_type: ['bars', 'content']
+        TreeView:
+            id: tree
+            root_options:{'text':'root'}
+            hide_root: True
+            #width: root.width
+            minimum_height: root.height
+            size_hint_y: None
 
 <ScrolledTreeNode>:
     height: 40

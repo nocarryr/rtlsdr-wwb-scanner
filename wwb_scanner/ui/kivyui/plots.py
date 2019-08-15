@@ -201,8 +201,8 @@ class SpectrumGraphBase(RelativeLayout, JSONMixin):
         self.x_range = [x_min, x_max]
         return True
     x_center = AliasProperty(get_x_center, set_x_center, bind=('x_min', 'x_max'))
-    y_min = NumericProperty(-100.)
-    y_max = NumericProperty(0.)
+    y_min = NumericProperty(-120.)
+    y_max = NumericProperty(20.)
     def get_y_size(self):
         return self.y_max - self.y_min
     def set_y_size(self, value):
