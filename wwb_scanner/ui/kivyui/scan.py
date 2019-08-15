@@ -296,7 +296,6 @@ class ScanProgress(EventDispatcher):
     current_spectrum = ObjectProperty(None)
     def __init__(self, **kwargs):
         super(ScanProgress, self).__init__(**kwargs)
-        self.cancelled = False
         self.scanner = None
         self.scan_thread = None
     def on_root_widget(self, *args, **kwargs):
@@ -411,14 +410,12 @@ class ScanProgress(EventDispatcher):
         def do_update(*args, **kwargs):
             self.show_scan()
             self.cleanup()
-        if not self.cancelled:
-            if self.scan_controls.smoothing_enabled:
-                self.smooth_scan()
-            if self.scan_controls.scaling_enabled:
-                self.scale_scan()
+        if self.scan_controls.smoothing_enabled:
+            self.smooth_scan()
+        if self.scan_controls.scaling_enabled:
+            self.scale_scan()
         Clock.schedule_once(do_update)
     def cancel_scan(self, *args, **kwargs):
-        self.cancelled = True
         if self.scanner._running.is_set():
             self.scanner.stop_scan()
     def cleanup(self):
