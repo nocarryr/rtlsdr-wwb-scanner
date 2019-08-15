@@ -1,16 +1,24 @@
 import os
 import datetime
 
+from kivy.uix.widget import Widget
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.button import Button
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.treeview import TreeView, TreeViewLabel
 from kivy.garden.filebrowser import FileBrowser
-from kivy.properties import ObjectProperty
+from kivy.properties import (
+    ObjectProperty,
+    DictProperty,
+    NumericProperty,
+    StringProperty,
+    ColorProperty,
+    AliasProperty,
+)
 
+from wwb_scanner.utils.color import Color
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.file_handlers import BaseImporter
 from wwb_scanner.scan_objects import Spectrum
+
+from wwb_scanner.ui.kivyui.treeutils import SortableTreeView, SortableNode
 
 class Action(object):
     _instances = {}
@@ -122,47 +130,83 @@ class FileOpen(Action, FileAction):
         self.app.root.instance_from_json(s)
         self.app.root.current_filename = filename
 
-class ScrolledTree(ScrollView):
+class ScrolledTree(BoxLayout):
+    app = ObjectProperty(None)
     tree = ObjectProperty(None)
+    sort_header = ObjectProperty(None)
+    __events__ = ['on_cancel', 'on_load']
+    def on_cancel(self, *args):
+        self.app.root.close_popup()
+    def on_load(self, *args):
+        node = self.tree.selected_node
+        if node is None:
+            return
+        spectrum = Spectrum.from_dbstore(eid=node.eid)
+        self.app.root.plot_container.add_plot(spectrum=spectrum)
+        self.app.root.close_popup()
+    def on_sort_header(self, *args):
+        self.sort_header.bind(active_cell=self.on_sort_cell, descending=self.on_sort_descending)
+    def on_sort_cell(self, instance, cell):
+        if cell is None:
+            self.tree.root.sort_property_name = '__index__'
+        else:
+            self.tree.root.sort_property_name = cell.sort_property
+    def on_sort_descending(self, instance, value):
+        self.tree.root.descending = value
 
-class ScrolledTreeNode(TreeViewLabel):
-    pass
+class ScrolledTreeView(SortableTreeView):
+    def __init__(self, **kwargs):
+        kwargs['root_options'] = {'sort_property_name':'datetime'}
+        super(ScrolledTreeView, self).__init__(**kwargs)
+        self.bind(minimum_height=self.setter('height'))
+        scan_data = db_store.get_all_scans()
+        for eid, scan in scan_data.items():
+            scan_node = self.add_node(ScrolledTreeNode(eid=eid, scan_data=scan))
+
+
+class ScrolledTreeNode(BoxLayout, SortableNode):
+    eid = NumericProperty()
+    name = StringProperty()
+    datetime = ObjectProperty()
+    scan_color = ColorProperty([0,0,0,0])
+    scan_data = DictProperty()
+    def __init__(self, **kwargs):
+        super(ScrolledTreeNode, self).__init__(**kwargs)
+        self.name = str(self.scan_data.get('name'))
+        self.datetime = datetime.datetime.fromtimestamp(self.scan_data['timestamp_utc'])
+        c = Color(**self.scan_data['color'])
+        self.scan_color = c.to_list()
+
+class SquareTexture(Widget):
+    def get_rect_size(self):
+        w, h = self.size
+        if h < w:
+            size = [h, h]
+        else:
+            size = [w, w]
+        return size
+    def set_rect_size(self, value):
+        pass
+    rect_size = AliasProperty(get_rect_size, set_rect_size, bind=['size'])
+    def get_rect_pos(self):
+        w, h = self.rect_size
+        x = self.center_x - w/2.
+        y = self.center_y - h/2.
+        return [x, y]
+    def set_rect_pos(self, value):
+        pass
+    rect_pos = AliasProperty(get_rect_pos, set_rect_pos, bind=['pos', 'rect_size'])
+
+class ColorBox(SquareTexture):
+    scan_color = ColorProperty([0,0,0,0])
+
 
 class PlotsLoadRecent(Action):
     name = 'plots.load_recent'
     def do_action(self, app):
         self.app = app
-        scan_data = db_store.get_all_scans()
         scroll_view = ScrolledTree()
-        tree_view = scroll_view.tree
-        self.tree_view = tree_view
-        for eid, scan in scan_data.items():
-            dt = datetime.datetime.fromtimestamp(scan['timestamp_utc'])
-            name = str(scan.get('name'))
-            txt = ' - '.join([name, str(dt)])
-            scan_node = tree_view.add_node(ScrolledTreeNode(text=txt))
-            scan_node.eid = eid
-        load_btn = Button(text='Load')
-        cancel_btn = Button(text='Cancel')
-        hbox = BoxLayout(orientation='horizontal', size_hint_y=.1)
-        hbox.add_widget(load_btn)
-        hbox.add_widget(cancel_btn)
-        vbox = BoxLayout(orientation='vertical')
-        vbox.add_widget(scroll_view)
-        vbox.add_widget(hbox)
-        cancel_btn.bind(on_release=self.on_cancel)
-        load_btn.bind(on_release=self.on_load)
-        app.root.show_popup(title='Load Scan', content=vbox, size_hint=(.9, .9))
-    def on_cancel(self, *args):
-        self.app.root.close_popup()
-        self.tree_view = None
-    def on_load(self, *args):
-        node = self.tree_view.selected_node
-        if node is None:
-            return
-        spectrum = Spectrum.from_dbstore(eid=node.eid)
-        self.app.root.plot_container.add_plot(spectrum=spectrum)
-        self.on_cancel()
+        app.root.show_popup(title='Load Scan', content=scroll_view, size_hint=(.9, .9))
 
 class PlotsImport(Action, FileAction):
     name = 'plots.import'

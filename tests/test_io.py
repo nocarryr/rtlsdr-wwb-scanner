@@ -38,7 +38,11 @@ def test_exporters(data_files, tmpdir):
 
                 # Account for frequency units in KHz for sdb2
                 assert np.allclose(src_spectrum.sample_data['frequency'], imp_spectrum.sample_data['frequency'])
-                assert np.array_equal(src_spectrum.sample_data['magnitude'], imp_spectrum.sample_data['magnitude'])
+                # sdb2 stores dB values rounded to the first decimal
+                assert np.array_equal(
+                    np.around(src_spectrum.sample_data['dbFS'], 1),
+                    np.around(imp_spectrum.sample_data['dbFS'], 1),
+                )
 
 def test_io(tmpdir, random_samples):
     from wwb_scanner.scan_objects import Spectrum
