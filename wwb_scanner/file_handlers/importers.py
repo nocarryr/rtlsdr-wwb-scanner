@@ -71,10 +71,7 @@ class WWBImporter(BaseWWBImporter):
         data_set = root.find('*/data_set')
         ts = data_set.get('date_time')
         if ts is not None:
-            try:
-                spectrum.timestamp_utc = float(ts)
-            except ValueError:
-                spectrum.timestamp_utc = float(ts) / 1000.
+            spectrum.timestamp_utc = float(ts) / 1000.
         else:
             dt_str = ' '.join([root.get('date'), root.get('time')])
             dt_fmt = '%a %b %d %Y %H:%M:%S'
