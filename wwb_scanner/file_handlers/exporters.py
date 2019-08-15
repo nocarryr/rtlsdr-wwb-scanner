@@ -114,7 +114,7 @@ class BaseWWBExporter(BaseExporter):
             scale_factor='1',
             date=d['scan_data_source']['date'],
             time=d['scan_data_source']['time'],
-            date_time=str(int((dt - EPOCH).total_seconds())),
+            date_time=str(int((dt - EPOCH).total_seconds() * 1000)),
         )
         return d
     def build_data(self):
