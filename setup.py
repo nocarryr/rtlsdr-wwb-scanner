@@ -49,7 +49,7 @@ setup(
     setup_requires=['pypandoc'],
     long_description=get_long_description(),
     entry_points={
-        'gui_scripts':[
+        'console_scripts':[
             'wwb_scanner-ui = wwb_scanner.ui.kivyui.main:run',
         ],
     },

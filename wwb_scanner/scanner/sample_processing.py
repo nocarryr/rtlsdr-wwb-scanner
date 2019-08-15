@@ -157,7 +157,7 @@ class SampleSet(JSONMixin):
         if not np.array_equal(freqs, self.frequencies):
             print('freq not equal: %s, %s' % (self.frequencies.size, freqs.size))
             self.frequencies = freqs
-
+        self.raw = None
         self.collection.on_sample_set_processed(self)
         self.complete.set()
     def calc_expected_freqs(self):
