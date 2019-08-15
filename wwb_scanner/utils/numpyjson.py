@@ -1,7 +1,11 @@
+import sys
 import base64
 import json
+import pickle
 
 import numpy as np
+
+PY3 = sys.version_info.major >= 3
 
 import jsonfactory
 
@@ -19,7 +23,11 @@ class NumpyEncoder(object):
     def decode(self, d):
         if '__ndarray__' in d:
             data = base64.b64decode(d['__ndarray__'])
-            return np.loads(data)
+            if PY3:
+                if not isinstance(data, bytes):
+                    data = bytes(data, 'UTF-8')
+                return pickle.loads(data, encoding='bytes')
+            return pickle.loads(data)
         return d
 
 def dumps(obj, **kwargs):

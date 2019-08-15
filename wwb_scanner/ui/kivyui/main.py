@@ -1,5 +1,13 @@
 import os
 
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+
+from kivy.garden import iconfonts
+iconfonts.register('default_font',
+    os.path.join(BASE_PATH, 'fonts', 'fontawesome-webfont.ttf'),
+    os.path.join(BASE_PATH, 'fonts', 'font-awesome.fontd')
+)
+
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.popup import Popup

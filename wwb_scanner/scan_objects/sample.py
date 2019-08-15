@@ -3,6 +3,7 @@ import numbers
 import numpy as np
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils import dbmath
 
 class Sample(JSONMixin):
     def __init__(self, **kwargs):
@@ -93,7 +94,7 @@ class Sample(JSONMixin):
                 return
         if not isinstance(value, numbers.Number):
             return
-        m = 10 ** (value / 10.)
+        m = dbmath.from_dB(value)
         ix = self.spectrum_index
         self.spectrum.sample_data['dbFS'][ix] = value
         self.spectrum.sample_data['magnitude'][ix] = m

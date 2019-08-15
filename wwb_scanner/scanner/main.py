@@ -54,7 +54,7 @@ class ScannerBase(JSONMixin):
             self.progress = (value - f_min) / (f_max - f_min)
         self.on_current_freq(value)
     def on_current_freq(self, value):
-        print('scanning %s' % (value))
+        pass
     @property
     def progress(self):
         return self._progress
@@ -65,7 +65,7 @@ class ScannerBase(JSONMixin):
         self._progress = value
         self.on_progress(value)
     def on_progress(self, value):
-        print('%s%%' % (int(value * 100)))
+        pass
     def build_sample_sets(self):
         freq,  end_freq = self.config.scan_range
         sample_collection = self.sample_collection
@@ -86,8 +86,6 @@ class ScannerBase(JSONMixin):
         self._running.clear()
         self.sample_collection.cancel()
         self._stopped.wait()
-    def scan_freq(self, freq):
-        pass
     def save_to_dbstore(self):
         self.spectrum.save_to_dbstore()
     def _serialize(self):
@@ -194,24 +192,18 @@ class Scanner(ScannerBase):
     def run_scan(self):
         with self.sdr_wrapper:
             super(Scanner, self).run_scan()
-    def scan_freq(self, freq):
-        sample_set = self.sample_collection.scan_freq(freq)
-        return sample_set
-    def on_sweep_processed(self, **kwargs):
-        pass
     def on_sample_set_processed(self, sample_set):
         powers = sample_set.powers
         freqs = sample_set.frequencies
         spectrum = self.spectrum
         center_freq = sample_set.center_frequency
-        print('adding %s samples: range=%s - %s' % (len(freqs), min(freqs), max(freqs)))
         spectrum.add_sample_set(
             frequency=freqs,
             magnitude=powers,
             center_frequency=center_freq,
             force_lower_freq=False,
         )
-        self.on_progress(self.progress)
+        self.progress = self.sample_collection.calc_progress()
 
 class ThreadedScanner(threading.Thread, Scanner):
     def __init__(self, **kwargs):
@@ -249,10 +241,6 @@ class ThreadedScanner(threading.Thread, Scanner):
                 break
             waiting.wait(scan_wait_timeout)
         stopped.set()
-    def scan_freq(self, freq):
-        if self.stopping.is_set():
-            return False
-        return super(ThreadedScanner, self).scan_freq(freq)
     def stop(self):
         self.stopping.set()
         self.waiting.set()
