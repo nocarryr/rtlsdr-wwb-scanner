@@ -32,6 +32,7 @@ def sort_psd(f, Pxx, onesided=False):
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 'complete',
                  '_frequencies', 'powers', 'collection', 'process_thread', 'samples_discarded')
+    _serialize_attrs = ('center_frequency', '_frequencies', 'powers')
     def __init__(self, **kwargs):
         for key in self.__slots__:
             if key == '_frequencies':
@@ -153,13 +154,7 @@ class SampleSet(JSONMixin):
         f_expected /= 1e6
         return f_expected
     def _serialize(self):
-        d = {}
-        for key in self.__slots__:
-            if key in ['scanner', 'collection', 'complete']:
-                continue
-            val = getattr(self, key)
-            d[key] = val
-        return d
+        return {k:getattr(self, k) for k in self._serialize_attrs}
 
 
 class SampleCollection(JSONMixin):
