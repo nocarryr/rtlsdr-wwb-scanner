@@ -15,7 +15,7 @@ def dB_to_power(dB, ref=REF_DB):
     return 10 ** (dB/10.) * ref
 
 def to_dB(p, ref=REF_DB):
-    return power_to_db(p, ref)
+    return power_to_dB(p, ref)
 
 def from_dB(dB, ref=REF_DB):
     return dB_to_power(dB, ref)
