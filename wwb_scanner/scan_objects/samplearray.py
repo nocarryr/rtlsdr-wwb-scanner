@@ -111,7 +111,7 @@ class SampleArray(JSONMixin):
         s = np.r_[x[window_size-1:0:-1], x, x[-2:-window_size-1:-1]]
 
         y = np.convolve(w/w.sum(), s, mode='valid')
-        m = y[(window_size/2-1):-(window_size/2)]
+        m = y[(window_size//2-1):-(window_size//2)]
 
         if m.size != x.size:
             raise Exception('Smooth result size {} != data size {}'.format(m.size, x.size))
