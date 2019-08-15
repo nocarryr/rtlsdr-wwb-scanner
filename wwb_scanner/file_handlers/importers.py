@@ -41,6 +41,7 @@ class CSVImporter(BaseImporter):
     _extension = 'csv'
     def parse_file_data(self):
         spectrum = self.spectrum
+        spectrum.name = os.path.basename(self.filename)
         def iter_lines():
             for line in self.file_data.splitlines():
                 line = line.rstrip('\n').rstrip('\r')
