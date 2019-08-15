@@ -3,6 +3,7 @@ from scipy.interpolate import CubicSpline
 import jsonfactory
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils import dbmath
 
 class SampleArray(JSONMixin):
     dtype = np.dtype([
@@ -50,9 +51,9 @@ class SampleArray(JSONMixin):
         if iq is not None and mag is None:
             mag = data['magnitude'] = np.abs(iq)
         if dbFS is not None and mag is None:
-            mag = data['magnitude'] = 10 ** (dbFS / 10)
+            mag = data['magnitude'] = dbmath.from_dB(dbFS)
         if mag is not None and dbFS is None:
-            data['dbFS'] = 10 * np.log10(mag)
+            data['dbFS'] = dbmath.to_dB(mag)
 
         self.append(data)
     def __getattr__(self, attr):
@@ -117,7 +118,7 @@ class SampleArray(JSONMixin):
             raise Exception('Smooth result size {} != data size {}'.format(m.size, x.size))
 
         self.data['magnitude'] = m
-        self.data['dbFS'] = 10 * np.log10(m)
+        self.data['dbFS'] = dbmath.to_dB(m)
     def interpolate(self, spacing=0.025):
         fmin = np.ceil(self.frequency.min())
         fmax = np.floor(self.frequency.max())
@@ -133,7 +134,7 @@ class SampleArray(JSONMixin):
         data = np.zeros(xs.size, dtype=self.dtype)
         data['frequency'] = xs
         data['magnitude'] = ys
-        data['dbFS'] = 10 * np.log10(ys)
+        data['dbFS'] = dbmath.to_dB(ys)
         self.data = data
 
     def _serialize(self):

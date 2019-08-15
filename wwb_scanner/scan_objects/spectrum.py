@@ -6,6 +6,7 @@ import numpy as np
 from scipy import signal
 
 from wwb_scanner.core import JSONMixin
+from wwb_scanner.utils import dbmath
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.utils.color import Color
 from wwb_scanner.scan_objects import SampleArray, Sample, TimeBasedSample
@@ -189,7 +190,7 @@ class Spectrum(JSONMixin):
             y /= y.max()
             y *= out_scale
             y += min_dB
-            self.sample_data['magnitude'] = 10 ** (y / 10)
+            self.sample_data['magnitude'] = dbmath.from_dB(y)
             self.sample_data['dbFS'] = y
         self.set_data_updated()
     def add_sample(self, **kwargs):
