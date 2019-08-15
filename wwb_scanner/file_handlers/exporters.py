@@ -163,6 +163,8 @@ class WWBExporter(BaseWWBExporter):
         data_set = ET.SubElement(data_sets, 'data_set', self.attribs['data_set'])
         freqs = self.spectrum.sample_data['frequency'] * 1000
         dB = np.around(self.spectrum.sample_data['dbFS'], decimals=1)
+        nanix = np.flatnonzero(np.isnan(dB) | np.isinf(dB))
+        dB[nanix] = -140.
         for freq, val in zip(freqs, dB):
             f = ET.SubElement(freq_set, 'f')
             f.text = str(int(freq))
