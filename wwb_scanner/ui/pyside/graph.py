@@ -315,8 +315,8 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._update_extents()
 
     def _update_extents(self):
-        self.minValue = QtCore.QPointF(min_x, self.xy_data['y'].min())
-        self.maxValue = QtCore.QPointF(max_x, self.xy_data['y'].max())
+        self.minValue = QtCore.QPointF(self.xy_data['x'].min(), self.xy_data['y'].min())
+        self.maxValue = QtCore.QPointF(self.xy_data['x'].max(), self.xy_data['y'].max())
 
     def _set_series_from_data(self):
         if self.model is None:
