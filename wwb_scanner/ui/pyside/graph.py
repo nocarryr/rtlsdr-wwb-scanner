@@ -332,7 +332,7 @@ class SpectrumGraphData(QtQuick.QQuickItem):
     def load_from_file(self, uri):
         # orig_fn = filename
         # filename = str(filename)
-        filename = uri.fileName()
+        filename = uri.toLocalFile()
         # if filename.startswith('file://'):
         #     filename = filename.lstrip('file://')
         print(f'load_from_file: "{filename}"')
