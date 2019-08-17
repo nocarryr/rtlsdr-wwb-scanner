@@ -39,6 +39,15 @@ ApplicationWindow {
         ScanControls {
             id: scanControls
             anchors.fill: parent
+            // scanReady: !scanner.running
+            onScannerState: {
+                if (state) {
+                    scanner.start();
+                    chartWrapper.newLiveScan(scanner);
+                } else {
+                    scanner.stop();
+                }
+            }
         }
     }
     footer: ToolBar {

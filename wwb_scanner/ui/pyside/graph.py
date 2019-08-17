@@ -48,7 +48,7 @@ class GraphTableModel(QtCore.QAbstractTableModel):
     def _reshape_data(self, d_arr):
         new_shape = (2, d_arr.size)
         cur_shape = self._data.shape
-        print(f'cur_shape={cur_shape}, new_shape={new_shape}')
+        # print(f'cur_shape={cur_shape}, new_shape={new_shape}')
         parent = QtCore.QModelIndex()
         if cur_shape[-1] > new_shape[-1]:
             start_col = new_shape[-1]
@@ -62,7 +62,7 @@ class GraphTableModel(QtCore.QAbstractTableModel):
         elif cur_shape[-1] < new_shape[-1]:
             start_col = cur_shape[-1]
             end_col = new_shape[-1] - 1
-            print(f'start_col={start_col}, end_col={end_col}')
+            # print(f'start_col={start_col}, end_col={end_col}')
             ix = self.index(0, 0)
             # parent = self.parent(ix)
             # parent = ix
@@ -212,8 +212,6 @@ class SpectrumGraphData(QtQuick.QQuickItem):
     _n_min_value = Signal()
     _n_max_value = Signal()
     _n_spectrum = Signal()
-    _n_update_interval = Signal()
-    _n_update_timer = Signal()
     def __init__(self, *args):
         self.xy_data = np.zeros(0, dtype=GRAPH_DTYPE)
         self._min_value = QtCore.QPointF(0., 0.)
@@ -221,8 +219,6 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._model = None
         self._spectrum = None
         self._name = None
-        self._update_interval = None
-        self._update_timer = None
         super().__init__(*args)
 
     def _g_model(self): return self._model
@@ -266,30 +262,6 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self.update_spectrum_data()
     spectrum = Property(object, _g_spectrum, _s_spectrum, notify=_n_spectrum)
 
-    def _g_update_interval(self): return self._update_interval
-    def _s_update_interval(self, value):
-        if value == self._update_interval:
-            return
-        self._update_interval = value
-        if self.update_timer is not None:
-            self.update_timer.stop.emit()
-        if value is not None:
-            ms = int(round(value * 1000))
-            if self.update_timer is None:
-                self.update_timer = IntervalTimer(interval_ms=ms)
-                self.update_timer.trigger.connect(self.on_update_timer_trigger)
-            else:
-                self.update_timer.interval_ms = ms
-            self.update_timer.start()
-        self._n_update_interval.emit()
-    update_interval = Property(float, _g_update_interval, _s_update_interval, notify=_n_update_interval)
-
-    def _g_update_timer(self): return self._update_timer
-    def _s_update_timer(self, value):
-        self._update_timer = value
-        self._n_update_timer.emit()
-    update_timer = Property(QtCore.QObject, _g_update_timer, _s_update_timer, notify=_n_update_timer)
-
     def _set_from_graph_dtype(self, d_arr):
         if self.model is None:
             return
@@ -318,19 +290,17 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._update_data_from_spectrum()
         self._set_series_from_data()
 
-
-
     def _update_data_from_spectrum(self):
         spectrum = self.spectrum
         dtype = np.dtype(float)
         with spectrum.data_update_lock:
             xy_data = np.zeros(spectrum.sample_data.size, dtype=GRAPH_DTYPE)
             data = spectrum.sample_data.data
-            print(f'data: shape={data.shape}, dtype={data.dtype}')
-            xy_data['x'] = spectrum.sample_data.data['frequency']
+            # print(f'data: shape={data.shape}, dtype={data.dtype}')
+            xy_data['x'] = data['frequency']
             freqmin = xy_data['x'].min()
             freqmax = xy_data['x'].max()
-            print(f'freq_range: "{freqmin}" - "{freqmax}"')
+            # print(f'freq_range: "{freqmin}" - "{freqmax}"')
             xy_data['y'] = spectrum.sample_data.data['dbFS']
             nan_ix = np.flatnonzero(np.isnan(xy_data['y']))
             xy_data['y'][nan_ix] = -110
@@ -342,10 +312,11 @@ class SpectrumGraphData(QtQuick.QQuickItem):
             # self.xy_data = {'x':x, 'y':y}
             self.xy_data = xy_data
             spectrum.data_updated.clear()
-        self.minValue = QtCore.QPointF(self.xy_data['x'].min(), self.xy_data['y'].min())
-        self.maxValue = QtCore.QPointF(self.xy_data['x'].max(), self.xy_data['y'].max())
+        self._update_extents()
 
-
+    def _update_extents(self):
+        self.minValue = QtCore.QPointF(min_x, self.xy_data['y'].min())
+        self.maxValue = QtCore.QPointF(max_x, self.xy_data['y'].max())
 
     def _set_series_from_data(self):
         if self.model is None:
@@ -373,6 +344,79 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         print('update_spectrum_data')
         self.update_spectrum_data()
         print('load complete')
+
+class LiveSpectrumGraphData(SpectrumGraphData):
+    _n_update_interval = Signal()
+    _n_update_timer = Signal()
+    _n_scanner = Signal()
+    updateSpectrumData = Signal()
+    def __init__(self, *args):
+        self._update_interval = None
+        self._update_timer = None
+        self._scanner = None
+        super().__init__(*args)
+        self.updateSpectrumData.connect(self.update_spectrum_data)
+    def _g_scanner(self): return self._scanner
+    def _s_scanner(self, value):
+        if value == self._scanner:
+            return
+        if self._scanner is not None:
+            self._scanner.disconnect(self)
+        self._scanner = value
+        print('scanner: ', self._scanner)
+        self._n_scanner.emit()
+        if self._scanner is not None:
+            self.spectrum = self._scanner.spectrum
+            self._scanner.scannerRunState.connect(self.on_scanner_run_state)
+            self.update_interval = .5
+        else:
+            self.update_interval = -1
+    scanner = Property(QtCore.QObject, _g_scanner, _s_scanner, notify=_n_scanner)
+
+    def on_scanner_run_state(self, state):
+        if self.scanner is None:
+            return
+        if not self.scanner.running:
+            self.spectrum.set_data_updated()
+            self.update_spectrum_data()
+            self.scanner = None
+
+    def _g_update_interval(self): return self._update_interval
+    def _s_update_interval(self, value):
+        if value == self._update_interval:
+            return
+        self._update_interval = value
+        if self.update_timer is not None:
+            self.update_timer.stop.emit()
+        if value is not None and value > 0:
+            ms = int(round(value * 1000))
+            if self.update_timer is None:
+                self.update_timer = IntervalTimer(interval_ms=ms)
+                self.update_timer.trigger.connect(self.on_update_timer_trigger)
+            else:
+                self.update_timer.interval_ms = ms
+            self.update_timer.start.emit()
+        self._n_update_interval.emit()
+    update_interval = Property(float, _g_update_interval, _s_update_interval, notify=_n_update_interval)
+
+    def _g_update_timer(self): return self._update_timer
+    def _s_update_timer(self, value):
+        self._update_timer = value
+        self._n_update_timer.emit()
+    update_timer = Property(QtCore.QObject, _g_update_timer, _s_update_timer, notify=_n_update_timer)
+
+    def on_update_timer_trigger(self, *args):
+        self.updateSpectrumData.emit()
+
+    def _update_extents(self):
+        if self.scanner is not None:
+            min_x = self.scanner.startFreq
+            max_x = self.scanner.endFreq
+        else:
+            min_x = self.xy_data['x'].min()
+            max_x = self.xy_data['y'].max()
+        self.minValue = QtCore.QPointF(min_x, self.xy_data['y'].min())
+        self.maxValue = QtCore.QPointF(max_x, self.xy_data['y'].max())
 
 # NOT USED
 class SpectrumLoader(QtCore.QObject):
@@ -418,4 +462,5 @@ def register_qml_types():
     QtQml.qmlRegisterType(TableGraphData, 'GraphUtils', 1, 0, 'TableGraphData')
     QtQml.qmlRegisterType(LineGraphData, 'GraphUtils', 1, 0, 'LineGraphData')
     QtQml.qmlRegisterType(SpectrumGraphData, 'GraphUtils', 1, 0, 'SpectrumGraphData')
+    QtQml.qmlRegisterType(LiveSpectrumGraphData, 'GraphUtils', 1, 0, 'LiveSpectrumGraphData')
     QtQml.qmlRegisterType(SpectrumLoader, 'GraphUtils', 1, 0, 'SpectrumLoader')

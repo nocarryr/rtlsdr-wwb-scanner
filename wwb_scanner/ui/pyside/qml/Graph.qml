@@ -13,8 +13,16 @@ Item {
     property var spectrumGraphs: []
     property var activeSpectrum
     // property var model
+    signal newLiveScan(var scanner)
     signal loadFromFile(url fileName)
     signal updateAxisExtents()
+
+
+    onNewLiveScan: {
+        var scannerArg = scanner;
+        var spectrumGraph
+        addModel({'scanner':scannerArg, 'isLive':true});
+    }
 
     // onUpdateAxisExtents: { doUpdateAxisExtents() }
 
@@ -62,13 +70,20 @@ Item {
         // graphData.load_from_file(fileName)
     }
 
+    function callable(obj){
+        if (typeof(obj) == 'function'){
+            return true;
+        }
+        return false;
+    }
+
     function buildComponent(prnt, uri, props, callback){
         var component = Qt.createComponent(uri),
             obj;
         function onComponentReady(){
             if (component.status == Component.Ready){
                 obj = component.createObject(prnt, props);
-                if (callback){
+                if (callable(callback)){
                     callback(obj);
                 }
             } else {
@@ -77,7 +92,7 @@ Item {
         }
         if (component.status == Component.Ready){
             obj = component.createObject(prnt, props);
-            if (callback){
+            if (callable(callback)){
                 callback(obj);
             }
         } else if (component.status == Component.Error){
@@ -88,18 +103,23 @@ Item {
     }
 
     function addModel(props, callback){
-        var series = chart.addMappedSeries();
+        var series = chart.addMappedSeries(),
+            qmlFile = 'SpectrumGraph.qml';
+
+        if (props.isLive){
+            qmlFile = 'LiveSpectrumGraph.qml';
+        }
         props['series'] = series;
-        buildComponent(root, 'SpectrumGraph.qml', props, function(obj){
+        buildComponent(root, qmlFile, props, function(obj){
             root.spectrumGraphs.push(obj);
             // chart.addMappedSeries(obj);
             root.activeSpectrum = obj;
             updateAxisExtents();
             obj.axisExtentsUpdate.connect(updateAxisExtents);
-            if (callback){
+            if (callable(callback)){
                 callback(obj);
             }
-        })
+        });
     }
 
     ChartView {
