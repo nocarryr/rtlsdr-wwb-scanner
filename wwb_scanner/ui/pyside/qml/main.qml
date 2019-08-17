@@ -4,6 +4,7 @@ import QtQuick.Controls 2.12
 import Qt.labs.settings 1.0
 import QtCharts 2.13
 import GraphUtils 1.0
+import ScanTools 1.0
 
 ApplicationWindow {
     id: window
@@ -132,5 +133,16 @@ ApplicationWindow {
     SpectrumLoader {
         id: spectrumLoader
 
+    }
+
+    ScannerInterface {
+        id: scanner
+        startFreq: scanControls.startFreq
+        endFreq: scanControls.endFreq
+        samplesPerSweep: scanControls.samplesPerSweep
+        sweepsPerScan: scanControls.sweepsPerScan
+        deviceInfo: device_config.device
+        gain: device_config.gain
+        sampleRate: device_config.sampleRate
     }
 }

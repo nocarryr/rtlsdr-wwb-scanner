@@ -6,11 +6,12 @@ from PySide2 import QtCore, QtQml
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQuick import QQuickView
 
-from wwb_scanner.ui.pyside import device_config, graph
+from wwb_scanner.ui.pyside import device_config, graph, scanner
 
 def register_qml_types():
     device_config.register_qml_types()
     graph.register_qml_types()
+    scanner.register_qml_types()
 
 # MAIN = QtCore.QUrl('qml/main.qml')
 BASE_PATH = Path(__file__).parent.resolve()
