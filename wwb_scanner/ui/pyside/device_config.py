@@ -4,6 +4,8 @@ from rtlsdr import RtlSdr
 from PySide2 import QtCore, QtQml
 from PySide2.QtCore import Signal, Property
 
+from wwb_scanner.ui.pyside.utils import GenericQObject
+
 # def get_devices():
 #     serials = RtlSdr.get_device_serial_addresses()
 
@@ -17,15 +19,6 @@ class TUNER_TYPE(enum.Enum):
     R820T       = 5
     R828D       = 6
 
-class GenericQObject(QtCore.QObject):
-    def _generic_setter(self, attr, value):
-        cur_value = getattr(self, attr)
-        if cur_value == value:
-            return
-        setattr(self, attr, value)
-        sig_name = f'_n{attr}'
-        sig = getattr(self, sig_name)
-        sig.emit()
 
 class DeviceInfo(GenericQObject):
     _n_text = Signal()
