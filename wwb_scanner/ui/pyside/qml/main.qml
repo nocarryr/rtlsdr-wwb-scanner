@@ -24,8 +24,15 @@ ApplicationWindow {
         Menu {
             title: qsTr("&File")
             Action {
-                text: ("&Import")
+                text: qsTr("&Import")
                 onTriggered: importDialog.open()
+            }
+            Action {
+                text: qsTr("&Export")
+                onTriggered: {
+                    exportDialog.graphData = chartWrapper.activeSpectrum;
+                    exportDialog.open();
+                }
             }
             Action {
                 text: qsTr("&Settings")
@@ -133,6 +140,10 @@ ApplicationWindow {
 
             chartWrapper.addSpectrum(fileName);
         }
+    }
+
+    ExportDialog {
+        id: exportDialog
     }
 
     DeviceConfigPopup {

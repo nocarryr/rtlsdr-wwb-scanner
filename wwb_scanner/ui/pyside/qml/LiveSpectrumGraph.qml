@@ -36,6 +36,10 @@ Item {
         graphData.load_from_file(fileName);
     }
 
+    function save_to_file(fileName){
+        graphData.save_to_file(fileName);
+    }
+
     function get_nearest_by_x(value){
         return graphData.get_nearest_by_x(value);
     }

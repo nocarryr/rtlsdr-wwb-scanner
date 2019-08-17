@@ -345,6 +345,12 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self.update_spectrum_data()
         print('load complete')
 
+    @Slot(QtCore.QUrl)
+    def save_to_file(self, uri):
+        filename = uri.toLocalFile()
+        print('save_to_file: ', filename)
+        self.spectrum.export_to_file(filename=filename)
+
 class LiveSpectrumGraphData(SpectrumGraphData):
     _n_update_interval = Signal()
     _n_update_timer = Signal()
