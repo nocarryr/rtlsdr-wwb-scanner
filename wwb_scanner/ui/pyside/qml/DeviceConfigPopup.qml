@@ -60,6 +60,23 @@ Dialog {
             // }
             device_model.append(data);
             console.log('model item: ' + JSON.stringify(device_model.get(i)));
+            if (!root.device) {
+                if (root.deviceSerial) {
+                    if (device.device_serial == root.deviceSerial){
+                        root.device = device;
+                    }
+                } else {
+                    if (root.deviceIndex !== undefined) {
+                        if (device.device_index == root.deviceIndex){
+                            root.device = device;
+                        }
+                    } else {
+                        if (device.device_index == 0){
+                            root.device = device;
+                        }
+                    }
+                }
+            }
             // device_model.sync();
         }
         if (root.device){
@@ -154,11 +171,7 @@ Dialog {
         root.close();
     }
 
-    onOpened:{
+    Component.onCompleted: {
         device_list.update_devices();
     }
-
-    // Component.onCompleted: {
-    //     device_list.update_devices();
-    // }
 }
