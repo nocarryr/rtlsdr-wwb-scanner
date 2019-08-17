@@ -1,4 +1,6 @@
 import time
+import threading
+
 from PySide2 import QtCore, QtQml
 from PySide2.QtCore import QObject, Property, Signal
 
@@ -74,3 +76,57 @@ class IntervalTimer(QObject):
         self._timer_id = None
         if timer_id is not None:
             self.killTimer(timer_id)
+
+class QObjectThread(QtCore.QObject):
+    started = Signal()
+    result = Signal(object)
+    error = Signal(object)
+    complete = Signal()
+    shutdown = Signal()
+    def __init__(self, parent=None, **kwargs):
+        super().__init__(parent)
+        self.target = kwargs.get('target')
+        self._thread = QtCore.QThread()
+        self._thread.started.connect(self._run)
+        self._debug_enabled = False
+        self.shutdown.connect(self._thread.quit)
+    def start(self):
+        self.print_debug('start()')
+        self.moveToThread(self._thread)
+        self._thread.start()
+    def stop(self):
+        self.shutdown.emit()
+        self.join()
+    def join(self):
+        # self.shutdown.emit()
+        self._thread.wait()
+    def _run(self):
+        self.print_debug('starting')
+        self.started.emit()
+        try:
+            self.print_debug('run()')
+            self.run()
+        except Exception as exc:
+            self.print_debug('Exception...')
+            import traceback
+            traceback.print_exc()
+            self.error.emit(exc)
+            self.shutdown.emit()
+            return
+        self.print_debug('run() finished')
+        self.complete.emit()
+        self.print_debug('complete')
+        self.shutdown.emit()
+        self.print_debug('shutdown')
+    def run(self):
+        result = self.target()
+        self.result.emit(result)
+    def print_debug(self, msg):
+        if not self._debug_enabled:
+            return
+        t = threading.current_thread()
+        print(f'{self!r} - {msg} - {t}')
+    def __repr__(self):
+        return f'<QObjectThread: {self}>'
+    def __str__(self):
+        return f'{self.target} - {self._thread}'
