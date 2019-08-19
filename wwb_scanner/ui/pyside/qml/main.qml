@@ -161,7 +161,7 @@ ApplicationWindow {
         endFreq: scanControls.endFreq
         samplesPerSweep: scanControls.samplesPerSweep
         sweepsPerScan: scanControls.sweepsPerScan
-        deviceInfo: device_config.device
+        deviceInfo: device_config.device ? device_config.device: null
         gain: device_config.gain
         sampleRate: device_config.sampleRate
     }
