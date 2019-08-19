@@ -1,7 +1,7 @@
 from bisect import bisect_left
 import numpy as np
 
-from PySide2 import QtCore, QtQml, QtQuick
+from PySide2 import QtCore, QtQml, QtQuick, QtGui
 from PySide2.QtCore import Signal, Property, Slot
 from PySide2.QtCharts import QtCharts
 
@@ -212,6 +212,7 @@ class SpectrumGraphData(QtQuick.QQuickItem):
     _n_min_value = Signal()
     _n_max_value = Signal()
     _n_spectrum = Signal()
+    _n_color = Signal()
     def __init__(self, *args):
         self.xy_data = np.zeros(0, dtype=GRAPH_DTYPE)
         self._min_value = QtCore.QPointF(0., 0.)
@@ -219,6 +220,7 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._model = None
         self._spectrum = None
         self._name = None
+        self._color = None
         super().__init__(*args)
 
     def _g_model(self): return self._model
@@ -235,6 +237,14 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._name = value
         self._n_name.emit()
     name = Property(str, _g_name, _s_name, notify=_n_name)
+
+    def _g_color(self): return self._color
+    def _s_color(self, value):
+        if value == self._color:
+            return
+        self._color = value
+        self._n_color.emit()
+    color = Property(QtGui.QColor, _g_color, _s_color, notify=_n_color)
 
     def _g_min_value(self): return self._min_value
     def _s_min_value(self, value):

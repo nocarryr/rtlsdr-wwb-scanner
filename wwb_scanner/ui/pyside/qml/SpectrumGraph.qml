@@ -12,12 +12,17 @@ Item {
     property alias minValue: graphData.minValue
     property alias maxValue: graphData.maxValue
     property alias spectrum: graphData.spectrum
+    property int index
+    property alias color: graphData.color
 
     signal axisExtentsUpdate()
 
     onSeriesChanged: {
         if (series){
             series.name = root.name;
+            if (true){//!graphData.color){
+                root.color = series.color;
+            }
         }
     }
 
@@ -57,6 +62,13 @@ Item {
         //     root.series.axisX.max = graphData.maxValue.x;
         //     root.series.axisY.max = graphData.maxValue.y;
         // }
+        onColorChanged: {
+            if (root.series){
+                if (root.series.color != graphData.color){
+                    root.series.color = graphData.color;
+                }
+            }
+        }
     }
 
     HXYModelMapper {

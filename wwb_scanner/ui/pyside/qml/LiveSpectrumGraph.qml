@@ -13,6 +13,8 @@ Item {
     property alias maxValue: graphData.maxValue
     property alias spectrum: graphData.spectrum
     property alias scanner: graphData.scanner
+    property int index
+    property alias color: graphData.color
 
     signal axisExtentsUpdate()
 
@@ -20,6 +22,9 @@ Item {
     onSeriesChanged: {
         if (series){
             series.name = root.name;
+            if (true){//!graphData.color){
+                root.color = series.color;
+            }
         }
     }
 
