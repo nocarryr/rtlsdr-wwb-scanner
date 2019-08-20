@@ -10,6 +10,7 @@ Item {
     anchors.fill: parent
 
     property alias mouseDataPoint: crosshair.dataValue
+    property alias theme: chart.theme
     property var models: []
     property var spectrumGraphs: []
     property var activeSpectrum

@@ -41,6 +41,13 @@ ApplicationWindow {
             MenuSeparator { }
             Action { text: qsTr("&Quit") }
         }
+        Menu {
+            title: qsTr("&View")
+            Action {
+                text: qsTr("&Theme")
+                onTriggered: themeSelect.open()
+            }
+        }
     }
     header: ToolBar {
         ScanControls {
@@ -74,6 +81,7 @@ ApplicationWindow {
         Graph {
             id: chartWrapper
             anchors.fill: parent
+            theme: themeSelect.theme
             // property var graph
             // property var spectrum_data
 
@@ -148,6 +156,10 @@ ApplicationWindow {
 
     DeviceConfigPopup {
         id: device_config
+    }
+
+    ThemeSelectPopup {
+        id: themeSelect
     }
 
     SpectrumLoader {
