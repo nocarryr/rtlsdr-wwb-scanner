@@ -50,7 +50,7 @@ setup(
     long_description=get_long_description(),
     entry_points={
         'console_scripts':[
-            'wwb_scanner-ui = wwb_scanner.ui.kivyui.main:run',
+            'wwb_scanner-ui = wwb_scanner.ui.pyside.main:run',
         ],
     },
     platforms=['any'],
