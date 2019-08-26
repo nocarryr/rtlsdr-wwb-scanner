@@ -67,6 +67,9 @@ class WWBImporter(BaseWWBImporter):
         color = root.get('color')
         if color is not None:
             spectrum.color = spectrum.color.from_hex(color)
+        name = root.get('name')
+        if name is not None:
+            spectrum.name = name
         freq_set = root.find('*/freq_set')
         data_set = root.find('*/data_set')
         ts = data_set.get('date_time')
