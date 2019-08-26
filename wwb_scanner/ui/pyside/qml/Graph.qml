@@ -133,6 +133,7 @@ Item {
 
     RowLayout {
         anchors.fill: parent
+        spacing: 1
         Item {
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -251,6 +252,9 @@ Item {
             id: chartSelect
             Layout.minimumWidth: 200
             Layout.fillHeight: true
+            Layout.leftMargin: 0
+            Layout.rightMargin: 5
+            Layout.topMargin: 5
             activeSpectrum: root.activeSpectrum
 
             onSelected: {

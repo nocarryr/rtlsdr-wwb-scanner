@@ -8,15 +8,17 @@ RadioDelegate {
     property string itemName
     property color itemColor: "#8080FF"
     property int itemIndex
+    leftPadding: 4
+    rightPadding: 4
+    font.pointSize: 9
 
+    signal colorButtonPressed(int itemIndex)
 
     contentItem: Label {
-        // rightPadding: control.indicator.width + control.spacing
-        rightPadding: 0
+        rightPadding: colorBtn.width + control.spacing
         leftPadding: control.indicator.width + control.spacing
         text: control.itemName
         font: control.font
-        // opacity: enabled ? 1.0: 0.3
         color: control.itemColor
         elide: Text.ElideRight
         maximumLineCount: 2
@@ -25,21 +27,36 @@ RadioDelegate {
         horizontalAlignment: Qt.AlignRight
     }
 
+    RoundButton {
+        id: colorBtn
+        property color highlightColor: Qt.lighter(control.itemColor, 1.25)
+
+        x: control.width - width - control.rightPadding
+        y: control.topPadding + (control.availableHeight - height) / 2
+        radius: 2
+
+        onClicked: {
+            control.colorButtonPressed(control.itemIndex);
+        }
+
+        background: Rectangle {
+            implicitWidth: 20
+            implicitHeight: 20
+            radius: colorBtn.radius
+            color: colorBtn.hovered ? colorBtn.highlightColor : control.itemColor
+            border.color: Qt.darker(control.itemColor, 1.5)
+            border.width: 1
+        }
+    }
+
     indicator: Rectangle {
-        implicitWidth: 28
-        implicitHeight: 28
-        // x: control.width - width - control.rightPadding
-        // x: width / 2 + control.leftPadding / 2
+        implicitWidth: 26
+        implicitHeight: 26
         x: control.leftPadding
-        // y: parent.height / 2 - height / 2
         y: control.topPadding + (control.availableHeight - height) / 2
         radius: width / 2
-        // color: Qt.lighter(control.itemColor, 1.5)
-        // color: "#00FF00"
-        // border.color: "#00FF00"// control.itemColor
-
         color: control.down ? control.palette.light : control.palette.base
-        border.width: control.visualFocus ? 2 : 1
+        border.width: 1
         border.color: control.visualFocus ? control.palette.highlight : control.palette.mid
 
         Rectangle {
@@ -51,5 +68,14 @@ RadioDelegate {
             color: control.palette.text
             visible: control.checked
         }
+    }
+
+    background: Rectangle {
+        implicitWidth: 100
+        implicitHeight: 40
+        opacity: control.down ? 1 : .3
+        color: control.hovered ? control.palette.midlight : control.palette.light
+        border.width: 1
+        border.color: control.visualFocus ? control.palette.highlight : control.palette.mid
     }
 }

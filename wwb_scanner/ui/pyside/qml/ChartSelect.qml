@@ -1,6 +1,7 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.11
 import QtQuick.Controls 2.12
+import QtQuick.Dialogs 1.0
 import GraphUtils 1.0
 
 Item {
@@ -21,7 +22,6 @@ Item {
     }
 
     onAddItem: {
-        // var index = root.spectrumGraphs.length;
         var index = spectrum.index;
         root.spectrumGraphs[index] = spectrum;
         root.allSeries[index] = spectrum.series;
@@ -30,17 +30,11 @@ Item {
             'name':spectrum.name,
             'color':spectrum.color,
         };
-        // if (!data.name){
-        //     data.name = 'foo';
-        // }
-        // console.log('onAddItem: ' + JSON.stringify(data));
         listModel.append(data);
         spectrum.onNameChanged.connect(function(){
-            // console.log('spectrum.onNameChanged: ', spectrum.name);
             listModel.get(index).name = spectrum.name;
         });
         spectrum.onColorChanged.connect(function(){
-            // console.log('spectrum.onColorChanged: ', spectrum.color);
             listModel.get(index).color = spectrum.color;
         });
     }
@@ -55,15 +49,14 @@ Item {
         anchors.fill: parent
         model: listModel
 
+        spacing: 2
+        contentWidth: listView.width
+
         ButtonGroup {
             id: btnGroup
 
-            // onCheckedButtonChanged: {
-            //
-            // }
             onClicked: {
                 var spectrum = root.spectrumGraphs[button.itemIndex];
-                // console.log('btnGroup.onClicked: ', button.itemIndex);
                 if (spectrum.index == root.activeIndex){
                     return;
                 }
@@ -78,6 +71,30 @@ Item {
             itemName: name
             itemColor: color
             checked: root.activeIndex == index
+            width: listView.contentWidth
+            onColorButtonPressed: {
+                var spectrum = root.spectrumGraphs[itemIndex];
+                colorDialog.activate(spectrum);
+            }
+        }
+    }
+    ColorDialog {
+        id: colorDialog
+        property var spectrum
+
+        function activate(spectrum){
+            colorDialog.spectrum = spectrum;
+            colorDialog.color = spectrum.color;
+            colorDialog.open();
+        }
+
+        onAccepted: {
+            colorDialog.spectrum.color = colorDialog.color;
+            colorDialog.close();
+        }
+        onRejected: {
+            colorDialog.spectrum = null;
+            colorDialog.close();
         }
     }
 }
