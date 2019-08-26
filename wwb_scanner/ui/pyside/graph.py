@@ -8,7 +8,7 @@ from PySide2.QtCharts import QtCharts
 
 from wwb_scanner.file_handlers import BaseImporter
 from wwb_scanner.scan_objects.spectrum import Spectrum
-from wwb_scanner.ui.pyside.utils import IntervalTimer
+from wwb_scanner.ui.pyside.utils import IntervalTimer, is_pathlike
 
 GRAPH_DTYPE = np.dtype([
     ('x', np.float64),
@@ -230,7 +230,13 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._on_model_changed()
     model = Property(QtCore.QObject, _g_model, _s_model, notify=_n_model)
 
-    def _g_name(self): return self._name
+    def _g_name(self):
+        name = self._name
+        if name is not None:
+            is_p, p = is_pathlike(name)
+            if is_p:
+                return p.name
+        return name
     def _s_name(self, value):
         if value == self._name:
             return

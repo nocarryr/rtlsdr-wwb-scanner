@@ -1,8 +1,26 @@
 import time
 import threading
+import pathlib
 
 from PySide2 import QtCore, QtQml
 from PySide2.QtCore import QObject, Property, Signal
+
+def is_pathlike(s):
+    if '/' in s or '\\' in s:
+        try:
+            p = pathlib.PurePosixPath(s)
+            uri = p.as_uri()
+            return True, p
+        except ValueError:
+            pass
+        try:
+            p = pathlib.PureWindowsPath(s)
+            uri = p.as_uri()
+            return True, p
+        except ValueError:
+            pass
+    return False, None
+
 
 class GenericQObject(QtCore.QObject):
     def _generic_setter(self, attr, value):
