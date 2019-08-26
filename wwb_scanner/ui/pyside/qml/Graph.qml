@@ -191,8 +191,10 @@ Item {
 
             Crosshair {
                 id: crosshair
-                anchors.fill: parent
-
+                x: chart.plotArea.x
+                y: chart.plotArea.y
+                width: chart.plotArea.width
+                height: chart.plotArea.height
             }
 
 
@@ -241,6 +243,7 @@ Item {
                             dataPos = dataPoint;
                         } else {
                             dataPos = chart.mapToPosition(dataPoint, series);
+                            dataPos = chart.mapToItem(crosshair, dataPos.x, dataPos.y);
                         }
                         crosshair.setData(dataPos, dataPoint);
                         // mouseArea.dataPoint = dataPoint;
