@@ -57,7 +57,7 @@ ApplicationWindow {
         ScanControls {
             id: scanControls
             anchors.fill: parent
-            // scanReady: !scanner.running
+            progress: scanner.progress
             onScannerState: {
                 if (state) {
                     scanner.start();
@@ -189,5 +189,8 @@ ApplicationWindow {
         deviceInfo: device_config.device ? device_config.device: null
         gain: device_config.gain
         sampleRate: device_config.sampleRate
+        onScannerRunState: {
+            scanControls.scanRunning = scanner.running;
+        }
     }
 }
