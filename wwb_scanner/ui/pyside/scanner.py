@@ -1,10 +1,13 @@
 import threading
 
+import numpy as np
+
 from PySide2 import QtCore, QtQml, QtQuick
 from PySide2.QtCore import Signal, Property, Slot
 
 from wwb_scanner.scanner.config import ScanConfig
 from wwb_scanner.scanner import Scanner
+from wwb_scanner.scanner.main import get_freq_resolution
 from wwb_scanner.scan_objects import Spectrum
 
 from wwb_scanner.ui.pyside.utils import GenericQObject, QObjectThread
@@ -15,6 +18,9 @@ class ScannerInterface(GenericQObject):
     _n_endFreq = Signal()
     _n_samplesPerSweep = Signal()
     _n_sweepsPerScan = Signal()
+    _n_windowSize = Signal()
+    _n_smoothingEnabled = Signal()
+    _n_smoothingFactor = Signal()
     _n_deviceInfo = Signal()
     _n_gain = Signal()
     _n_sampleRate = Signal()
@@ -29,6 +35,9 @@ class ScannerInterface(GenericQObject):
         self._endFreq = None
         self._samplesPerSweep = None
         self._sweepsPerScan = None
+        self._windowSize = None
+        self._smoothingEnabled = False
+        self._smoothingFactor = 1.
         self._deviceInfo = None
         self._gain = None
         self._sampleRate = None
@@ -68,6 +77,18 @@ class ScannerInterface(GenericQObject):
     def _s_sweepsPerScan(self, value): self._generic_setter('_sweepsPerScan', value)
     sweepsPerScan = Property(int, _g_sweepsPerScan, _s_sweepsPerScan, notify=_n_sweepsPerScan)
 
+    def _g_windowSize(self): return self._windowSize
+    def _s_windowSize(self, value): self._generic_setter('_windowSize', value)
+    windowSize = Property(int, _g_windowSize, _s_windowSize, notify=_n_windowSize)
+
+    def _g_smoothingEnabled(self): return self._smoothingEnabled
+    def _s_smoothingEnabled(self, value): self._generic_setter('_smoothingEnabled', value)
+    smoothingEnabled = Property(bool, _g_smoothingEnabled, _s_smoothingEnabled, notify=_n_smoothingEnabled)
+
+    def _g_smoothingFactor(self): return self._smoothingFactor
+    def _s_smoothingFactor(self, value): self._generic_setter('_smoothingFactor', value)
+    smoothingFactor = Property(float, _g_smoothingFactor, _s_smoothingFactor, notify=_n_smoothingFactor)
+
     def _g_deviceInfo(self): return self._deviceInfo
     def _s_deviceInfo(self, value): self._generic_setter('_deviceInfo', value)
     deviceInfo = Property(QtCore.QObject, _g_deviceInfo, _s_deviceInfo, notify=_n_deviceInfo)
@@ -96,11 +117,16 @@ class ScannerInterface(GenericQObject):
         conf.sampling.sample_rate = self.sampleRate * 1e3
         conf.sampling.samples_per_sweep = self.samplesPerSweep
         conf.sampling.sweeps_per_scan = self.sweepsPerScan
+        conf.sampling.window_size = self.windowSize
         return conf
 
     # def get_all_freqs(self):
     #     if self.scanner._running.is_set():
     #         return self.scanner.get_all_freqs()
+
+    @Slot(int, float, result=float)
+    def getFreqResolution(self, nfft, fs):
+        return get_freq_resolution(nfft, fs*1e3) / 1e6
 
     @Slot()
     def start(self):

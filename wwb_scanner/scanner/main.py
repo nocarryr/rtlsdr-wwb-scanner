@@ -18,6 +18,15 @@ def mhz_to_hz(mhz):
 def hz_to_mhz(hz):
     return hz / 1000000.0
 
+def get_freq_resolution(nfft, fs):
+    freqs = np.fft.fftfreq(nfft, 1/fs)
+    freqs = np.fft.fftshift(freqs)
+    r = np.unique(np.diff(np.around(freqs)))
+    if r.size != 1:
+        print('!!! Not unique: ', r)
+        return r.mean()
+    return r[0]
+
 class StopScanner(Exception):
     pass
 

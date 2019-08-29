@@ -35,8 +35,12 @@ ApplicationWindow {
                 }
             }
             Action {
-                text: qsTr("&Settings")
+                text: qsTr("&Device Settings")
                 onTriggered: device_config.open()
+            }
+            Action {
+                text: qsTr("S&can Settings")
+                onTriggered: scanControlsDialog.open()
             }
             MenuSeparator { }
             Action { text: qsTr("&Quit") }
@@ -158,6 +162,11 @@ ApplicationWindow {
         id: device_config
     }
 
+    ScanControlsDialog {
+        id: scanControlsDialog
+        scanner: scanner
+    }
+
     ThemeSelectPopup {
         id: themeSelect
     }
@@ -171,8 +180,11 @@ ApplicationWindow {
         id: scanner
         startFreq: scanControls.startFreq
         endFreq: scanControls.endFreq
-        samplesPerSweep: scanControls.samplesPerSweep
-        sweepsPerScan: scanControls.sweepsPerScan
+        samplesPerSweep: scanControlsDialog.samplesPerSweep
+        sweepsPerScan: scanControlsDialog.sweepsPerScan
+        windowSize: scanControlsDialog.windowSize
+        smoothingEnabled: scanControlsDialog.smoothingEnabled
+        smoothingFactor: scanControlsDialog.smoothingFactor
         deviceInfo: device_config.device ? device_config.device: null
         gain: device_config.gain
         sampleRate: device_config.sampleRate

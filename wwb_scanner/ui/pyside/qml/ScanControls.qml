@@ -5,27 +5,24 @@ import Qt.labs.settings 1.0
 
 RowLayout {
     id: root
-    spacing: 0
-    property real startFreq: 470.
-    property real endFreq: 536.
-    property real samplesPerSweep: 8192
-    property real sweepsPerScan: 20
+    property alias startFreq: settings.startFreq
+    property alias endFreq: settings.endFreq
     property bool scanReady: true
     signal scannerState(bool state)
 
     Settings {
+        id: settings
         category: 'Scan Config'
-        property alias startFreq: root.startFreq
-        property alias endFreq: root.endFreq
-        property alias samplesPerSweep: root.samplesPerSweep
-        property alias sweepsPerScan: root.sweepsPerScan
+        property real startFreq: 470.
+        property real endFreq: 536.
     }
 
     NumberInput {
         id: startFreqInput
         name: 'Start Freq'
+        Layout.leftMargin: 6
+        labelFontSize: 10
         value: root.startFreq
-        Layout.rightMargin: 0
         onSubmit: {
             root.startFreq = startFreqInput.value;
         }
@@ -33,30 +30,18 @@ RowLayout {
     NumberInput {
         id: endFreqInput
         name: 'End Freq'
+        labelFontSize: 10
         value: root.endFreq
-        Layout.leftMargin: 0
         onSubmit: {
             root.endFreq = endFreqInput.value;
         }
     }
 
-    NumberInput {
-        id: samplesPerSweepInput
-        name: 'Samples Per Sweep'
-        isFloat: false
-        value: root.samplesPerSweep
-        onSubmit: {
-            root.samplesPerSweep = samplesPerSweepInput.value;
-        }
-    }
-    NumberInput {
-        id: sweepsPerScanInput
-        name: 'Sweeps Per Scan'
-        isFloat: false
-        value: root.sweepsPerScan
-        onSubmit: {
-            root.sweepsPerScan = sweepsPerScanInput.value;
-        }
+    ToolSeparator { }
+
+    Item {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
     }
 
     ToolSeparator { }
@@ -70,6 +55,7 @@ RowLayout {
     ToolButton {
         id: scanStopBtn
         text: "Stop"
+        Layout.rightMargin: 6
         // enabled: !root.scanReady
         onClicked: root.scannerState(false)
     }
