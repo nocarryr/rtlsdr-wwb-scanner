@@ -21,8 +21,10 @@ class SampleArray(JSONMixin):
             self.data = np.sort(self.data, order='frequency')
     @classmethod
     def create(cls, keep_sorted=True, **kwargs):
-        obj = cls(keep_sorted=keep_sorted)
-        obj.set_fields(**kwargs)
+        data = kwargs.get('data')
+        obj = cls(data, keep_sorted=keep_sorted)
+        if not obj.data.size:
+            obj.set_fields(**kwargs)
         return obj
     def set_fields(self, **kwargs):
         f = kwargs.get('frequency')

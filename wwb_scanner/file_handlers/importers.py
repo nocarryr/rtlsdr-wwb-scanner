@@ -36,6 +36,16 @@ class BaseImporter(object):
     def parse_file_data(self):
         raise NotImplementedError('Method must be implemented by subclasses')
 
+class NumpyImporter(BaseImporter):
+    _extension = 'npz'
+    def __call__(self):
+        data = np.load(self.filename)
+        spectrum = self.spectrum
+        spectrum.name = os.path.basename(self.filename)
+        spectrum.add_sample_set(data=data['sample_data'])
+        return spectrum
+
+
 class CSVImporter(BaseImporter):
     delimiter_char = ','
     _extension = 'csv'

@@ -37,9 +37,6 @@ Item {
     onMinValueChanged: { axisExtentsUpdate() }
     onMaxValueChanged: { axisExtentsUpdate() }
 
-    function load_from_file(fileName){
-        graphData.load_from_file(fileName);
-    }
 
     function save_to_file(fileName){
         graphData.save_to_file(fileName);

@@ -51,6 +51,13 @@ class BaseExporter(object):
         with open(self.filename, 'w') as f:
             f.write(s)
 
+class NumpyExporter(BaseExporter):
+    _extension = 'npz'
+    def build_data(self):
+        pass
+    def write_file(self):
+        np.savez(self.filename, sample_data=self.spectrum.sample_data)
+
 class CSVExporter(BaseExporter):
     _extension = 'csv'
     newline_chars = '\r\n'

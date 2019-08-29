@@ -10,7 +10,8 @@ FileDialog {
     selectExisting: false
     defaultSuffix: 'csv'
     nameFilters: [
-        'Scan Files (*.csv)'
+        'Scan Files (*.csv)',
+        'Numpy Files (*.npz)',
     ]
     property var graphData
 
