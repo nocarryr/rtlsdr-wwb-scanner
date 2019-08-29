@@ -396,7 +396,7 @@ class LiveSpectrumGraphData(SpectrumGraphData):
         if self._scanner is not None:
             self.spectrum = self._scanner.spectrum
             self._scanner.scannerRunState.connect(self.on_scanner_run_state)
-            self.update_interval = .5
+            self.update_interval = .1
         else:
             self.update_interval = -1
     scanner = Property(QtCore.QObject, _g_scanner, _s_scanner, notify=_n_scanner)
@@ -439,7 +439,11 @@ class LiveSpectrumGraphData(SpectrumGraphData):
     def _update_extents(self):
         if self.scanner is not None:
             min_x = self.scanner.startFreq
+            if self.xy_data.size and self.xy_data['x'].min() < min_x:
+                min_x = self.xy_data['x'].min()
             max_x = self.scanner.endFreq
+            if self.xy_data.size and self.xy_data['x'].max() > max_x:
+                max_x = self.xy_data['x'].max()
         else:
             min_x = self.xy_data['x'].min()
             max_x = self.xy_data['y'].max()

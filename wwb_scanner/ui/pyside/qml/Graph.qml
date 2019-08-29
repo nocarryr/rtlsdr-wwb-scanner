@@ -139,10 +139,11 @@ Item {
             Layout.fillHeight: true
             ChartView {
                 id: chart
+                property bool useOpenGL: true
                 anchors.fill: parent
                 antialiasing: true
                 legend.visible: false
-                animationOptions: ChartView.AllAnimations
+                animationOptions: ChartView.SeriesAnimations
                 property var activeSeries
                 // enabled: false
 
@@ -165,8 +166,16 @@ Item {
                 }
                 function addMappedSeries(){
                     var series = chart.createSeries(ChartView.SeriesTypeLine, 'foo', axisX, axisY);
+                    series.useOpenGL = chart.useOpenGL;
                     chart.activeSeries = series;
                     return series;
+                }
+                onUseOpenGLChanged: {
+                    var series;
+                    for (var i=0;i<chart.count();i++){
+                        series = chart.series(i);
+                        series.useOpenGL = chart.useOpenGL;
+                    }
                 }
 
             //     LineSeries {
