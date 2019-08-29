@@ -67,6 +67,6 @@ class Color(dict):
             return eq
         return not eq
     def __repr__(self):
-        return f'<{self.__class__}: {self}>'
+        return '<{self.__class__}: {self}>'.format(self=self)
     def __str__(self):
         return str(self.to_list())
