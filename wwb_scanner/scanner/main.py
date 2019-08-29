@@ -27,6 +27,16 @@ def get_freq_resolution(nfft, fs):
         return r.mean()
     return r[0]
 
+def is_equal_spacing(nfft, fs, step_size):
+    freqs = np.fft.fftfreq(nfft, 1/fs)
+    freqs = np.fft.fftshift(freqs)
+
+    freqs2 = freqs + step_size
+    all_freqs = np.unique(np.around(np.append(freqs, freqs2)))
+    diff = np.unique(np.diff(np.around(all_freqs)))
+    print(diff)
+    return diff.size == 1
+
 class StopScanner(Exception):
     pass
 
@@ -153,10 +163,32 @@ class Scanner(ScannerBase):
         c = self.sampling_config
         overlap = c.sweep_overlap_ratio
         self.sdr.sample_rate = c.sample_rate
-        rs = self.sdr.sample_rate
+        rs = int(round(self.sdr.sample_rate))
+
         self.sample_rate = rs
-        step_size = self._step_size = hz_to_mhz(rs / 2. * overlap)
+        nfft = self.window_size
+        resolution = get_freq_resolution(nfft, rs)
+
+        step_size = self._step_size = rs / 2. * overlap
+        self._equal_spacing = is_equal_spacing(nfft, rs, step_size)
+        if not self.equal_spacing:
+            step_size -= step_size % resolution
+            step_size = round(step_size)
+            if step_size <= 0:
+                step_size += resolution
+            self._equal_spacing = is_equal_spacing(nfft, rs, step_size)
+
+        step_size = hz_to_mhz(step_size)
+        self._step_size = step_size
+        print(f'step_size: {step_size!r}, equal_spacing: {self._equal_spacing}')
         return step_size
+    @property
+    def equal_spacing(self):
+        r = getattr(self, '_equal_spacing', None)
+        if r is not None:
+            return r
+        _ = self.step_size
+        return self._equal_spacing
     @property
     def window_size(self):
         c = self.config
@@ -206,11 +238,15 @@ class Scanner(ScannerBase):
         freqs = sample_set.frequencies
         spectrum = self.spectrum
         center_freq = sample_set.center_frequency
+        if self.equal_spacing:
+            force_lower_freq = True
+        else:
+            force_lower_freq = False
         spectrum.add_sample_set(
             frequency=freqs,
             magnitude=powers,
             center_frequency=center_freq,
-            force_lower_freq=False,
+            force_lower_freq=force_lower_freq,
         )
         self.progress = self.sample_collection.calc_progress()
 

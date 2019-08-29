@@ -18,6 +18,7 @@ class ScannerInterface(GenericQObject):
     _n_endFreq = Signal()
     _n_samplesPerSweep = Signal()
     _n_sweepsPerScan = Signal()
+    _n_sweepOverlapRatio = Signal()
     _n_windowSize = Signal()
     _n_smoothingEnabled = Signal()
     _n_smoothingFactor = Signal()
@@ -35,6 +36,7 @@ class ScannerInterface(GenericQObject):
         self._endFreq = None
         self._samplesPerSweep = None
         self._sweepsPerScan = None
+        self._sweepOverlapRatio = None
         self._windowSize = None
         self._smoothingEnabled = False
         self._smoothingFactor = 1.
@@ -77,6 +79,10 @@ class ScannerInterface(GenericQObject):
     def _s_sweepsPerScan(self, value): self._generic_setter('_sweepsPerScan', value)
     sweepsPerScan = Property(int, _g_sweepsPerScan, _s_sweepsPerScan, notify=_n_sweepsPerScan)
 
+    def _g_sweepOverlapRatio(self): return self._sweepOverlapRatio
+    def _s_sweepOverlapRatio(self, value): self._generic_setter('_sweepOverlapRatio', value)
+    sweepOverlapRatio = Property(float, _g_sweepOverlapRatio, _s_sweepOverlapRatio, notify=_n_sweepOverlapRatio)
+
     def _g_windowSize(self): return self._windowSize
     def _s_windowSize(self, value): self._generic_setter('_windowSize', value)
     windowSize = Property(int, _g_windowSize, _s_windowSize, notify=_n_windowSize)
@@ -117,6 +123,7 @@ class ScannerInterface(GenericQObject):
         conf.sampling.sample_rate = self.sampleRate * 1e3
         conf.sampling.samples_per_sweep = self.samplesPerSweep
         conf.sampling.sweeps_per_scan = self.sweepsPerScan
+        conf.sampling.sweep_overlap_ratio = self.sweepOverlapRatio
         conf.sampling.window_size = self.windowSize
         return conf
 

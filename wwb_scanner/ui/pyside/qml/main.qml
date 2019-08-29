@@ -182,6 +182,7 @@ ApplicationWindow {
         endFreq: scanControls.endFreq
         samplesPerSweep: scanControlsDialog.samplesPerSweep
         sweepsPerScan: scanControlsDialog.sweepsPerScan
+        sweepOverlapRatio: scanControlsDialog.sweepOverlapRatio
         windowSize: scanControlsDialog.windowSize
         smoothingEnabled: scanControlsDialog.smoothingEnabled
         smoothingFactor: scanControlsDialog.smoothingFactor
