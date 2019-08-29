@@ -23,11 +23,7 @@ def calc_num_samples(num_samples):
     return next_2_to_pow(int(num_samples))
 
 def sort_psd(f, Pxx, onesided=False):
-    a = np.zeros(f.size, dtype=[('f', f.dtype), ('Pxx', Pxx.dtype)])
-    a['f'] = f[:]
-    a['Pxx'] = Pxx[:]
-    a = np.sort(a, order='f')
-    return a['f'], a['Pxx']
+    return np.fft.fftshift(f), np.fft.fftshift(Pxx)
 
 class SampleSet(JSONMixin):
     __slots__ = ('scanner', 'center_frequency', 'raw', 'current_sweep', 'complete',
@@ -57,6 +53,9 @@ class SampleSet(JSONMixin):
     @property
     def samples_per_sweep(self):
         return self.scanner.samples_per_sweep
+    @property
+    def window_size(self):
+        return getattr(self.scanner, 'window_size', NPERSEG)
     def read_samples(self):
         scanner = self.scanner
         freq = self.center_frequency
@@ -113,18 +112,17 @@ class SampleSet(JSONMixin):
 
         samples = self.raw.flatten()
 
-        win = get_window(self.scanner.sampling_config.window_type, NPERSEG)
+        win_size = self.window_size
+        win = get_window(self.scanner.sampling_config.window_type, win_size)
         freqs, Pxx = welch(samples, fs=rs, window=win,
-            nperseg=NPERSEG, scaling='density', return_onesided=False)
+            nperseg=win_size, scaling='density', return_onesided=False)
 
         iPxx = np.fft.irfft(Pxx)
         iPxx = self.translate_freq(iPxx, fc, rs)
         Pxx = np.abs(np.fft.rfft(iPxx.real))
 
         freqs, Pxx = sort_psd(freqs, Pxx)
-        f_ix = np.append(np.nonzero(freqs<-0.25e6), np.nonzero(freqs>0.25e6))
-        freqs = freqs[f_ix]
-        Pxx = Pxx[f_ix]
+        freqs = np.around(freqs)
 
         freqs += fc
         freqs /= 1e6
@@ -140,15 +138,15 @@ class SampleSet(JSONMixin):
         freq = self.center_frequency
         scanner = self.scanner
         rs = scanner.sample_rate
+        win_size = self.window_size
         num_samples = scanner.samples_per_sweep * scanner.sweeps_per_scan
         overlap_ratio = scanner.sampling_config.sweep_overlap_ratio
         fake_samples = np.zeros(num_samples, 'complex')
-        f_expected, Pxx = welch(fake_samples.real, fs=rs, nperseg=NPERSEG, return_onesided=False)
+        f_expected, Pxx = welch(fake_samples.real, fs=rs, nperseg=win_size, return_onesided=False)
 
         f_expected, Pxx = sort_psd(f_expected, Pxx)
 
-        f_ix = np.append(np.nonzero(f_expected<-0.25e6), np.nonzero(f_expected>0.25e6))
-        f_expected = f_expected[f_ix]
+        f_expected = np.around(f_expected)
 
         f_expected += freq
         f_expected /= 1e6
