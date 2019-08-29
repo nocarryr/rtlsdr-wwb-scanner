@@ -56,6 +56,14 @@ Item {
     LiveSpectrumGraphData {
         id: graphData
         model: tblModel
+
+        onColorChanged: {
+            if (root.series){
+                if (root.series.color != graphData.color){
+                    root.series.color = graphData.color;
+                }
+            }
+        }
     }
 
     HXYModelMapper {

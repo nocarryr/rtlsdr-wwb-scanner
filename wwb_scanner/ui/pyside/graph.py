@@ -250,6 +250,10 @@ class SpectrumGraphData(QtQuick.QQuickItem):
             return
         self._color = value
         self._n_color.emit()
+        if self.spectrum is not None:
+            rgba = value.getRgbF()
+            if rgba != self.spectrum.color:
+                self.spectrum.color.from_list(rgba)
     color = Property(QtGui.QColor, _g_color, _s_color, notify=_n_color)
 
     def _g_min_value(self): return self._min_value
@@ -275,6 +279,8 @@ class SpectrumGraphData(QtQuick.QQuickItem):
                 self.name = value.name
             else:
                 value.name = self.name
+            if value.color != value.DEFAULT_COLOR:
+                self.color = QtGui.QColor.fromRgbF(*value.color.to_list())
         self.update_spectrum_data()
     spectrum = Property(object, _g_spectrum, _s_spectrum, notify=_n_spectrum)
 
