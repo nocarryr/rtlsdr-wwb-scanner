@@ -213,6 +213,7 @@ class SpectrumGraphData(QtQuick.QQuickItem):
     _n_max_value = Signal()
     _n_spectrum = Signal()
     _n_color = Signal()
+    _n_graphVisible = Signal()
     def __init__(self, *args):
         self.xy_data = np.zeros(0, dtype=GRAPH_DTYPE)
         self._min_value = QtCore.QPointF(0., 0.)
@@ -221,6 +222,7 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         self._spectrum = None
         self._name = None
         self._color = None
+        self._graphVisible = True
         super().__init__(*args)
 
     def _g_model(self): return self._model
@@ -255,6 +257,14 @@ class SpectrumGraphData(QtQuick.QQuickItem):
             if rgba != self.spectrum.color:
                 self.spectrum.color.from_list(rgba)
     color = Property(QtGui.QColor, _g_color, _s_color, notify=_n_color)
+
+    def _g_graphVisible(self): return self._graphVisible
+    def _s_graphVisible(self, value):
+        if value == self._graphVisible:
+            return
+        self._graphVisible = value
+        self._n_graphVisible.emit()
+    graphVisible = Property(bool, _g_graphVisible, _s_graphVisible, notify=_n_graphVisible)
 
     def _g_min_value(self): return self._min_value
     def _s_min_value(self, value):

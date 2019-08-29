@@ -71,10 +71,14 @@ Item {
             itemName: name
             itemColor: color
             checked: root.activeIndex == index
+            graphVisible: root.spectrumGraphs[itemIndex].graphVisible
             width: listView.contentWidth
             onColorButtonPressed: {
                 var spectrum = root.spectrumGraphs[itemIndex];
                 colorDialog.activate(spectrum);
+            }
+            onVisibleCheckBoxPressed: {
+                root.spectrumGraphs[itemIndex].graphVisible = state;
             }
         }
     }

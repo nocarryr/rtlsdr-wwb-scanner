@@ -12,6 +12,7 @@ Item {
     property alias minValue: graphData.minValue
     property alias maxValue: graphData.maxValue
     property alias spectrum: graphData.spectrum
+    property alias graphVisible: graphData.graphVisible
     property int index
     property alias color: graphData.color
 
@@ -30,6 +31,13 @@ Item {
         if (series){
             root.series.name = root.name;
         }
+    }
+
+    onGraphVisibleChanged: {
+        if (!root.series){
+            return;
+        }
+        root.series.visible = root.graphVisible;
     }
 
     onMinValueChanged: { axisExtentsUpdate() }

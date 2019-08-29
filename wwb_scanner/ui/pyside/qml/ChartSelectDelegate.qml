@@ -8,15 +8,17 @@ RadioDelegate {
     property string itemName
     property color itemColor: "#8080FF"
     property int itemIndex
+    property alias graphVisible: visibleCheckBox.checked
     leftPadding: 4
     rightPadding: 4
     font.pointSize: 9
 
     signal colorButtonPressed(int itemIndex)
+    signal visibleCheckBoxPressed(int itemIndex, bool state)
 
     contentItem: Label {
         rightPadding: colorBtn.width + control.spacing
-        leftPadding: control.indicator.width + control.spacing
+        leftPadding: control.indicator.width + visibleCheckBox.width + control.spacing
         text: control.itemName
         font: control.font
         color: control.itemColor
@@ -27,6 +29,14 @@ RadioDelegate {
         horizontalAlignment: Qt.AlignRight
     }
 
+    CheckBox {
+        id: visibleCheckBox
+        x: control.indicator.width + control.spacing
+        y: control.topPadding + (control.availableHeight - height) / 2
+        onToggled: {
+            control.visibleCheckBoxPressed(control.itemIndex, visibleCheckBox.checked);
+        }
+    }
     RoundButton {
         id: colorBtn
         property color highlightColor: Qt.lighter(control.itemColor, 1.25)
