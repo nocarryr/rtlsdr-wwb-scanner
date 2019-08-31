@@ -54,19 +54,44 @@ def test_spectrum(random_samples):
 
 def test_add_sample_set(random_samples):
     from wwb_scanner.scan_objects import Spectrum
+    from wwb_scanner.scan_objects import SampleArray
 
-    rs = 2.048e6
+    rs = 2.000e6
 
     def build_data(fc):
         freqs, sig, Pxx = random_samples(n=256, rs=rs, fc=fc)
 
         return freqs, Pxx
 
+    def build_struct_data(freqs, ff):
+        data = np.zeros(freqs.size, dtype=SampleArray.dtype)
+        data['frequency'] = freqs
+        data['iq'] = ff
+        data['magnitude'] = np.abs(ff)
+        data['dbFS'] = 10 * np.log10(np.abs(ff))
+        return data
+
+    def get_overlap_arrays(data1, data2):
+        freqs1 = data1['frequency']
+        freqs2 = data2['frequency']
+        overlap_data1 = data1[np.flatnonzero(np.in1d(freqs1, freqs2))]
+        overlap_data2 = data2[np.flatnonzero(np.in1d(freqs2, freqs1))]
+        avg_data = np.zeros(overlap_data1.size, dtype=overlap_data1.dtype)
+        avg_data['frequency'] = overlap_data1['frequency']
+        for key in ['iq', 'magnitude', 'dbFS']:
+            avg_data[key] = np.mean([overlap_data1[key], overlap_data2[key]], axis=0)
+        non_overlap_data2 = data2[np.flatnonzero(np.in1d(freqs2, freqs1, invert=True))]
+        assert np.array_equal(overlap_data1['frequency'], overlap_data2['frequency'])
+
+        return avg_data, non_overlap_data2
+
     fc = 600e6
 
     spectrum = Spectrum()
 
     freqs, ff = build_data(fc)
+    data1 = build_struct_data(freqs, ff)
+
     spectrum.add_sample_set(frequency=freqs, iq=ff, center_frequency=fc, force_lower_freq=True)
 
     assert np.array_equal(spectrum.sample_data['frequency'], freqs)
@@ -87,15 +112,25 @@ def test_add_sample_set(random_samples):
 
     assert np.unique(spectrum.sample_data['frequency']).size == spectrum.sample_data['frequency'].size
 
-    for freq, val in zip(freqs2, ff2):
+    data2 = build_struct_data(freqs2, ff2)
+    avg_data, non_overlap_data2 = get_overlap_arrays(data1, data2)
+    assert data2.size == avg_data.size + non_overlap_data2.size
+    assert spectrum.sample_data.size == data1.size + non_overlap_data2.size
+
+    for freq in freqs2:
+        mask = np.isin([freq], avg_data['frequency'])
+        if np.any(mask):
+            val = avg_data[np.searchsorted(avg_data['frequency'], freq)]
+        else:
+            val = non_overlap_data2[np.searchsorted(non_overlap_data2['frequency'], freq)]
         sample = spectrum.samples[freq]
         ix = sample.spectrum_index
         iq = spectrum.sample_data['iq'][ix]
         m = spectrum.sample_data['magnitude'][ix]
         dB = spectrum.sample_data['dbFS'][ix]
-        assert iq == val == sample.iq
-        assert m == np.abs(val) == sample.magnitude
-        assert dB == 10 * np.log10(np.abs(val)) == sample.dbFS
+        assert iq == val['iq'] == sample.iq
+        assert m == val['magnitude'] == sample.magnitude
+        assert dB == val['dbFS'] == sample.dbFS
 
 
     fc = 800e6
@@ -109,12 +144,22 @@ def test_add_sample_set(random_samples):
     assert spectrum.sample_data['frequency'].size == spectrum.sample_data['iq'].size
     assert spectrum.sample_data['frequency'].size == spectrum.sample_data['magnitude'].size
 
-    for freq, val in zip(freqs3, ff3):
+    data3 = build_struct_data(freqs3, ff3)
+    avg_data2, non_overlap_data3 = get_overlap_arrays(data2, data3)
+    assert data3.size == avg_data2.size + non_overlap_data3.size
+    assert spectrum.sample_data.size == data1.size + non_overlap_data2.size + non_overlap_data3.size
+
+    for freq in freqs3:
+        mask = np.isin([freq], avg_data2['frequency'])
+        if np.any(mask):
+            val = avg_data2[np.searchsorted(avg_data2['frequency'], freq)]
+        else:
+            val = non_overlap_data3[np.searchsorted(non_overlap_data3['frequency'], freq)]
         sample = spectrum.samples[freq]
         ix = sample.spectrum_index
         iq = spectrum.sample_data['iq'][ix]
         m = spectrum.sample_data['magnitude'][ix]
         dB = spectrum.sample_data['dbFS'][ix]
-        assert iq == val == sample.iq
-        assert m == np.abs(val) == sample.magnitude
-        assert dB == 10 * np.log10(np.abs(val)) == sample.dbFS
+        assert iq == val['iq'] == sample.iq
+        assert m == val['magnitude'] == sample.magnitude
+        assert dB == val['dbFS'] == sample.dbFS
