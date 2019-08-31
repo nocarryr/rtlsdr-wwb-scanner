@@ -76,11 +76,21 @@ ApplicationWindow {
             anchors.fill: parent
 
             Label {
-                text: chartWrapper.mouseDataPoint.x.toString();
+                text: chartWrapper.mouseDataPoint.x.toFixed(3);
+                Layout.preferredWidth: contentWidth
+                Layout.leftMargin: 12
+                font.pointSize: 9
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Qt.AlignLeft
             }
             Label {
-                text: chartWrapper.mouseDataPoint.y.toString();
+                text: chartWrapper.mouseDataPoint.y.toFixed(3);
+                Layout.preferredWidth: contentWidth
+                font.pointSize: 9
+                verticalAlignment: Text.AlignVCenter
+                horizontalAlignment: Qt.AlignLeft
             }
+            Item { Layout.fillWidth: true }
         }
     }
     StackView {
