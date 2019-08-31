@@ -43,7 +43,10 @@ ApplicationWindow {
                 onTriggered: scanControlsDialog.open()
             }
             MenuSeparator { }
-            Action { text: qsTr("&Quit") }
+            Action {
+                text: qsTr("&Quit")
+                onTriggered: Qt.quit()
+            }
         }
         Menu {
             title: qsTr("&View")
