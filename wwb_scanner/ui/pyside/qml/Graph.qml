@@ -64,10 +64,7 @@ Item {
         if (minValue == null || maxValue == null){
             return;
         }
-        axisX.min = minValue.x;
-        axisX.max = maxValue.x;
-        axisY.min = minValue.y;
-        axisY.max = maxValue.y;
+        viewController.setDataExtents(minValue, maxValue);
     }
 
     onLoadFromFile: {
@@ -131,8 +128,26 @@ Item {
         });
     }
 
+    GraphViewController {
+        id: viewController
+        axisX: axisX
+        axisY: axisY
+    }
+
+    GraphHViewControls {
+        id: hViewControls
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        height: parent.height * .1
+        controller: viewController
+    }
+
     RowLayout {
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: hViewControls.bottom
+        anchors.bottom: parent.bottom
         spacing: 1
         Item {
             Layout.fillWidth: true
