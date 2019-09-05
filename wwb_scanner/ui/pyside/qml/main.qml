@@ -60,6 +60,7 @@ ApplicationWindow {
         ScanControls {
             id: scanControls
             anchors.fill: parent
+            config: scanConfig
             progress: scanner.progress
             onScannerState: {
                 if (state) {
@@ -178,6 +179,7 @@ ApplicationWindow {
     ScanControlsDialog {
         id: scanControlsDialog
         scanner: scanner
+        config: scanConfig
     }
 
     ThemeSelectPopup {
@@ -189,16 +191,13 @@ ApplicationWindow {
 
     }
 
+    ScanConfig {
+        id: scanConfig
+    }
+
     ScannerInterface {
         id: scanner
-        startFreq: scanControls.startFreq
-        endFreq: scanControls.endFreq
-        samplesPerSweep: scanControlsDialog.samplesPerSweep
-        sweepsPerScan: scanControlsDialog.sweepsPerScan
-        sweepOverlapRatio: scanControlsDialog.sweepOverlapRatio
-        windowSize: scanControlsDialog.windowSize
-        smoothingEnabled: scanControlsDialog.smoothingEnabled
-        smoothingFactor: scanControlsDialog.smoothingFactor
+        scanConfig: scanConfig.model
         deviceInfo: device_config.device ? device_config.device: null
         gain: device_config.gain
         sampleRate: device_config.sampleRate

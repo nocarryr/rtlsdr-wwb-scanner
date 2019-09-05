@@ -5,63 +5,44 @@ import numpy as np
 from PySide2 import QtCore, QtQml, QtQuick
 from PySide2.QtCore import Signal, Property, Slot
 
-from wwb_scanner.scanner.config import ScanConfig
+from wwb_scanner.scanner import config
 from wwb_scanner.scanner import Scanner
 from wwb_scanner.scanner.main import get_freq_resolution
 from wwb_scanner.scan_objects import Spectrum
 
 from wwb_scanner.ui.pyside.utils import GenericQObject, QObjectThread
 
-class ScannerInterface(GenericQObject):
-    _n_running = Signal()
+class ScanConfigData(GenericQObject):
     _n_startFreq = Signal()
     _n_endFreq = Signal()
     _n_samplesPerSweep = Signal()
     _n_sweepsPerScan = Signal()
     _n_sweepOverlapRatio = Signal()
+    _n_windowType = Signal()
     _n_windowSize = Signal()
     _n_smoothingEnabled = Signal()
     _n_smoothingFactor = Signal()
-    _n_deviceInfo = Signal()
-    _n_gain = Signal()
-    _n_sampleRate = Signal()
-    _n_spectrum = Signal()
-    _n_progress = Signal()
-    _n_scannerInitialized = Signal()
-    scannerRunState = Signal(bool)
-    # scannerFreqsReady = Signal()
+    _n_scalingEnabled = Signal()
+    _n_scalingMinDB = Signal()
+    _n_scalingMaxDB = Signal()
+    configUpdate = Signal()
     def __init__(self, *args):
-        self._running = False
-        self._startFreq = None
-        self._endFreq = None
-        self._samplesPerSweep = None
-        self._sweepsPerScan = None
-        self._sweepOverlapRatio = None
-        self._windowSize = None
+        self._startFreq = 470.
+        self._endFreq = 536.
+        self._samplesPerSweep = 8192
+        self._sweepsPerScan = 20
+        self._sweepOverlapRatio = .5
+        self._windowType = 'hann'
+        self._windowSize = 128
         self._smoothingEnabled = False
         self._smoothingFactor = 1.
-        self._deviceInfo = None
-        self._gain = None
-        self._sampleRate = None
-        self._spectrum = None
-        self._scannerInitialized = False
-        self._progress = -1
+        self._scalingEnabled = False
+        self._scalingMinDB = -140.
+        self._scalingMaxDB = -55.
         super().__init__(*args)
-        self.scanner = None
-        self.scan_thread = None
 
-    def _g_running(self): return self._running
-    def _s_running(self, value):
-        if value == self._running:
-            return
-        self._running = value
-        self._n_running.emit()
-        self.scannerRunState.emit(value)
-    running = Property(bool, _g_running, _s_running, notify='_n_running')
-
-    def _g_scannerInitialized(self): return self._scannerInitialized
-    def _s_scannerInitialized(self, value): self._generic_setter('_scannerInitialized', value)
-    scannerInitialized = Property(bool, _g_scannerInitialized, _s_scannerInitialized, notify=_n_scannerInitialized)
+    def _generic_property_changed(self, attr, old_value, new_value):
+        self.configUpdate.emit()
 
     def _g_startFreq(self): return self._startFreq
     def _s_startFreq(self, value): self._generic_setter('_startFreq', value)
@@ -83,6 +64,10 @@ class ScannerInterface(GenericQObject):
     def _s_sweepOverlapRatio(self, value): self._generic_setter('_sweepOverlapRatio', value)
     sweepOverlapRatio = Property(float, _g_sweepOverlapRatio, _s_sweepOverlapRatio, notify=_n_sweepOverlapRatio)
 
+    def _g_windowType(self): return self._windowType
+    def _s_windowType(self, value): self._generic_setter('_windowType', value)
+    windowType = Property(str, _g_windowType, _s_windowType, notify=_n_windowType)
+
     def _g_windowSize(self): return self._windowSize
     def _s_windowSize(self, value): self._generic_setter('_windowSize', value)
     windowSize = Property(int, _g_windowSize, _s_windowSize, notify=_n_windowSize)
@@ -94,6 +79,65 @@ class ScannerInterface(GenericQObject):
     def _g_smoothingFactor(self): return self._smoothingFactor
     def _s_smoothingFactor(self, value): self._generic_setter('_smoothingFactor', value)
     smoothingFactor = Property(float, _g_smoothingFactor, _s_smoothingFactor, notify=_n_smoothingFactor)
+
+    def _g_scalingEnabled(self): return self._scalingEnabled
+    def _s_scalingEnabled(self, value): self._generic_setter('_scalingEnabled', value)
+    scalingEnabled = Property(bool, _g_scalingEnabled, _s_scalingEnabled, notify=_n_scalingEnabled)
+
+    def _g_scalingMinDB(self): return self._scalingMinDB
+    def _s_scalingMinDB(self, value): self._generic_setter('_scalingMinDB', value)
+    scalingMinDB = Property(float, _g_scalingMinDB, _s_scalingMinDB, notify=_n_scalingMinDB)
+
+    def _g_scalingMaxDB(self): return self._scalingMaxDB
+    def _s_scalingMaxDB(self, value): self._generic_setter('_scalingMaxDB', value)
+    scalingMaxDB = Property(float, _g_scalingMaxDB, _s_scalingMaxDB, notify=_n_scalingMaxDB)
+
+class ScannerInterface(GenericQObject):
+    _n_running = Signal()
+    _n_scanConfig = Signal()
+    _n_deviceInfo = Signal()
+    _n_gain = Signal()
+    _n_sampleRate = Signal()
+    _n_spectrum = Signal()
+    _n_progress = Signal()
+    _n_scannerInitialized = Signal()
+    scannerRunState = Signal(bool)
+    # scannerFreqsReady = Signal()
+    def __init__(self, *args):
+        self._running = False
+        self._scanConfig = None
+        self._deviceInfo = None
+        self._gain = None
+        self._sampleRate = None
+        self._spectrum = None
+        self._scannerInitialized = False
+        self._progress = -1
+        super().__init__(*args)
+        self.scanner = None
+        self.scan_thread = None
+
+    @property
+    def startFreq(self): return self.scanConfig.startFreq
+
+    @property
+    def endFreq(self): return self.scanConfig.endFreq
+
+    def _g_running(self): return self._running
+    def _s_running(self, value):
+        if value == self._running:
+            return
+        self._running = value
+        self._n_running.emit()
+        self.scannerRunState.emit(value)
+    running = Property(bool, _g_running, _s_running, notify='_n_running')
+
+    def _g_scannerInitialized(self): return self._scannerInitialized
+    def _s_scannerInitialized(self, value): self._generic_setter('_scannerInitialized', value)
+    scannerInitialized = Property(bool, _g_scannerInitialized, _s_scannerInitialized, notify=_n_scannerInitialized)
+
+    def _g_scanConfig(self): return self._scanConfig
+    def _s_scanConfig(self, value): self._generic_setter('_scanConfig', value)
+    scanConfig = Property(ScanConfigData, _g_scanConfig, _s_scanConfig, notify=_n_scanConfig)
 
     def _g_deviceInfo(self): return self._deviceInfo
     def _s_deviceInfo(self, value): self._generic_setter('_deviceInfo', value)
@@ -116,15 +160,15 @@ class ScannerInterface(GenericQObject):
     progress = Property(float, _g_progress, _s_progress, notify=_n_progress)
 
     def build_scan_config(self):
-        conf = ScanConfig()
+        conf = config.ScanConfig()
         conf.scan_range = [self.startFreq, self.endFreq]
         conf.device.serial_number = self.deviceInfo.device_serial
         conf.device.gain = self.gain
         conf.sampling.sample_rate = self.sampleRate * 1e3
-        conf.sampling.samples_per_sweep = self.samplesPerSweep
-        conf.sampling.sweeps_per_scan = self.sweepsPerScan
-        conf.sampling.sweep_overlap_ratio = self.sweepOverlapRatio
-        conf.sampling.window_size = self.windowSize
+        conf.sampling.samples_per_sweep = self.scanConfig.samplesPerSweep
+        conf.sampling.sweeps_per_scan = self.scanConfig.sweepsPerScan
+        conf.sampling.sweep_overlap_ratio = self.scanConfig.sweepOverlapRatio
+        conf.sampling.window_size = self.scanConfig.windowSize
         return conf
 
     # def get_all_freqs(self):
@@ -197,4 +241,5 @@ class ScanThread(QObjectThread):
         self.scannerProgress.emit(value)
 
 def register_qml_types():
+    QtQml.qmlRegisterType(ScanConfigData, 'ScanTools', 1, 0, 'ScanConfigData')
     QtQml.qmlRegisterType(ScannerInterface, 'ScanTools', 1, 0, 'ScannerInterface')

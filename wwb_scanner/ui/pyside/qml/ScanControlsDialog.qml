@@ -1,14 +1,12 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.11
 import QtQuick.Controls 2.12
-import Qt.labs.settings 1.0
 import ScanTools 1.0
 
 Dialog {
     id: root
+    property ScanConfig config
     property ScannerInterface scanner
-    // property alias startFreq: startFreqInput.value
-    // property alias endFreq: endFreqInput.value
     property real sampleRate
     property alias samplesPerSweep: samplesPerSweepInput.value
     property alias sweepsPerScan: sweepsPerScanInput.value
@@ -51,23 +49,6 @@ Dialog {
 
     onSampleRateChanged: { getFreqResolution() }
     onWindowSizeChanged: { getFreqResolution() }
-
-    Settings {
-        id: settings
-        category: 'Scan Config'
-        // property real startFreq: 470.
-        // property real endFreq: 536.
-        property real samplesPerSweep: 8192
-        property real sweepsPerScan: 20
-        property real sweepOverlapRatio: 0.5
-        property string windowType: 'hann'
-        property int windowSize: 128
-        property bool smoothingEnabled: false
-        property real smoothingFactor: 1.0
-        property bool scalingEnabled: false
-        property real scalingMinDB: -140
-        property real scalingMaxDB: -55
-    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -191,34 +172,32 @@ Dialog {
     standardButtons: Dialog.Ok | Dialog.Cancel
 
     function commitSettings(){
-        // settings.startFreq = root.startFreq;
-        // settings.endFreq = root.endFreq;
-        settings.samplesPerSweep = root.samplesPerSweep;
-        settings.sweepsPerScan = root.sweepsPerScan;
-        settings.sweepOverlapRatio = root.sweepOverlapRatio;
-        settings.windowType = root.windowType;
-        settings.windowSize = root.windowSize;
-        settings.smoothingEnabled = root.smoothingEnabled;
-        settings.smoothingFactor = root.smoothingFactor;
-        settings.scalingEnabled = root.scalingEnabled;
-        settings.scalingMinDB = root.scalingMinDB;
-        settings.scalingMaxDB = root.scalingMaxDB;
-        settings.sync();
+        config.samplesPerSweep = root.samplesPerSweep;
+        config.sweepsPerScan = root.sweepsPerScan;
+        config.sweepOverlapRatio = root.sweepOverlapRatio;
+        config.windowType = root.windowType;
+        config.windowSize = root.windowSize;
+        config.smoothingEnabled = root.smoothingEnabled;
+        config.smoothingFactor = root.smoothingFactor;
+        config.scalingEnabled = root.scalingEnabled;
+        config.scalingMinDB = root.scalingMinDB;
+        config.scalingMaxDB = root.scalingMaxDB;
     }
 
     function reloadSettings(){
-        // root.startFreq = settings.startFreq;
-        // root.endFreq = settings.endFreq;
-        root.samplesPerSweep = settings.samplesPerSweep;
-        root.sweepsPerScan = settings.sweepsPerScan;
-        root.sweepOverlapRatio = settings.sweepOverlapRatio;
-        root.windowType = settings.windowType;
-        root.windowSize = settings.windowSize;
-        root.smoothingEnabled = settings.smoothingEnabled;
-        root.smoothingFactor = settings.smoothingFactor;
-        root.scalingEnabled = settings.scalingEnabled;
-        root.scalingMinDB = settings.scalingMinDB;
-        root.scalingMaxDB = settings.scalingMaxDB;
+        if (!config){
+            return;
+        }
+        root.samplesPerSweep = config.samplesPerSweep;
+        root.sweepsPerScan = config.sweepsPerScan;
+        root.sweepOverlapRatio = config.sweepOverlapRatio;
+        root.windowType = config.windowType;
+        root.windowSize = config.windowSize;
+        root.smoothingEnabled = config.smoothingEnabled;
+        root.smoothingFactor = config.smoothingFactor;
+        root.scalingEnabled = config.scalingEnabled;
+        root.scalingMinDB = config.scalingMinDB;
+        root.scalingMaxDB = config.scalingMaxDB;
     }
 
     onAccepted: {
@@ -231,7 +210,6 @@ Dialog {
         root.close();
     }
     onAboutToShow: {
-        settings.sync();
         reloadSettings();
     }
     Component.onCompleted: {

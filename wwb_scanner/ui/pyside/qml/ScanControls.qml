@@ -1,23 +1,35 @@
 import QtQuick 2.0
 import QtQuick.Layouts 1.11
 import QtQuick.Controls 2.12
-import Qt.labs.settings 1.0
 
 RowLayout {
     id: root
-    property alias startFreq: settings.startFreq
-    property alias endFreq: settings.endFreq
+    property ScanConfig config
+    property alias startFreq: startFreqInput.value
+    property alias endFreq: endFreqInput.value
+    property bool configReady: false
     property bool scanRunning: false
     property bool scanReady: !root.scanRunning
     property alias progress: progressBar.value
 
     signal scannerState(bool state)
 
-    Settings {
-        id: settings
-        category: 'Scan Config'
-        property real startFreq: 470.
-        property real endFreq: 536.
+    onConfigChanged: {
+        if (!config){
+            return;
+        }
+        configUpdateCallback();
+        root.configReady = true;
+        config.configUpdate.connect(configUpdateCallback);
+    }
+
+    function configUpdateCallback(){
+        if (root.startFreq != config.startFreq){
+            root.startFreq = config.startFreq;
+        }
+        if (root.endFreq != config.endFreq){
+            root.endFreq = config.endFreq;
+        }
     }
 
     NumberInput {
@@ -25,18 +37,16 @@ RowLayout {
         name: 'Start Freq'
         Layout.leftMargin: 6
         labelFontSize: 10
-        value: root.startFreq
         onSubmit: {
-            root.startFreq = startFreqInput.value;
+            root.config.startFreq = startFreqInput.value;
         }
     }
     NumberInput {
         id: endFreqInput
         name: 'End Freq'
         labelFontSize: 10
-        value: root.endFreq
         onSubmit: {
-            root.endFreq = endFreqInput.value;
+            root.config.endFreq = endFreqInput.value;
         }
     }
 
