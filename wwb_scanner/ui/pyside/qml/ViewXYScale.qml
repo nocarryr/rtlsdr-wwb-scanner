@@ -99,7 +99,7 @@ Item {
         onValueSizeChanged: { root.valueSize.x = xScale.valueSize }
         onValueCenterChanged: { root.valueCenter.x = xScale.valueCenter }
         onScaleFactorChanged: { root.scaleFactor.x = xScale.scaleFactor }
-        onValuesChanged: { queueValueChange() }
+        onValuesChanged: Qt.callLater(emitValueChange, root.valueMin, root.valueMax)
     }
 
     ViewScale {
@@ -110,14 +110,14 @@ Item {
         onValueSizeChanged: { root.valueSize.y = yScale.valueSize }
         onValueCenterChanged: { root.valueCenter.y = yScale.valueCenter }
         onScaleFactorChanged: { root.scaleFactor.y = yScale.scaleFactor }
-        onValuesChanged: { queueValueChange() }
+        onValuesChanged: Qt.callLater(emitValueChange, root.valueMin, root.valueMax)
     }
 
     function queueValueChange(){
-        Qt.callLater(emitValueChange);
+        Qt.callLater(emitValueChange, root.valueMin, root.valueMax);
     }
 
-    function emitValueChange(){
-        root.valuesChanged(root.valueMin, root.valueMax);
+    function emitValueChange(vmin, vmax){
+        root.valuesChanged(vmin, vmax);
     }
 }

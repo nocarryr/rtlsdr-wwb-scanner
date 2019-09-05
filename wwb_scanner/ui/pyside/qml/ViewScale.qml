@@ -19,13 +19,11 @@ Item {
         root.valueMin = vmin;
         root.valueMax = vmax;
         root.scaleFactor *= factor;
-        queueValueChange();
     }
 
     function setScale(factor){
         var offsetFactor = factor / root.scaleFactor;
         zoom(offsetFactor);
-        queueValueChange();
     }
 
     function translate(offset){
@@ -33,7 +31,6 @@ Item {
             vmax = root.valueMax + offset;
         root.valueMin = vmin;
         root.valueMax = vmax;
-        queueValueChange();
     }
 
     function translateTo(pos){
@@ -42,21 +39,18 @@ Item {
             vmax = pos + size/2;
         root.valueMin = vmin;
         root.valueMax = vmax;
-        queueValueChange();
     }
 
-    onValueMinChanged: { queueValueChange() }
-    onValueMaxChanged: { queueValueChange() }
-    onValueSizeChanged: { queueValueChange() }
-    onValueCenterChanged: { queueValueChange() }
+    onValueMinChanged: Qt.callLater(emitValueChange, valueMin, valueMax)
+    onValueMaxChanged: Qt.callLater(emitValueChange, valueMin, valueMax)
+    onValueSizeChanged: Qt.callLater(emitValueChange, valueMin, valueMax)
+    onValueCenterChanged: Qt.callLater(emitValueChange, valueMin, valueMax)
 
-
-    function queueValueChange(){
-        Qt.callLater(emitValueChange);
-    }
-
-    function emitValueChange(){
-        root.valuesChanged(root.valueMin, root.valueMax);
+    function emitValueChange(vmin, vmax){
+        if (root.valueMin != vmin || root.valueMax != vmax){
+            return;
+        }
+        root.valuesChanged(vmin, vmax);
     }
 
 }
