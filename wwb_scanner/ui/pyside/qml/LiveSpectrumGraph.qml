@@ -6,7 +6,7 @@ Item {
     id: root
 
     property var mapper: modelMapper
-    property var series
+    property LineSeries series
     property alias name: graphData.name
     property var model: tblModel
     property alias minValue: graphData.minValue
@@ -18,6 +18,7 @@ Item {
     property alias color: graphData.color
 
     signal axisExtentsUpdate()
+    signal seriesClicked(int index)
 
 
     onSeriesChanged: {
@@ -26,6 +27,13 @@ Item {
             if (true){//!graphData.color){
                 root.color = series.color;
             }
+        }
+    }
+
+    Connections {
+        target: root.series
+        onClicked: {
+            root.seriesClicked(root.index);
         }
     }
 

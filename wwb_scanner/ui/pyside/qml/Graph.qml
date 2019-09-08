@@ -19,6 +19,7 @@ Item {
     signal newLiveScan(var scanner)
     signal loadFromFile(url fileName)
     signal updateAxisExtents()
+    signal seriesClicked(int index)
 
     function setActiveSpectrum(spectrum){
         root.activeSpectrum = spectrum;
@@ -32,6 +33,10 @@ Item {
     }
 
     // onUpdateAxisExtents: { doUpdateAxisExtents() }
+    onSeriesClicked: {
+        var spectrumGraph = root.spectrumGraphs[index];
+        setActiveSpectrum(spectrumGraph);
+    }
 
     onUpdateAxisExtents: {
         var spectrum, minValue = null, maxValue = null;
@@ -121,6 +126,7 @@ Item {
             root.activeSpectrum = obj;
             updateAxisExtents();
             obj.axisExtentsUpdate.connect(updateAxisExtents);
+            obj.seriesClicked.connect(root.seriesClicked);
             chartSelect.addItem(obj);
             if (callable(callback)){
                 callback(obj);
@@ -219,6 +225,7 @@ Item {
                 y: chart.plotArea.y
                 width: chart.plotArea.width
                 height: chart.plotArea.height
+                enabled: false
             }
 
 
@@ -226,20 +233,25 @@ Item {
                 id: mouseArea
                 anchors.fill: parent
                 hoverEnabled: true
+                propagateComposedEvents: true
 
                 property point dataPoint: Qt.point(0, 0)
                 property point dataPos: Qt.point(0, 0)
 
                 onPositionChanged: {
+                    mouse.accepted = false;
                     if (!mouseArea.containsMouse){
                         return;
                     }
-                    mouse.accepted = true;
                     // var pt = Qt.point(mouse.x, mouse.y);
                     // console.log(pt.x, pt.y);
                     var pt = mouseArea.mapToGlobal(mouse.x, mouse.y);
                     timedMouse.setPoint(pt);
                 }
+
+                onClicked: { mouse.accepted = false }
+                onPressed: { mouse.accepted = false }
+                onReleased: { mouse.accepted = false }
 
                 Timer {
                     id: timedMouse
