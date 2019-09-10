@@ -9,6 +9,7 @@ Item {
     property real viewCenter: 0.5
     property alias bgColor: control.bgColor
     property alias gutterColor: control.gutterColor
+    property alias scrolling: control.pressed
 
     onDataExtentsChanged: {
         handleScaleChanges();

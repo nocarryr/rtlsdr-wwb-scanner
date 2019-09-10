@@ -148,6 +148,13 @@ Item {
         anchors.top: parent.top
         height: parent.height * .1
         controller: viewController
+        onScrollingChanged: {
+            if (scrolling){
+                chart.animationOptions = ChartView.NoAnimation;
+            } else {
+                chart.animationOptions = ChartView.SeriesAnimations;
+            }
+        }
     }
 
     RowLayout {
@@ -161,7 +168,7 @@ Item {
             Layout.fillHeight: true
             ChartView {
                 id: chart
-                property bool useOpenGL: true
+                property bool useOpenGL: false
                 anchors.fill: parent
                 antialiasing: true
                 legend.visible: false

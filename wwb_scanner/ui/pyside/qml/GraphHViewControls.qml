@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.11
 RowLayout {
     id: root
     property GraphViewController controller
+    property alias scrolling: scrollBar.scrolling
 
     RoundButton {
         Layout.leftMargin: 6
@@ -12,6 +13,7 @@ RowLayout {
         onClicked: { controller.scrollLeft() }
     }
     XScrollBar {
+        id: scrollBar
         Layout.fillWidth: true
         Layout.fillHeight: true
         dataExtents: controller.dataExtents
