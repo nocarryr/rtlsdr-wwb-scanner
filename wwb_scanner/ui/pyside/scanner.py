@@ -222,9 +222,27 @@ class ScannerInterface(GenericQObject):
         print('on_scanner_finished')
         self.scan_thread.stop()
         print('scan_thread stopped')
+        if self.scanConfig.smoothingEnabled:
+            self.smooth_scan()
+        if self.scanConfig.scalingEnabled:
+            self.scale_scan()
         self.scan_thread = None
         self.scanner = None
         self.running = False
+
+    @Slot()
+    def smooth_scan(self):
+        print('Smoothing scan')
+        N = int(self.spectrum.sample_data.size * self.scanConfig.smoothingFactor / 100.)
+        self.spectrum.smooth(N)
+        # TODO: figure out why interpolate stopped working
+        # self.spectrum.interpolate()
+
+    @Slot()
+    def scale_scan(self):
+        print('Scaling scan')
+        conf = self.scanConfig
+        self.spectrum.scale(conf.scalingMinDB, conf.scalingMaxDB)
 
     @Slot()
     def on_scanner_ready(self):
