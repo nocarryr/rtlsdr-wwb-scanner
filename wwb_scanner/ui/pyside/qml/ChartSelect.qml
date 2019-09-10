@@ -9,8 +9,6 @@ Item {
     property var activeSpectrum
     property int activeIndex: -1
     property var spectrumGraphs: ({})
-    property var allSeries: ({})
-    property var itemMap: ({})
 
     signal addItem(var spectrum)
     signal selected(var spectrum, bool state)
@@ -24,7 +22,6 @@ Item {
     onAddItem: {
         var index = spectrum.index;
         root.spectrumGraphs[index] = spectrum;
-        root.allSeries[index] = spectrum.series;
         var data = {
             'index':index,
             'name':spectrum.name,
@@ -82,23 +79,50 @@ Item {
             }
         }
     }
-    ColorDialog {
+
+    Loader {
         id: colorDialog
+        sourceComponent: Component { ColorDialog {} }
         property var spectrum
+        property color color
+        active: false
 
         function activate(spectrum){
             colorDialog.spectrum = spectrum;
             colorDialog.color = spectrum.color;
-            colorDialog.open();
+            colorDialog.active = true;
         }
 
-        onAccepted: {
-            colorDialog.spectrum.color = colorDialog.color;
-            colorDialog.close();
-        }
-        onRejected: {
+        function close(){
+            var dlg = colorDialog.item;
+            if (dlg){
+                dlg.close();
+            }
             colorDialog.spectrum = null;
-            colorDialog.close();
+            colorDialog.active = false;
+        }
+
+        onItemChanged: {
+            var dlg = item;
+            if (dlg){
+                dlg.color = colorDialog.color;
+                dlg.open();
+            }
+        }
+
+        Connections {
+            target: colorDialog.item
+            onAccepted: {
+                var dlg = colorDialog.item;
+                colorDialog.spectrum.color = dlg.color;
+                dlg.close();
+                colorDialog.close();
+            }
+            onRejected: {
+                var dlg = colorDialog.item;
+                dlg.close();
+                colorDialog.close();
+            }
         }
     }
 }
