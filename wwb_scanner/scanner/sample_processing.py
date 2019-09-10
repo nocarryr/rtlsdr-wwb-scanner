@@ -114,7 +114,7 @@ class SampleSet(JSONMixin):
 
         win_size = self.window_size
         win = get_window(self.scanner.sampling_config.window_type, win_size)
-        freqs, Pxx = welch(samples, fs=rs, window=win,
+        freqs, Pxx = welch(samples, fs=rs, window=win, detrend=False,
             nperseg=win_size, scaling='density', return_onesided=False)
 
         iPxx = np.fft.irfft(Pxx)
