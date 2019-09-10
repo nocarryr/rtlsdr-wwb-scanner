@@ -5,8 +5,9 @@ import GraphUtils 1.0
 Item {
     id: root
 
+    property var graphParent
     property var mapper: modelMapper
-    property LineSeries series
+    property alias series: modelMapper.series
     property alias name: graphData.name
     property var model: tblModel
     property alias minValue: graphData.minValue
@@ -16,6 +17,9 @@ Item {
     property alias graphVisible: graphData.graphVisible
     property int index
     property alias color: graphData.color
+    property bool seriesInitialized: false
+    property bool selected: true
+    property real seriesWidth: selected ? 2 : 1
 
     signal axisExtentsUpdate()
     signal seriesClicked(int index)
@@ -24,9 +28,20 @@ Item {
     onSeriesChanged: {
         if (series){
             series.name = root.name;
-            if (true){//!graphData.color){
+            series.width = root.seriesWidth;
+            if (root.seriesInitialized){
+                series.color = root.color;
+            } else {
                 root.color = series.color;
             }
+            root.seriesInitialized = true;
+        }
+    }
+
+    Connections {
+        target: root.graphParent
+        onActiveSpectrumChanged: {
+            root.selected = root.graphParent.activeSpectrum.index == root.index;
         }
     }
 
@@ -40,6 +55,12 @@ Item {
     onNameChanged: {
         if (series){
             root.series.name = root.name;
+        }
+    }
+
+    onSeriesWidthChanged: {
+        if (root.series){
+            root.series.width = root.seriesWidth;
         }
     }
 

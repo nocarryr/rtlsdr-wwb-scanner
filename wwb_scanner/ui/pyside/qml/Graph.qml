@@ -119,6 +119,7 @@ Item {
             qmlFile = 'LiveSpectrumGraph.qml';
         }
         props['series'] = series;
+        props['graphParent'] = root;
         buildComponent(root, qmlFile, props, function(obj){
             obj.index = root.spectrumGraphs.length;
             root.spectrumGraphs.push(obj);
