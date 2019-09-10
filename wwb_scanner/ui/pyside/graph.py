@@ -415,8 +415,11 @@ class LiveSpectrumGraphData(SpectrumGraphData):
         if self.scanner is None:
             return
         if not self.scanner.running:
-            self.spectrum.set_data_updated()
-            self.update_spectrum_data()
+            self.update_interval = -1
+            if self.spectrum is not None:
+                with self.spectrum.data_update_lock:
+                    self.spectrum.set_data_updated()
+                    self.update_spectrum_data()
             self.scanner = None
 
     def _g_update_interval(self): return self._update_interval

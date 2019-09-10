@@ -73,7 +73,7 @@ class Spectrum(JSONMixin):
             self.timestamp_utc = timestamp_utc
         self.step_size = kwargs.get('step_size')
         self.data_updated = threading.Event()
-        self.data_update_lock = threading.Lock()
+        self.data_update_lock = threading.RLock()
         self.samples = {}
         self.sample_data = SampleArray()
         self.center_frequencies = kwargs.get('center_frequencies', [])
