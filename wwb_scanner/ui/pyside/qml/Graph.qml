@@ -148,13 +148,6 @@ Item {
         anchors.top: parent.top
         height: parent.height * .1
         controller: viewController
-        onScrollingChanged: {
-            if (scrolling){
-                chart.animationOptions = ChartView.NoAnimation;
-            } else {
-                chart.animationOptions = ChartView.SeriesAnimations;
-            }
-        }
     }
 
     RowLayout {
@@ -206,6 +199,19 @@ Item {
                         series.useOpenGL = chart.useOpenGL;
                     }
                 }
+
+                states: [
+                    State {
+                        name: 'NORMAL'
+                        when: !hViewControls.scrolling
+                        PropertyChanges { target:chart; animationOptions:ChartView.SeriesAnimations }
+                    },
+                    State {
+                        name: 'SCROLLING'
+                        when: hViewControls.scrolling
+                        PropertyChanges { target:chart; animationOptions:ChartView.NoAnimation }
+                    }
+                ]
 
             //     LineSeries {
             //         name: graphData.name ? graphData.name: ''
