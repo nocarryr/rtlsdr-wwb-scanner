@@ -1,2 +1,3 @@
 include LICENSE*
 include README
+include wwb_scanner/ui/pyside/qml/*.qml

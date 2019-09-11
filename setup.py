@@ -45,6 +45,7 @@ setup(
         'json-object-factory',
         'Cython',
         'kivy',
+        'PySide2>=5.13.1',
     ],
     setup_requires=['pypandoc'],
     long_description=get_long_description(),
