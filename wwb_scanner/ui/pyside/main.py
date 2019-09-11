@@ -6,6 +6,7 @@ from PySide2 import QtCore, QtQml
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQuick import QQuickView
 
+from . import get_resource_filename
 from wwb_scanner.ui.pyside import device_config, graph, scanner
 
 def register_qml_types():
@@ -13,9 +14,7 @@ def register_qml_types():
     graph.register_qml_types()
     scanner.register_qml_types()
 
-# MAIN = QtCore.QUrl('qml/main.qml')
-BASE_PATH = Path(__file__).parent.resolve()
-QML_PATH = BASE_PATH / 'qml'
+QML_PATH = get_resource_filename('qml')
 
 def run(argv=None):
     if argv is None:
