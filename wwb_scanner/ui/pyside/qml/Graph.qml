@@ -226,6 +226,15 @@ Item {
             //
             //         }
             }
+            UHFChannels {
+                id: channelLabels
+                axisX: axisX
+                chart: chart
+                x: chart.plotArea.x
+                y: chart.plotArea.y
+                width: chart.plotArea.width
+                height: 30
+            }
 
             Crosshair {
                 id: crosshair
