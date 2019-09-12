@@ -1,29 +1,42 @@
 # rtlsdr-wwb-scanner
 
-##RF Scanner and Exporter for use with Shure Wireless Workbench
+RF Scanner and Exporter for use with Shure Wireless Workbench
 
-Allows wide-band RF scans to be performed by an inexpensive [RTL-SDR][osmosdr-wiki] device.  The scan data can then be exported as a CSV file formatted for use in WWB.
+Allows wide-band RF scans to be performed by an inexpensive [RTL-SDR][osmosdr-wiki] device.
+The scan data can then be exported as a CSV file formatted for use in WWB.
 
-###Installation
+## Installation
 
-* Download and install *librtlsdr* following the directions [here][osmosdr-wiki]
-* Install the python wrapper [pyrtlsdr][pyrtlsdr]
-* Install [Kivy](http://kivy.org/#download) and [Kivy Garden](http://kivy-garden.github.io/).
-    * After that, you'll need to "garen install" the "filebrowser" and "tickline" packages:
-        * `garden install filebrowser`
-        * `garden install tickline`
-* Install tinydb:
-   * `pip install tinydb`
+### librtlsdr
 
-This project relies heavily upon the numpy and scipy libraries.  Installation for those can be found [here][scipy-install].
+The `librtlsdr` library is required and must be installed separately.
+Installation documentation for various platforms can be found on the [osmocom wiki][osmosdr-wiki]
+and in the [pyrtlsdr project][pyrtlsdr].
 
-This project is not yet configured with distutils, so you will either need to download the source tarball or clone the [repository](https://github.com/nocarryr/rtlsdr-wwb-scanner).  Cloning would be recommended as this is still in the early stages of development.
+### Install via pip
 
-###Usage
+```bash
+pip install rtlsdr-wwb-scanner
+```
 
-Well... at the moment I'm performing all tests, scans, import/export functions, etc manually in the python interpreter so this section will be difficult until main scripts and entry points have been created.  Check back soon!
+## Dependencies
 
-To use the Kivy interface run the "kivyapp.py" script in the project root.
+These packages are required, but should be collected and installed automatically:
+
+* Numpy: https://numpy.org
+* Scipy: https://scipy.org/scipylib/index.html
+* pyrtlsdr: https://github.com/roger-/pyrtlsdr
+* PySide2: https://pypi.org/project/PySide2/
+
+## Usage
+
+After installation, the user interface can be launched by:
+
+```bash
+wwb_scanner-ui
+```
+
+(Further usage information will be added soon)
 
 
 [osmosdr-wiki]: http://sdr.osmocom.org/trac/wiki/rtl-sdr
