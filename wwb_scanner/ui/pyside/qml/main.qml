@@ -56,6 +56,7 @@ ApplicationWindow {
             }
         }
     }
+
     header: ToolBar {
         ScanControls {
             id: scanControls
@@ -72,6 +73,7 @@ ApplicationWindow {
             }
         }
     }
+
     footer: ToolBar {
         RowLayout {
             anchors.fill: parent
@@ -84,6 +86,7 @@ ApplicationWindow {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Qt.AlignLeft
             }
+
             Label {
                 text: chartWrapper.mouseDataPoint.y.toFixed(3);
                 Layout.preferredWidth: contentWidth
@@ -91,80 +94,25 @@ ApplicationWindow {
                 verticalAlignment: Text.AlignVCenter
                 horizontalAlignment: Qt.AlignLeft
             }
+
             Item { Layout.fillWidth: true }
+
         }
     }
+
     StackView {
         anchors.fill: parent
         Graph {
             id: chartWrapper
             anchors.fill: parent
             theme: themeSelect.theme
-            // property var graph
-            // property var spectrum_data
-
-            function addSpectrum(fileName) {
-                chartWrapper.loadFromFile(fileName);
-                // // chartWrapper.spectrum_data = spectrum_data;
-                // var component = Qt.createComponent('Graph.qml'),
-                //     graphCtx = {},//{'model':spectrum_data.model},
-                //     graph;
-                // function onComponentReady(){
-                //     if (component.status == Component.Ready){
-                //         graph = component.createObject(chartWrapper, graphCtx);
-                //         chartWrapper.graph = graph;
-                //         graph.loadFromFile(fileName);
-                //     } else {
-                //         console.error('Error creating object: ', component.errorString());
-                //     }
-                // }
-                // if (component.status == Component.Ready){
-                //     graph = component.createObject(chartWrapper, graphCtx);
-                //     chartWrapper.graph = graph;
-                //     graph.loadFromFile(fileName);
-                // } else if (component.status == Component.Error){
-                //     console.error('Error creating object: ', component.errorString());
-                // } else {
-                //     component.statusChanged.connect(onComponentReady);
-                // }
-            }
         }
-        // ChartView {
-        //     id: chart
-        //     anchors.fill: parent
-        //     property var defaultAxes: [null, null]
-        //     property var spectra: []
-        //
-        //     function addSpectrum(spectrum_data) {
-        //         var series;
-        //         if (false){//chart.defaultAxes[0]){
-        //             series = chart.createSeries(
-        //                 ChartView.SeriesTypeLine,
-        //                 chart.defaultAxes[0],
-        //                 chart.defaultAxes[1],
-        //             );
-        //         } else {
-        //             series = chart.createSeries(ChartView.SeriesTypeLine, spectrum_data.name)
-        //             // chart.defaultAxes[0] = chart.axisX(series);
-        //             // chart.defaultAxes[1] = chart.axisY(series);
-        //         }
-        //         console.log('series created');
-        //         chart.spectra.push(spectrum_data);
-        //         console.log('item appended');
-        //         spectrum_data.series = series;
-        //         console.log('series attached');
-        //     }
-        // }
     }
 
     ImportDialog {
         id: importDialog
         onImportFile: {
-            console.log(fileName);
-            // spectrumLoader.load_from_file(fileName);
-            // var spec_data = spectrumLoader.instance;
-
-            chartWrapper.addSpectrum(fileName);
+            chartWrapper.loadFromFile(fileName);
         }
     }
 
@@ -184,11 +132,6 @@ ApplicationWindow {
 
     ThemeSelectPopup {
         id: themeSelect
-    }
-
-    SpectrumLoader {
-        id: spectrumLoader
-
     }
 
     ScanConfig {

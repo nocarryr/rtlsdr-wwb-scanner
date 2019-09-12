@@ -102,7 +102,6 @@ class ScannerInterface(GenericQObject):
     _n_progress = Signal()
     _n_scannerInitialized = Signal()
     scannerRunState = Signal(bool)
-    # scannerFreqsReady = Signal()
     def __init__(self, *args):
         self._running = False
         self._scanConfig = None
@@ -171,10 +170,6 @@ class ScannerInterface(GenericQObject):
         conf.sampling.window_size = self.scanConfig.windowSize
         return conf
 
-    # def get_all_freqs(self):
-    #     if self.scanner._running.is_set():
-    #         return self.scanner.get_all_freqs()
-
     @Slot(int, float, result=float)
     def getFreqResolution(self, nfft, fs):
         return get_freq_resolution(nfft, fs*1e3) / 1e6
@@ -219,7 +214,6 @@ class ScannerInterface(GenericQObject):
 
     @Slot()
     def on_scanner_finished(self):
-        print('on_scanner_finished')
         self.scan_thread.stop()
         print('scan_thread stopped')
         if self.scanConfig.smoothingEnabled:
@@ -246,9 +240,7 @@ class ScannerInterface(GenericQObject):
 
     @Slot()
     def on_scanner_ready(self):
-        print('on_scanner_ready: ', threading.current_thread())
         self.scannerInitialized = True
-        # self.scannerFreqsReady.emit()
         self.scan_init_thread.stop()
         self.scan_init_thread = None
 

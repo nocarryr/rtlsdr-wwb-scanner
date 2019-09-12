@@ -26,11 +26,7 @@ class GraphPoint(QtCore.QPointF):
 
 class GraphTableModel(QtCore.QAbstractTableModel):
     def __init__(self, *args):
-        # self._data_arr = np.zeros(0, dtype=GRAPH_DTYPE)
         self._data = np.zeros((2,0), dtype=np.float64)
-        # self._data = np.zeros((2,64), dtype=np.float64)
-        # self._data[0] = np.linspace(0,1,64) * 450e6 + 450e6
-        # self._data[1] = np.sin(self._data[0]) * -1
         super().__init__(*args)
     def columnCount(self, parent):
         return self._data.shape[1]
@@ -38,23 +34,18 @@ class GraphTableModel(QtCore.QAbstractTableModel):
         return self._data.shape[0]
     def flags(self, index):
         return QtCore.Qt.ItemFlags.ItemIsEnabled
-    # def headerData(self, section, orientation, role):
-    #
     def data(self, index, role):
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-            # print(f'data access: {index}')
             return float(self._data[index.row(), index.column()])
         return QtCore.QVariant()
     def _reshape_data(self, d_arr):
         new_shape = (2, d_arr.size)
         cur_shape = self._data.shape
-        # print(f'cur_shape={cur_shape}, new_shape={new_shape}')
         parent = QtCore.QModelIndex()
         if cur_shape[-1] > new_shape[-1]:
             start_col = cur_shape[-1] - 1
             end_col = new_shape[-1] - 1
             ix = self.index(0, 0)
-            # parent = self.parent(ix)
             parent = ix
             self.beginRemoveColumns(parent, start_col, end_col)
             self._data = self._data[...,:end_col+1]
@@ -62,22 +53,17 @@ class GraphTableModel(QtCore.QAbstractTableModel):
         elif cur_shape[-1] < new_shape[-1]:
             start_col = cur_shape[-1]
             end_col = new_shape[-1] - 1
-            # print(f'start_col={start_col}, end_col={end_col}')
             ix = self.index(0, 0)
-            # parent = self.parent(ix)
-            # parent = ix
             self.beginInsertColumns(parent, start_col, end_col)
             data = np.zeros(new_shape, dtype=np.float64)
-            if True:# self._data.size:
-                data[:,:start_col] = self._data[:,:]
-                data[0,start_col:] = d_arr['x'][start_col:]
-                data[1,start_col:] = d_arr['y'][start_col:]
+            data[:,:start_col] = self._data[:,:]
+            data[0,start_col:] = d_arr['x'][start_col:]
+            data[1,start_col:] = d_arr['y'][start_col:]
             self._data = data
             self.endInsertColumns()
 
     def set_from_graph_dtype(self, d_arr):
         if d_arr.size != self._data.shape[-1]:
-            # self._reshape_data((2,d_arr.size))
             self._reshape_data(d_arr)
             x_changed = True
             y_changed = True
@@ -93,118 +79,15 @@ class GraphTableModel(QtCore.QAbstractTableModel):
 
         change_ix = set(change_ix_x) | set(change_ix_y)
 
-        data[0] = d_arr['x']
-        data[1] = d_arr['y']
-        # for i in range(2):
-        #     print('data[{}].min={}, .max={}'.format(
-        #         i, data[i].min(), data[i].max(),
-        #     ))
-
         if not len(change_ix):
             return
+
+        data[0] = d_arr['x']
+        data[1] = d_arr['y']
+
         tl = self.index(0, min(change_ix))
         br = self.index(data.shape[0]-1, max(change_ix))
-        # print(f'tl={tl}, br={br}')
         self.dataChanged.emit(tl, br)
-
-
-class TableGraphData(QtCore.QObject):
-    _n_model = Signal()
-    def __init__(self, *args):
-        # self._model = GraphTableModel()
-        self._model = None
-        super().__init__(*args)
-
-    def _g_model(self): return self._model
-    def _s_model(self, value):
-        self._model = value
-        self._n_model.emit()
-        self._on_model_changed()
-    model = Property(GraphTableModel, _g_model, _s_model, notify=_n_model)
-
-    def _on_model_changed(self):
-        pass
-
-    def set_from_graph_dtype(self, d_arr):
-        if self.model is None:
-            return
-        self.model.set_from_graph_dtype(d_arr)
-
-#  NOT USED
-class LineGraphData(QtCore.QObject):
-    _n_series = Signal()
-    def __init__(self, *args):
-        super().__init__(*args)
-        self._series = QtCharts.QLineSeries()
-        self.value_map = {}
-        self.index_map = {}
-
-    def _g_series(self): return self._series
-    def _s_series(self, value):
-        if value == self._series:
-            return
-        self._series = value
-        self._update_series_data()
-        self._n_series.emit()
-    series = Property(QtCharts.QLineSeries, _g_series, _s_series, notify=_n_series)
-
-    def _update_series_data(self):
-        self.series.clear()
-        for pt in self:
-            self.series.append(pt)
-
-    def set_point(self, x, y):
-        pt = self.value_map.get(x)
-        if pt is not None:
-            if pt.y() == y:
-                return
-            pt.setY(y)
-            self.series.replace(pt.index, pt)
-        else:
-            pt = GraphPoint(x, y)
-            if not len(self.value_map.keys()):
-                self.series.append(pt)
-                pt.index = 0
-            elif x > max(self.value_map.keys()):
-                pt.index = self.series.count()
-                self.series.append(pt)
-            else:
-                idx = bisect_left(sorted(self.value_map.keys()), x)
-                pt.index = idx
-                self.series.insert(idx, pt)
-                self._insert_index(idx, x)
-            self.value_map[x] = pt
-            self.index_map[pt.index] = pt
-    def get_point(self, x):
-        return self.value_map.get(x)
-    def clear_points(self):
-        self.series.clear()
-        self.value_map.clear()
-    def _insert_index(self, idx, x):
-        for pt in self.value_map.values():
-            if pt.index < idx:
-                continue
-            elif pt.index == idx:
-                if pt.x() == x:
-                    continue
-            if pt.index in self.index_map:
-                del self.index_map[pt.index]
-            pt.index += 1
-            self.index_map[pt.index] = pt
-
-    def __len__(self):
-        return len(self.series_map)
-    def iter_indices(self):
-        return sorted(self.index_map.keys())
-    def __iter__(self):
-        for i in self.iter_indices():
-            yield self.index_map[i]
-
-
-# class GraphDataNP(GraphData):
-#     def __init__(self, *args):
-#         self._xy_arr = np.zeros(0, dtype=GRAPH_DTYPE)
-#         super().__init__(*args)
 
 class SpectrumGraphData(QtQuick.QQuickItem):
     _n_model = Signal()
@@ -328,20 +211,12 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         with spectrum.data_update_lock:
             xy_data = np.zeros(spectrum.sample_data.size, dtype=GRAPH_DTYPE)
             data = spectrum.sample_data.data
-            # print(f'data: shape={data.shape}, dtype={data.dtype}')
             xy_data['x'] = data['frequency']
             freqmin = xy_data['x'].min()
             freqmax = xy_data['x'].max()
-            # print(f'freq_range: "{freqmin}" - "{freqmax}"')
             xy_data['y'] = spectrum.sample_data.data['dbFS']
             nan_ix = np.flatnonzero(np.isnan(xy_data['y']))
             xy_data['y'][nan_ix] = -110
-            # if np.any(np.isnan(y)):
-            #     # print('NaN in ydata')
-            #     if hasattr(self, 'xy_data'):
-            #         return
-            #     y = np.array([-110])
-            # self.xy_data = {'x':x, 'y':y}
             self.xy_data = xy_data
             spectrum.data_updated.clear()
         self._update_extents()
@@ -354,33 +229,18 @@ class SpectrumGraphData(QtQuick.QQuickItem):
         if self.model is None:
             return
         self.model.set_from_graph_dtype(self.xy_data)
-        # self.set_from_graph_dtype(self.xy_data)
-        # xy_data = self.xy_data
-        # for x, y in np.nditer([xy_data['x'], xy_data['y']]):
-        #     # print(x)
-        #     # print(y)
-        #     self.set_point(float(x), float(y))
+
     @Slot(QtCore.QUrl)
     def load_from_file(self, uri):
-        # orig_fn = filename
-        # filename = str(filename)
         filename = uri.toLocalFile()
-        # if filename.startswith('file://'):
-        #     filename = filename.lstrip('file://')
-        print(f'load_from_file: "{filename}"')
-        # spectrum = Spectrum.import_from_file(filename)
         spectrum = BaseImporter.import_file(filename)
         spectrum.set_data_updated()
-        print('spectrum created')
         self.spectrum = spectrum
-        print('update_spectrum_data')
         self.update_spectrum_data()
-        print('load complete')
 
     @Slot(QtCore.QUrl)
     def save_to_file(self, uri):
         filename = uri.toLocalFile()
-        print('save_to_file: ', filename)
         self.spectrum.export_to_file(filename=filename)
 
 class LiveSpectrumGraphData(SpectrumGraphData):
@@ -394,6 +254,7 @@ class LiveSpectrumGraphData(SpectrumGraphData):
         self._scanner = None
         super().__init__(*args)
         self.updateSpectrumData.connect(self.update_spectrum_data)
+
     def _g_scanner(self): return self._scanner
     def _s_scanner(self, value):
         if value == self._scanner:
@@ -401,7 +262,6 @@ class LiveSpectrumGraphData(SpectrumGraphData):
         if self._scanner is not None:
             self._scanner.disconnect(self)
         self._scanner = value
-        print('scanner: ', self._scanner)
         self._n_scanner.emit()
         if self._scanner is not None:
             self.spectrum = self._scanner.spectrum
@@ -463,49 +323,7 @@ class LiveSpectrumGraphData(SpectrumGraphData):
         self.minValue = QtCore.QPointF(min_x, self.xy_data['y'].min())
         self.maxValue = QtCore.QPointF(max_x, self.xy_data['y'].max())
 
-# NOT USED
-class SpectrumLoader(QtCore.QObject):
-    _n_instance = Signal()
-    # loadFromFile = Signal(QtCore.QObject)
-    # loadComplete = Signal(QtCore.QObject, SpectrumGraphData)
-    def __init__(self, *args):
-        self._instance = None
-        super().__init__(*args)
-        # self.loadFromFile.connect(self.load_from_file)
-
-    def _g_instance(self): return self._instance
-    def _s_instance(self, value):
-        self._instance = value
-        self._n_instance.emit()
-    instance = Property(SpectrumGraphData, _g_instance, _s_instance, notify=_n_instance)
-
-    @Slot(QtCore.QUrl)
-    def load_from_file(self, uri):
-        # orig_fn = filename
-        # filename = str(filename)
-        filename = uri.fileName()
-        # if filename.startswith('file://'):
-        #     filename = filename.lstrip('file://')
-        print(f'load_from_file: "{filename}"')
-        # spectrum = Spectrum.import_from_file(filename)
-        spectrum = BaseImporter.import_file(filename)
-        spectrum.set_data_updated()
-        print('spectrum created')
-        graph_data = SpectrumGraphData()
-        print('attaching to graph_data')
-        graph_data.spectrum = spectrum
-        print('update_spectrum_data')
-        graph_data.update_spectrum_data()
-        print('len: ', len(graph_data.xy_data))
-        print('returning to qml')
-        self.instance = graph_data
-        # self.loadComplete.emit(uri, graph_data)
-        # return graph_data
-
 def register_qml_types():
     QtQml.qmlRegisterType(GraphTableModel, 'GraphUtils', 1, 0, 'GraphTableModel')
-    QtQml.qmlRegisterType(TableGraphData, 'GraphUtils', 1, 0, 'TableGraphData')
-    QtQml.qmlRegisterType(LineGraphData, 'GraphUtils', 1, 0, 'LineGraphData')
     QtQml.qmlRegisterType(SpectrumGraphData, 'GraphUtils', 1, 0, 'SpectrumGraphData')
     QtQml.qmlRegisterType(LiveSpectrumGraphData, 'GraphUtils', 1, 0, 'LiveSpectrumGraphData')
-    QtQml.qmlRegisterType(SpectrumLoader, 'GraphUtils', 1, 0, 'SpectrumLoader')

@@ -28,9 +28,6 @@ def run(argv=None):
     register_qml_types()
     qml_main = QML_PATH / 'main.qml'
     engine.load(str(qml_main))
-    # view = QQuickView()
-    # view.setSource(MAIN)
-    # view.show()
     win = engine.rootObjects()[0]
     win.show()
     sys.exit(app.exec_())

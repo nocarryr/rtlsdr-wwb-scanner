@@ -30,9 +30,6 @@ Dialog {
         if (!root.scanner){
             return -1;
         }
-        // if (!root.scanner.deviceInfo){
-        //     return -1;
-        // }
         var fs = root.sampleRate,
             nfft = root.windowSize;
         if (!fs || !nfft){

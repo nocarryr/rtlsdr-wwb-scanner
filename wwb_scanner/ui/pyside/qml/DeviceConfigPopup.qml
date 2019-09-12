@@ -32,18 +32,14 @@ Dialog {
     DeviceInfoList {
         id: device_list
         onDevicesChanged: {
-            console.log('onDevicesChanged');
             updateDeviceList();
         }
     }
+
     function updateDeviceList(){
         var devices = device_list.devices,
-            // indices = Object.keys(devices),
             device,
             data;
-        // indices.sort();
-        console.log('updateDeviceList');
-        // console.log(indices.length);
         device_model.clear();
         for (var i=0;i<devices.length;i++){
             device = devices[i];
@@ -53,13 +49,7 @@ Dialog {
                 'device_serial':device.device_serial,
                 'text':device.text,
             };
-            // if (i == 0 || i >= device_model.count){
-            //     device_model.append(data);
-            // } else {
-            //     device_model.set(i, data);
-            // }
             device_model.append(data);
-            console.log('model item: ' + JSON.stringify(device_model.get(i)));
             if (!root.device) {
                 if (root.deviceSerial) {
                     if (device.device_serial == root.deviceSerial){
@@ -77,12 +67,12 @@ Dialog {
                     }
                 }
             }
-            // device_model.sync();
         }
         if (root.device){
             device_select.currentIndex = root.device.device_index;
         }
     }
+
     ColumnLayout {
         anchors.fill: parent
         GroupBox {
@@ -109,11 +99,11 @@ Dialog {
                 }
             }
         }
+
         GroupBox {
             title: "Sample Rate (Msps)"
             TextField {
                 id: sampleRateField
-
                 inputMethodHints: Qt.ImhDigitsOnly
                 maximumLength: 4
                 text: root.sampleRate.toString()
@@ -127,15 +117,14 @@ Dialog {
             title: "Gain"
             SpinBox {
                 id: gainSelect
-                signal updateChoices()
                 property var items: [0]
                 from: 0
                 to: items.length-1
+                signal updateChoices()
 
                 onUpdateChoices:{
                     if (root.device){
                         gainSelect.items = root.device.gains;
-                        // gainSelect.to = root.device.gains.length;
                         for (var i=0;i<gainSelect.items.length;i++){
                             if (gainSelect.items[i] == root.gain){
                                 gainSelect.value = i;
@@ -162,6 +151,7 @@ Dialog {
             }
         }
     }
+
     standardButtons: Dialog.Ok | Dialog.Cancel
 
     onAccepted:{

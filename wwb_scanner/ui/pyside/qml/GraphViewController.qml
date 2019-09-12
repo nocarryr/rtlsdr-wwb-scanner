@@ -7,7 +7,6 @@ Item {
 
     property var axisX
     property var axisY
-    property var chart
 
     property ViewXYScale dataExtents: dataExtents
     property ViewXYScale viewScale: viewScale
@@ -87,7 +86,6 @@ Item {
         viewScale.translateToX(newPos);
         if (root.viewMin.x < root.dataMin.x){
             viewScale.translateToX(curPos);
-            // dataExtents.setValueMin(Qt.point(root.viewMin.x, root.dataMin.y));
         }
         root.isScrolled = true;
     }
@@ -98,7 +96,6 @@ Item {
         viewScale.translateToX(newPos);
         if (root.viewMax.x > root.dataMax.x){
             viewScale.translateToX(curPos);
-            // dataExtents.setValueMax(Qt.point(root.viewMax.x, root.dataMax.y));
         }
         root.isScrolled = true;
     }
@@ -118,6 +115,7 @@ Item {
             }
         }
     }
+
     ViewXYScale {
         id: viewScale
         onValuesChanged: {

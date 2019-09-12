@@ -11,11 +11,9 @@ Item {
 
     property alias mouseDataPoint: crosshair.dataValue
     property alias theme: chart.theme
-    property var models: []
     property var spectrumGraphs: []
     property var activeSpectrum
     property alias activeSeries: chart.activeSeries
-    // property var model
     signal newLiveScan(var scanner)
     signal loadFromFile(url fileName)
     signal updateAxisExtents()
@@ -32,7 +30,6 @@ Item {
         addModel({'scanner':scannerArg, 'isLive':true});
     }
 
-    // onUpdateAxisExtents: { doUpdateAxisExtents() }
     onSeriesClicked: {
         var spectrumGraph = root.spectrumGraphs[index];
         setActiveSpectrum(spectrumGraph);
@@ -75,8 +72,7 @@ Item {
     onLoadFromFile: {
         var spectrum = addModel({}, function(obj){
             obj.load_from_file(fileName);
-        })
-        // graphData.load_from_file(fileName)
+        });
     }
 
     function callable(obj){
@@ -123,7 +119,6 @@ Item {
         buildComponent(root, qmlFile, props, function(obj){
             obj.index = root.spectrumGraphs.length;
             root.spectrumGraphs.push(obj);
-            // chart.addMappedSeries(obj);
             root.activeSpectrum = obj;
             updateAxisExtents();
             obj.axisExtentsUpdate.connect(updateAxisExtents);
@@ -161,43 +156,29 @@ Item {
             Layout.fillHeight: true
             ChartView {
                 id: chart
-                property bool useOpenGL: false
                 anchors.fill: parent
                 antialiasing: true
                 legend.visible: false
                 animationOptions: ChartView.SeriesAnimations
                 property var activeSeries
-                // enabled: false
 
                 ValueAxis {
                     id: axisX
-                    // min: root.activeSpectrum ? root.activeSpectrum.minValue.x: 100
-                    // max: root.activeSpectrum ? root.activeSpectrum.maxValue.x: 900
                     min: 100
                     max: 900
                     labelFormat: "%07.3f MHz"
                 }
                 ValueAxis {
                     id: axisY
-                    // min: root.activeSpectrum ? root.activeSpectrum.minValue.y: -160
-                    // max: root.activeSpectrum ? root.activeSpectrum.maxValue.y: 0
                     min: -160
                     max: 0
-                    // base: 10
                     labelFormat: "%07.2f dB"
                 }
+
                 function addMappedSeries(){
                     var series = chart.createSeries(ChartView.SeriesTypeLine, 'foo', axisX, axisY);
-                    series.useOpenGL = chart.useOpenGL;
                     chart.activeSeries = series;
                     return series;
-                }
-                onUseOpenGLChanged: {
-                    var series;
-                    for (var i=0;i<chart.count();i++){
-                        series = chart.series(i);
-                        series.useOpenGL = chart.useOpenGL;
-                    }
                 }
 
                 states: [
@@ -212,26 +193,8 @@ Item {
                         PropertyChanges { target:chart; animationOptions:ChartView.NoAnimation }
                     }
                 ]
-
-            //     LineSeries {
-            //         name: graphData.name ? graphData.name: ''
-            //         // HXYModelMapper {
-            //         //     model: graphData.model
-            //         //     xRow: 0
-            //         //     yRow: 1
-            //         // }
-            //         id: lineSeries
-            //         axisX: axisX
-            //         axisY: axisY
-            //         HXYModelMapper {
-            //             id: modelMapper
-            //             series: lineSeries
-            //             model: tblModel
-            //             xRow: 0
-            //             yRow: 1
-            //
-            //         }
             }
+
             UHFChannels {
                 id: channelLabels
                 axisX: axisX
@@ -266,8 +229,6 @@ Item {
                     if (!mouseArea.containsMouse){
                         return;
                     }
-                    // var pt = Qt.point(mouse.x, mouse.y);
-                    // console.log(pt.x, pt.y);
                     var pt = mouseArea.mapToGlobal(mouse.x, mouse.y);
                     timedMouse.setPoint(pt);
                 }
@@ -305,11 +266,11 @@ Item {
                             dataPos = chart.mapToItem(crosshair, dataPos.x, dataPos.y);
                         }
                         crosshair.setData(dataPos, dataPoint);
-                        // mouseArea.dataPoint = dataPoint;
                     }
                 }
             }
         }
+
         ChartSelect {
             id: chartSelect
             Layout.minimumWidth: 200

@@ -23,8 +23,6 @@ FileDialog {
     }
 
     onAccepted: {
-        console.log('save_to_file: ', root.fileUrl);
-        console.log('folder: ', root.folder);
         root.graphData.save_to_file(root.fileUrl);
         root.close();
     }

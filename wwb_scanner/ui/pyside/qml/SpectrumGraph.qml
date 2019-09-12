@@ -91,14 +91,7 @@ Item {
     SpectrumGraphData {
         id: graphData
         model: tblModel
-        // onMinValueChanged: {
-        //     root.series.axisX.min = graphData.minValue.x;
-        //     root.series.axisY.min = graphData.minValue.y;
-        // }
-        // onMaxValueChanged: {
-        //     root.series.axisX.max = graphData.maxValue.x;
-        //     root.series.axisY.max = graphData.maxValue.y;
-        // }
+
         onColorChanged: {
             if (root.series){
                 if (root.series.color != graphData.color){

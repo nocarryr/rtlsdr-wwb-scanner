@@ -74,7 +74,6 @@ Item {
     onMinValueChanged: { axisExtentsUpdate() }
     onMaxValueChanged: { axisExtentsUpdate() }
 
-
     function save_to_file(fileName){
         graphData.save_to_file(fileName);
     }
