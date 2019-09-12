@@ -71,12 +71,14 @@ RowLayout {
     ToolButton {
         id: scanStartBtn
         text: "Start"
+        icon.name: 'media-playback-start'
         enabled: root.scanReady
         onClicked: root.scannerState(true)
     }
     ToolButton {
         id: scanStopBtn
         text: "Stop"
+        icon.name: 'media-playback-stop'
         Layout.rightMargin: 6
         // enabled: !root.scanReady
         onClicked: root.scannerState(false)
