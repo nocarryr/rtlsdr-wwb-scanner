@@ -38,19 +38,18 @@ setup(
     packages=find_packages(exclude=['tests*']),
     include_package_data=True,
     install_requires=[
-        'numpy',
+        'numpy>=1.13',
         'scipy',
         'pyrtlsdr>=0.2.6',
         'tinydb',
         'json-object-factory',
-        'Cython',
-        'kivy',
+        'PySide2>=5.13.1',
     ],
     setup_requires=['pypandoc'],
     long_description=get_long_description(),
     entry_points={
         'console_scripts':[
-            'wwb_scanner-ui = wwb_scanner.ui.kivyui.main:run',
+            'wwb_scanner-ui = wwb_scanner.ui.pyside.main:run',
         ],
     },
     platforms=['any'],

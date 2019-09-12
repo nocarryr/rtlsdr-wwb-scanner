@@ -44,6 +44,7 @@ class Spectrum(JSONMixin):
         'name', 'color', 'timestamp_utc', 'step_size',
         'center_frequencies', 'scan_config_eid',
     ]
+    DEFAULT_COLOR = Color({'r':0, 'g':1, 'b':0, 'a':1})
     def __init__(self, **kwargs):
         self.name = kwargs.get('name')
         self.eid = kwargs.get('eid')
@@ -53,7 +54,15 @@ class Spectrum(JSONMixin):
             self.scan_config = config
         elif eid is not None:
             self.scan_config_eid = eid
-        self.color = Color(kwargs.get('color'))
+
+        color = kwargs.get('color')
+        if color is None:
+            color = self.DEFAULT_COLOR
+        if isinstance(color, Color):
+            self.color = color.copy()
+        else:
+            self.color = Color(color)
+
         datetime_utc = kwargs.get('datetime_utc')
         timestamp_utc = kwargs.get('timestamp_utc')
         if datetime_utc is not None:
@@ -64,7 +73,7 @@ class Spectrum(JSONMixin):
             self.timestamp_utc = timestamp_utc
         self.step_size = kwargs.get('step_size')
         self.data_updated = threading.Event()
-        self.data_update_lock = threading.Lock()
+        self.data_update_lock = threading.RLock()
         self.samples = {}
         self.sample_data = SampleArray()
         self.center_frequencies = kwargs.get('center_frequencies', [])

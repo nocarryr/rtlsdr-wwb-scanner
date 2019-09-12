@@ -21,8 +21,10 @@ class SampleArray(JSONMixin):
             self.data = np.sort(self.data, order='frequency')
     @classmethod
     def create(cls, keep_sorted=True, **kwargs):
-        obj = cls(keep_sorted=keep_sorted)
-        obj.set_fields(**kwargs)
+        data = kwargs.get('data')
+        obj = cls(data, keep_sorted=keep_sorted)
+        if not obj.data.size:
+            obj.set_fields(**kwargs)
         return obj
     def set_fields(self, **kwargs):
         f = kwargs.get('frequency')
@@ -95,16 +97,25 @@ class SampleArray(JSONMixin):
             self.data = np.append(self.data, data)
     def insert_sorted(self, other):
         data = self._check_obj_type(other)
+        in_ix_self = np.flatnonzero(np.in1d(self.frequency, data['frequency']))
+        in_ix_data = np.flatnonzero(np.in1d(data['frequency'], self.frequency))
+        if in_ix_self.size:
+            self.iq[in_ix_self] = np.mean([
+                self.iq[in_ix_self], data['iq'][in_ix_data]
+            ], axis=0)
+            self.magnitude[in_ix_self] = np.mean([
+                self.magnitude[in_ix_self], data['magnitude'][in_ix_data]
+            ], axis=0)
+            self.dbFS[in_ix_self] = np.mean([
+                self.dbFS[in_ix_self], data['dbFS'][in_ix_data]
+            ], axis=0)
+
         nin_ix = np.flatnonzero(np.in1d(data['frequency'], self.frequency, invert=True))
 
         if nin_ix.size:
             d = np.append(self.data, data[nin_ix])
             d = np.sort(d, order='frequency')
             self.data = d
-        ix = np.searchsorted(self.frequency, data['frequency'])
-        self.iq[ix] = data['iq']
-        self.magnitude[ix] = data['magnitude']
-        self.dbFS[ix] = data['dbFS']
     def smooth(self, window_size):
         x = self.magnitude
         w = np.hanning(window_size)

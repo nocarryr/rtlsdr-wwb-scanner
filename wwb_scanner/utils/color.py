@@ -9,6 +9,8 @@ class Color(dict):
         initdict.setdefault('b', 0.)
         initdict.setdefault('a', 1.)
         super(Color, self).__init__(initdict, **kwargs)
+    def copy(self):
+        return Color({key:self[key] for key in self._color_keys})
     def from_list(self, l):
         for i, val in enumerate(l):
             key = self._color_keys[i]
@@ -42,3 +44,29 @@ class Color(dict):
                 break
             i += 1
         return cls(d)
+    def __eq__(self, other):
+        if isinstance(other, Color):
+            other = other.to_list()
+        elif isinstance(other, dict):
+            other = Color(other).to_list()
+        elif isinstance(other, (list, tuple)):
+            other = list(other)
+        else:
+            return NotImplemented
+        self_list = self.to_list()
+        if len(other) < 3:
+            return False
+        elif len(other) == 3:
+            if self['a'] != 1:
+                return False
+            return self_list[:3] == other
+        return self_list == other
+    def __ne__(self, other):
+        eq = self.__eq__(other)
+        if eq is NotImplemented:
+            return eq
+        return not eq
+    def __repr__(self):
+        return '<{self.__class__}: {self}>'.format(self=self)
+    def __str__(self):
+        return str(self.to_list())
