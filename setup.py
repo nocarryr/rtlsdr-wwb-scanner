@@ -43,8 +43,6 @@ setup(
         'pyrtlsdr>=0.2.6',
         'tinydb',
         'json-object-factory',
-        'Cython',
-        'kivy',
         'PySide2>=5.13.1',
     ],
     setup_requires=['pypandoc'],

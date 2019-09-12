@@ -3,4 +3,4 @@ scipy
 pyrtlsdr
 tinydb
 json-object-factory
-kivy
+PySide2>=5.13.1
