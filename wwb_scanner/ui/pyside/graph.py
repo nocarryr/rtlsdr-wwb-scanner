@@ -51,8 +51,8 @@ class GraphTableModel(QtCore.QAbstractTableModel):
         # print(f'cur_shape={cur_shape}, new_shape={new_shape}')
         parent = QtCore.QModelIndex()
         if cur_shape[-1] > new_shape[-1]:
-            start_col = new_shape[-1]
-            end_col = cur_shape[-1] - 1
+            start_col = cur_shape[-1] - 1
+            end_col = new_shape[-1] - 1
             ix = self.index(0, 0)
             # parent = self.parent(ix)
             parent = ix
