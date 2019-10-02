@@ -6,7 +6,7 @@ from PySide2 import QtCore, QtQml
 from PySide2.QtWidgets import QApplication
 from PySide2.QtQuick import QQuickView
 
-from . import get_resource_filename
+from wwb_scanner.ui.pyside import get_resource_filename
 from wwb_scanner.ui.pyside import device_config, graph, scanner
 
 def register_qml_types():
