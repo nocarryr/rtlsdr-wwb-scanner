@@ -2,6 +2,9 @@ import threading
 
 import numpy as np
 
+import logging
+logger = logging.getLogger(__name__)
+
 from wwb_scanner.core import JSONMixin
 from wwb_scanner.utils.dbstore import db_store
 from wwb_scanner.scanner.sdrwrapper import SdrWrapper
@@ -23,7 +26,7 @@ def get_freq_resolution(nfft, fs):
     freqs = np.fft.fftshift(freqs)
     r = np.unique(np.diff(np.around(freqs)))
     if r.size != 1:
-        print('!!! Not unique: ', r)
+        logger.error(f'!!! Not unique: {r}')
         return r.mean()
     return r[0]
 
@@ -34,7 +37,7 @@ def is_equal_spacing(nfft, fs, step_size):
     freqs2 = freqs + step_size
     all_freqs = np.unique(np.around(np.append(freqs, freqs2)))
     diff = np.unique(np.diff(np.around(all_freqs)))
-    print(diff)
+    logger.debug(f'freq spacing diff={diff}')
     return diff.size == 1
 
 class StopScanner(Exception):
@@ -180,7 +183,7 @@ class Scanner(ScannerBase):
 
         step_size = hz_to_mhz(step_size)
         self._step_size = step_size
-        print(f'step_size: {step_size!r}, equal_spacing: {self._equal_spacing}')
+        logger.info(f'step_size: {step_size!r}, equal_spacing: {self._equal_spacing}')
         return step_size
     @property
     def equal_spacing(self):

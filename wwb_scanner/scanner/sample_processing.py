@@ -4,6 +4,9 @@ import numpy as np
 from scipy.signal.windows import __all__ as WINDOW_TYPES
 from scipy.signal import welch, get_window, hilbert
 
+import logging
+logger = logging.getLogger(__name__)
+
 from wwb_scanner.core import JSONMixin
 
 WINDOW_TYPES = [s for s in WINDOW_TYPES if s != 'get_window']
@@ -129,7 +132,7 @@ class SampleSet(JSONMixin):
 
         self.powers = Pxx
         if not np.array_equal(freqs, self.frequencies):
-            print('freq not equal: %s, %s' % (self.frequencies.size, freqs.size))
+            logger.warning('freq not equal: %s, %s' % (self.frequencies.size, freqs.size))
             self.frequencies = freqs
         self.raw = None
         self.collection.on_sample_set_processed(self)

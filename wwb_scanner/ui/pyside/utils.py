@@ -4,6 +4,8 @@ import pathlib
 
 from PySide2 import QtCore, QtQml
 from PySide2.QtCore import QObject, Property, Signal
+import logging
+logger = logging.getLogger(__name__)
 
 def is_pathlike(s):
     if '/' in s or '\\' in s:
@@ -146,7 +148,7 @@ class QObjectThread(QtCore.QObject):
         if not self._debug_enabled:
             return
         t = threading.current_thread()
-        print(f'{self!r} - {msg} - {t}')
+        logger.debug(f'{self!r} - {msg} - {t}')
     def __repr__(self):
         return f'<QObjectThread: {self}>'
     def __str__(self):

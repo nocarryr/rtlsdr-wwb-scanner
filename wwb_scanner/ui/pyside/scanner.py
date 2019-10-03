@@ -4,6 +4,8 @@ import numpy as np
 
 from PySide2 import QtCore, QtQml, QtQuick
 from PySide2.QtCore import Signal, Property, Slot
+import logging
+logger = logging.getLogger(__name__)
 
 from wwb_scanner.scanner import config
 from wwb_scanner.scanner import Scanner
@@ -215,7 +217,7 @@ class ScannerInterface(GenericQObject):
     @Slot()
     def on_scanner_finished(self):
         self.scan_thread.stop()
-        print('scan_thread stopped')
+        logger.info('scan_thread stopped')
         if self.scanConfig.smoothingEnabled:
             self.smooth_scan()
         if self.scanConfig.scalingEnabled:
@@ -226,7 +228,7 @@ class ScannerInterface(GenericQObject):
 
     @Slot()
     def smooth_scan(self):
-        print('Smoothing scan')
+        logger.info('Smoothing scan')
         N = int(self.spectrum.sample_data.size * self.scanConfig.smoothingFactor / 100.)
         self.spectrum.smooth(N)
         # TODO: figure out why interpolate stopped working
@@ -234,7 +236,7 @@ class ScannerInterface(GenericQObject):
 
     @Slot()
     def scale_scan(self):
-        print('Scaling scan')
+        logger.info('Scaling scan')
         conf = self.scanConfig
         self.spectrum.scale(conf.scalingMinDB, conf.scalingMaxDB)
 

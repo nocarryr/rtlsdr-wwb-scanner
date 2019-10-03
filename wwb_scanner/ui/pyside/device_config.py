@@ -3,6 +3,8 @@ from rtlsdr import RtlSdr
 
 from PySide2 import QtCore, QtQml
 from PySide2.QtCore import Signal, Property
+import logging
+logger = logging.getLogger(__name__)
 
 from wwb_scanner.ui.pyside.utils import GenericQObject
 
@@ -101,14 +103,12 @@ class DeviceInfoList(GenericQObject):
 
 
     def _on_update_devices(self):
-        print('update_devices')
         device_serials = RtlSdr.get_device_serial_addresses()
-        print(device_serials)
+        logger.debug(f'found sdr serial numbers: {device_serials}')
         for i, device_serial in enumerate(device_serials):
             if i in self._devices:
                 continue
             device = self.add_device(i, device_serial)
-            print(device)
 
     def add_device(self, device_index, device_serial):
         assert device_index not in self._devices
