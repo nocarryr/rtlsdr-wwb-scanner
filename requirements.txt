@@ -1,6 +1,6 @@
 numpy>=1.13
 scipy
 pyrtlsdr
-tinydb
+tinydb==3.13.0
 json-object-factory
 PySide2>=5.13.1
