@@ -5,11 +5,9 @@ name: Test from sdist and wheels
 
 on:
   push:
-    branches:
-      - master
-      - gh-actions
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
   release:
     types: [created]
 
