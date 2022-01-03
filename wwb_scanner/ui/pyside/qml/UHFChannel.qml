@@ -30,11 +30,11 @@ Item {
 
     Connections {
         target: root.parentChannels
-        onGeometryUpdate: {
+        function onGeometryUpdate() {
             root.parentWidth = root.parentChannels.width;
             Qt.callLater(updatePosition);
         }
-        onRangeUpdate: { Qt.callLater(updatePosition) }
+        function onRangeUpdate() { Qt.callLater(updatePosition) }
     }
 
     onUpdatePosition: {

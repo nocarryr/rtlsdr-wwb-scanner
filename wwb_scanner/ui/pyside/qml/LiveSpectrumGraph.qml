@@ -40,14 +40,14 @@ Item {
 
     Connections {
         target: root.graphParent
-        onActiveSpectrumChanged: {
+        function onActiveSpectrumChanged() {
             root.selected = root.graphParent.activeSpectrum.index == root.index;
         }
     }
 
     Connections {
         target: root.series
-        onClicked: {
+        function onClicked() {
             root.seriesClicked(root.index);
         }
     }

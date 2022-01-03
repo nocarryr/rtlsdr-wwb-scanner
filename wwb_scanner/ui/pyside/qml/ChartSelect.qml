@@ -112,13 +112,13 @@ Item {
 
         Connections {
             target: colorDialog.item
-            onAccepted: {
+            function onAccepted() {
                 var dlg = colorDialog.item;
                 colorDialog.spectrum.color = dlg.color;
                 dlg.close();
                 colorDialog.close();
             }
-            onRejected: {
+            function onRejected() {
                 var dlg = colorDialog.item;
                 dlg.close();
                 colorDialog.close();
