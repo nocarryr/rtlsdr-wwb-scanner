@@ -19,6 +19,26 @@ and in the [pyrtlsdr project][pyrtlsdr].
 pip install rtlsdr-wwb-scanner
 ```
 
+It is recommended however to install into a virtual environment such as
+[virtualenv](https://pypi.org/project/virtualenv/) or Python's built-in
+[venv](https://docs.python.org/3.8/library/venv.html) module.
+
+
+```bash
+# Create the environment using the built-in venv module
+python3 -m venv /path/to/new/virtual/environment
+
+# Activate it using <virtual-environment-path>/bin/activate
+source /path/to/new/virtual/environment/bin/activate
+
+# Install rtlsdr-wwb-scanner and its dependencies in the virtual environment
+python -m pip install rtlsdr-wwb-scanner
+```
+
+*Note* for Windows users: The `bin` directory should be replaced with `Scripts`
+making the "activate" command `<virtual-environment-path>/Scripts/activate`
+
+
 ## Dependencies
 
 These packages are required, but should be collected and installed automatically:
@@ -36,7 +56,20 @@ After installation, the user interface can be launched by:
 wwb_scanner-ui
 ```
 
-(Further usage information will be added soon)
+If a virtual environment was used, it must either be activated (see above) or
+the `wwb_scanner-ui` script must be executed by its absolute file name:
+
+```bash
+/path/to/new/virtual/environment/bin/wwb_scanner-ui
+```
+
+Or for Windows:
+
+```bash
+/path/to/new/virtual/environment/Scripts/wwb_scanner-ui
+```
+
+For convenience, a shortcut may be created to launch the above script directly.
 
 
 [osmosdr-wiki]: http://sdr.osmocom.org/trac/wiki/rtl-sdr
