@@ -90,6 +90,6 @@ class WWBImporter(BaseWWBImporter):
             dt_fmt = '%a %b %d %Y %H:%M:%S'
             dt = datetime.datetime.strptime(dt_str, dt_fmt)
             spectrum.datetime_utc = dt
-        freqs = np.fromiter((float(t.text) / 1000. for t in freq_set), dtype=np.float)
+        freqs = np.fromiter((float(t.text) / 1000. for t in freq_set), dtype=np.float64)
         dB = np.fromiter((float(t.text) for t in data_set), dtype=np.float64)
         spectrum.add_sample_set(frequency=freqs, dbFS=dB)
