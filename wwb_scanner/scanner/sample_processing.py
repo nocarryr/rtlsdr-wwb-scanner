@@ -102,7 +102,7 @@ class SampleSet(JSONMixin):
                 p += omega
                 p -= 2 * np.pi
                 i += 1
-        phase_rot = np.fromiter(iter_phase(), dtype=np.float)
+        phase_rot = np.fromiter(iter_phase(), dtype=np.float64)
         phase_rot = np.unwrap(phase_rot)
         xlator = np.zeros(phase_rot.size, dtype=samples.dtype)
         xlator.real = np.cos(phase_rot)
