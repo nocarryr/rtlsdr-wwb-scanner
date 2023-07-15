@@ -221,9 +221,6 @@ Item {
                 hoverEnabled: true
                 propagateComposedEvents: true
 
-                property point dataPoint: Qt.point(0, 0)
-                property point dataPos: Qt.point(0, 0)
-
                 onPositionChanged: {
                     mouse.accepted = false;
                     if (!mouseArea.containsMouse){
@@ -250,15 +247,16 @@ Item {
                     }
 
                     onTriggered: {
-                        var series = chart.activeSeries,
-                            spectrum = root.activeSpectrum;
+                        const series = chart.activeSeries;
+                        const spectrum = root.activeSpectrum;
                         if (!series || !spectrum){
                             return;
                         }
-                        var pos = chart.mapFromGlobal(timedMouse.point.x, timedMouse.point.y),
-                            mouseDataPoint = chart.mapToValue(pos, series),
-                            dataPoint = spectrum.get_nearest_by_x(mouseDataPoint.x),
-                            dataPos;
+                        const curPt = timedMouse.point;
+                        const pos = chart.mapFromGlobal(curPt.x, curPt.y);
+                        const mouseDataPoint = chart.mapToValue(pos, series);
+                        const dataPoint = spectrum.get_nearest_by_x(mouseDataPoint.x);
+                        let dataPos;
                         if (dataPoint.x < 0) {
                             dataPos = dataPoint;
                         } else {
