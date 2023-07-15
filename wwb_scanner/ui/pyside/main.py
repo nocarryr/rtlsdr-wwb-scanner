@@ -37,10 +37,14 @@ def qt_message_handler(mode, context, message):
     levelname = get_qmsg_levelname(mode)
     if levelname is None:
         return
-    lvl = getattr(logging, levelname)
+    lvl = getattr(logging, levelname, logging.INFO)
     # show_trace = lvl not in [logging.INFO, logging.DEBUG]
     fn = QtCore.QUrl(context.file)
-    p = Path(fn.toLocalFile()).relative_to(QML_PATH)
+    p = Path(fn.toLocalFile())
+    try:
+        p = p.relative_to(QML_PATH)
+    except ValueError:
+        p = p.relative_to(p.parent)
     name = '.'.join(p.parts)
     _logger = logging.getLogger(name)
     _logger.log(lvl, message)
