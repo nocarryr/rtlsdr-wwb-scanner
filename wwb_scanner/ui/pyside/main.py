@@ -15,6 +15,10 @@ from PySide2.QtQuick import QQuickView
 from wwb_scanner.ui.pyside import get_resource_filename
 from wwb_scanner.ui.pyside import device_config, graph, scanner
 
+QT_MSG_TYPES = {
+    v:k.split('Qt')[1].split('Msg')[0] for k,v in QtCore.QtMsgType.values.items()
+}
+
 def register_qml_types():
     device_config.register_qml_types()
     graph.register_qml_types()
@@ -28,10 +32,10 @@ def on_app_quit():
 def get_qmsg_levelname(mode):
     if mode == QtCore.QtSystemMsg:
         return None
-    for name, value in QtCore.QtMsgType.values.items():
-        if mode == value:
-            name = name.split('Qt')[1].split('Msg')[0]
-            return name.upper()
+    name = QT_MSG_TYPES.get(mode)
+    if name is not None:
+        name = name.upper()
+    return name
 
 def qt_message_handler(mode, context, message):
     levelname = get_qmsg_levelname(mode)
