@@ -2,11 +2,12 @@ name: Packaging Tests
 
 on:
   push:
-    branches: [ master ]
+    branches: [ master, develop ]
   pull_request:
     branches: [ master ]
   release:
     types: [created]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -33,7 +34,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
+      fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
