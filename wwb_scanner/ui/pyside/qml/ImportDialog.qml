@@ -8,7 +8,7 @@ FileDialog {
     folder: shortcuts.home
     selectMultiple: false
     nameFilters: [
-        'Scan Files (*.csv *.sdb2)',
+        'Scan Files (*.csv *.sdb2, *.sdb3)',
         'Numpy Files (*.npz)',
     ]
     signal importFile(var fileName)

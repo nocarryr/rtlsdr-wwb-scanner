@@ -40,10 +40,10 @@ def data_files():
 
     files = {}
     for fn in os.listdir(data_dir):
-        if os.path.splitext(fn)[1] not in ['.csv', '.sdb2']:
+        if os.path.splitext(fn)[1] not in ['.csv', '.sdb2', '.sdb3']:
             continue
         s = os.path.splitext(os.path.basename(fn))[0]
-        start_freq, end_freq = [float(v) for v in s.split('-')]
+        start_freq, end_freq = [float(v.replace('_', '.')) for v in s.split('-')]
         fkey = (start_freq, end_freq)
         skey = os.path.splitext(fn)[1].strip('.')
         if fkey not in files:
