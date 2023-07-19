@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import NamedTuple
+from typing import NamedTuple, Any
 from dataclasses import dataclass
 import os.path
 import datetime
@@ -114,8 +114,14 @@ class WWB7Importer(BaseImporter):
         data['freqs'] /= 1e6
         spectrum.add_sample_set(frequency=data['freqs'], dbFS=data['values'])
         spectrum.timestamp_utc = params.scan_datetime.timestamp()
-        spectrum.name = params.title
-        spectrum.color = spectrum.color.from_hex(params.color)
+        if params.extended is not None:
+            name = params.extended.scan_name
+            color = params.extended.colors[0]
+        else:
+            name = params.title
+            color = params.color
+        spectrum.name = name
+        spectrum.color = spectrum.color.from_hex(color)
 
 
 
@@ -186,6 +192,25 @@ class SDB3BinarySchema:
 
 
 @dataclass
+class SDB3ExtendedParams:
+    band_name: str
+    channel: str
+    creator: str
+    scan_name: str
+    colors: list[str]
+
+    @classmethod
+    def parse(cls, data: dict[str, Any]) -> SDB3ExtendedParams:
+        kw = dict(
+            band_name=data['Band'],
+            channel=data['Channel'],
+            creator=data['Creator'],
+            scan_name=data['ScanName'][0],
+            colors=data['UserCurveColors'],
+        )
+        return cls(**kw)
+
+@dataclass
 class SDB3ScanParams:
     amplitude_units: str
     binary_schema: SDB3BinarySchema
@@ -198,11 +223,12 @@ class SDB3ScanParams:
     scan_datetime: datetime.datetime
     title: str
     version: str
+    extended: SDB3ExtendedParams|None
 
     @classmethod
     def parse(cls, indata: bytes) -> SDB3ScanParams:
         to_parse = indata.split(b'//@ShureScan')[1]
-        to_parse = to_parse.split(b'@Binary:@Swp')[0]
+        to_parse, remaining = to_parse.split(b'@Binary:@Swp')
         data = json.loads(to_parse)
         keys = [
             ('amplitude_units', 'AmplUnits'),
@@ -220,6 +246,11 @@ class SDB3ScanParams:
         kw['scan_datetime'] = datetime.datetime.strptime(dt_str, dt_fmt)
         kw['freq_units'] = FrequencyUnit.create(data['FreqUnits'])
         kw['binary_schema'] = SDB3BinarySchema.parse(data['BinarySchema'])
+        if b'@Extended' in remaining:
+            remaining = remaining.split(b'@Extended:')[1]
+            remaining = remaining.split(b'@End')[0]
+            ext_data = json.loads(remaining)
+            kw['extended'] = SDB3ExtendedParams.parse(ext_data)
         return cls(**kw)
 
     @property
